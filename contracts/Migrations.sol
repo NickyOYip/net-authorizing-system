@@ -1,49 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/**
- * @title Migrations
- * @dev This contract is used to track the progress of deployment migrations.
- *      It helps prevent the same migration scripts from being run multiple times.
- */
 contract Migrations {
-    // The owner of this contract (typically the deployer)
     address public owner;
+    uint public last_completed_migration;
 
-    // Tracks the last completed migration script number
-    uint public lastCompletedMigration;
+    event OwnerSet(address indexed owner);
+    event Log(string message);
 
-    // Modifier to restrict functions to only be callable by the owner.
+    constructor() {
+        owner = msg.sender;
+        emit OwnerSet(owner);
+        // Commented out extra log event to check deployment:
+        // emit Log("Constructor executed");
+    }
+
     modifier restricted() {
-        require(msg.sender == owner, "This function is restricted to the contract's owner");
+        require(msg.sender == owner, "Not authorized");
         _;
     }
 
-    /**
-     * @dev Constructor sets the owner to the address that deployed the contract.
-     */
-    constructor() {
-        owner = msg.sender;
-    }
-
-    /**
-     * @dev Updates the last completed migration number.
-     *      This function can only be called by the owner.
-     * @param completed The migration number that was completed.
-     */
     function setCompleted(uint completed) public restricted {
-        lastCompletedMigration = completed;
-    }
-
-    /**
-     * @dev This function allows upgrading the Migrations contract itself,
-     *      transferring the migration state to a new contract.
-     *      It calls setCompleted on the new contract, ensuring continuity.
-     *      Only the owner can perform an upgrade.
-     * @param newAddress The address of the new Migrations contract.
-     */
-    function upgrade(address newAddress) public restricted {
-        Migrations upgraded = Migrations(newAddress);
-        upgraded.setCompleted(lastCompletedMigration);
+        last_completed_migration = completed;
     }
 }
