@@ -1,91 +1,117 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-import "@openzeppelin/contracts/access/Ownable.sol";
+pragma solidity >=0.4.22 <0.9.0;
 
 /**
  * @title Certificate Contract
- * @notice Manages digital certificates with secure activation, state control, and encrypted data handling.
+ * @notice This contract manages certificate data, state transitions, and activation processes.
  */
-contract Certificate is Ownable {
-    address public userAddress;             // Address linked to this certificate.
-    string private data;                    // Encrypted certificate data.
-    bytes32 public hash;                    // Hash of the certified document for integrity.
-    string private activeCode;             // Activation code for certificate activation.
-    uint256 public activeTimeLimit = 1 days; // Time limit for activation (default 1 day).
-    address public certificateAddress;     // Associated certificate contract address.
+contract Certificate {
+    address private owner;
+    address public userAddress;
 
+    // Certificate data encrypted with user's view code
+    string private data;
+
+    // Hash of the certified document
+    string public documentHash;
+    string public jsonHash;
+
+    // Activation details
+    string private activeCode;
+    uint256 public activeTime;
+    uint256 public disableTime;
+    uint256 public deployTime;
+
+    // Enum to represent the current state of the certificate.
     enum State { Inactive, Active, Disabled }
     State public state;
-
-    uint256 public disableTime;            // Timestamp when the certificate will auto-disable.
 
     // Events
     event CertificateActivated(address indexed user, uint256 timestamp);
     event StateUpdated(State newState, uint256 disableTime);
-    event DataUpdated(string newData);
 
     /**
-     * @notice Constructor to initialize the certificate.
-     * @param _initialOwner The contract owner.
-     * @param _activeCode The activation code for this certificate.
-     * @param _certificateAddress The address of the related certificate contract.
-     * @param _hash The hash of the certified document.
+     * @notice Modifier to restrict functions to the contract owner.
      */
-    constructor(
-        address _initialOwner,
-        string memory _activeCode,
-        address _certificateAddress,
-        bytes32 _hash
-    ) Ownable(_initialOwner) {
-        activeCode = _activeCode;
-        certificateAddress = _certificateAddress;
-        hash = _hash;
-        state = State.Inactive;
+    modifier onlyOwner() {
+        require(msg.sender == owner, "[Certificate][AddressErr]:Not the contract owner.");
+        _;
     }
 
     /**
-     * @notice Activates the certificate if within time limit and valid activation code is provided.
+     * @notice Modifier to allow only the linked user to access specific functions.
+     */
+    modifier onlyUser() {
+        require(msg.sender == userAddress, "[Certificate][AddressErr]:Not the linked user.");
+        _;
+    }
+
+    /**
+     * @notice Modifier to allow only the specific State to access specific functions.
+     */
+    function stateToString(State _state) internal pure returns (string memory) {
+        if (_state == State.Inactive) return "Inactive";
+        if (_state == State.Active) return "Active";
+        if (_state == State.Disabled) return "Disabled";
+        return "Unknown";
+    }
+
+    modifier checkState(State stateToCheck) {
+        require(state == stateToCheck, string(abi.encodePacked("[Certificate][StateErr]:Contract is ", stateToString(state), ".")));
+        _;
+    }
+
+
+
+    /**
+     * @notice Initializes the Certificate contract with an owner and activation code.
+     * @param _activeCode The activation code for the certificate.
+     * @param _documentHash The hash of the certified document.
+     * @param _jsonHash The hash of the VP(Data).
+     * @param _disableTime The time limit for the certificate to be disabled.
+     */
+    constructor(string memory _activeCode, string memory _documentHash, string memory  _jsonHash, uint256 _disableTime) {
+        owner = msg.sender;
+        activeCode = _activeCode;
+        activeTime = block.timestamp + 1 days; // Default time limit: 1 day
+        documentHash = _documentHash;
+        jsonHash = _jsonHash;
+        state = State.Inactive;
+        deployTime = block.timestamp;
+        disableTime = deployTime + (_disableTime * 1 days);
+    }
+
+    /**
+     * @notice Activates the certificate if within the activation time limit.
      * @param _userAddress The address of the user activating the certificate.
      * @param _activeCode The activation code provided by the user.
      */
-    function activateCertificate(address _userAddress, string memory _activeCode) external {
-        require(state == State.Inactive, "Certificate already active or disabled.");
-        require(block.timestamp <= activeTimeLimit, "Activation time expired.");
-        require(keccak256(abi.encodePacked(activeCode)) == keccak256(abi.encodePacked(_activeCode)), "Invalid activation code.");
-
+    function activateCertificate(address _userAddress, string memory _activeCode, string memory _data) external checkState(State.Inactive){
+        require(block.timestamp <= activeTime, "[Certificate][TimeErr]:Activation time expired.");
+        require(keccak256(abi.encodePacked(activeCode)) == keccak256(abi.encodePacked(_activeCode)), "[Certificate][CodeErr]:Invalid activation code.");
         userAddress = _userAddress;
         state = State.Active;
+        data = _data;
         emit CertificateActivated(_userAddress, block.timestamp);
     }
 
     /**
-     * @notice Updates the certificate's state.
-     * @param _newState The new state to be set (Inactive, Active, Disabled).
-     * @param _disableTime The timestamp when the certificate should auto-disable.
+     * @notice Updates the certificate's state and sets a disable time if needed.
+     * @param _newState Indicates the state of the certificate.
+     * @param _disableTime The timestamp when the certificate should be disabled .
      */
     function updateState(State _newState, uint256 _disableTime) external onlyOwner {
+        disableTime = deployTime + (_disableTime * 1 days);
         state = _newState;
-        disableTime = _disableTime;
-        emit StateUpdated(_newState, _disableTime);
     }
 
     /**
-     * @notice Retrieves the certificate data and its hash if active.
-     * @return The encrypted certificate data and document hash.
+     * @notice Retrieves the certificate data and document hash.
+     * @return The encrypted data, document hash, VPHash, state.
      */
-    function getCertificate() external view returns (string memory, bytes32) {
-        require(state == State.Active, "Certificate is not active.");
-        return (data, hash);
+    function getCertificate() external view returns (string memory, string memory, string memory, State, uint256) {
+        return (data, documentHash, jsonHash, state, disableTime);
     }
 
-    /**
-     * @notice Updates the certificate data after re-encryption with a new view code.
-     * @param _newData The new encrypted certificate data.
-     */
-    function updateData(string memory _newData) external {
-        require(msg.sender == userAddress, "Unauthorized: Only the user can update data.");
-        data = _newData;
-        emit DataUpdated(_newData);
-    }
+
 }

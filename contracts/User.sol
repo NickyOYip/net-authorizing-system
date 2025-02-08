@@ -1,74 +1,74 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-import "@openzeppelin/contracts/access/Ownable.sol";
+pragma solidity >=0.4.22 <0.9.0;
 
 /**
  * @title User Contract
- * @notice This contract represents a user profile in the decentralized identity system.
- * It stores the user's public key, an array of certified document types, and links to certificate addresses.
- * Only the contract owner (the user) can update sensitive data.
+ * @notice This contract represents a user's profile, storing certified certificates and encrypted view codes.
  */
-contract User is Ownable {
-    // User's public key for asymmetric encryption
-    string public publicKey;
+contract User {
+    address private owner;
 
-    // Array to store types or identifiers of certified documents
-    string[] public certified;
+    // Array to store addresses of certified certificates
+    address[] private certificatesList;
+    mapping(address => bool) private isInCertificatesList; // Track existence
 
-    // Address linked to the user's certificate
-    address public certificateAddress;
+    // Array to store addresses of certified certificates
+    address[] private certifiedCertificates;
+    mapping(address => bool) private isInCertifiedList; // Track existence
+
 
     /**
-     * @notice Initializes the User contract with the owner's address, public key, and certificate address.
-     * @param _initialOwner The initial owner of the contract.
-     * @param _publicKey The public key associated with the user.
-     * @param _certificateAddress The certificate address linked to this user (if any).
+     * @notice Modifier to restrict functions to the contract owner.
      */
-    constructor(
-        address _initialOwner,
-        string memory _publicKey,
-        address _certificateAddress
-    ) Ownable(_initialOwner) {
-        publicKey = _publicKey;
-        certificateAddress = _certificateAddress;
+    modifier onlyOwner() {
+        require(msg.sender == owner, "[User][AddressErr]:Not the contract owner.");
+        _;
+    }
+    
+    /**
+     * @notice Initializes the User contract and sets the contract owner.
+     */
+    constructor() {
+        owner = msg.sender;
+    }
+    /**
+     * @notice Adds a certificate to the general list.
+     * @param _certificate The address of the certificate to add.
+     * @dev Reverts if the certificate already exists.
+     */
+    function addCertificate(address _certificate) external {
+        require(!isInCertificatesList[_certificate], "[User][AddressErr]:Certificate already exists");
+        certificatesList.push(_certificate);
+        isInCertificatesList[_certificate] = true;
     }
 
     /**
-     * @notice Updates the user's public key.
-     * @dev Only the contract owner can call this function.
-     * @param _newPublicKey The new public key to be set.
+     * @notice Adds a certificate to the certified list.
+     * @param _certificate The address of the certificate to certify.
+     * @dev Reverts if the certificate is already certified.
      */
-    function updateAKey(string memory _newPublicKey) external onlyOwner {
-        publicKey = _newPublicKey;
+    function addCertifiedCertificate(address _certificate) external {
+        require(!isInCertifiedList[_certificate], "[User][AddressErr]:Certificate already exists");
+        certifiedCertificates.push(_certificate);
+        isInCertifiedList[_certificate] = true;
     }
 
     /**
-     * @notice Adds a new certified document type/identifier to the user's record.
-     * @dev Only the contract owner can add certifications.
-     * @param _certifiedDoc A string representing the certified document type.
+     * @notice Gets all stored certificates.
+     * @return certificates An array of certificate addresses.
+     * @dev Output example: ["0x123...", "0x456...", "0x789..."]
      */
-    function addCertified(string memory _certifiedDoc) external onlyOwner {
-        certified.push(_certifiedDoc);
+    function getCertificates() external view returns (address[] memory certificates) {
+        return certificatesList;
     }
 
-    /**
-     * @notice Retrieves a certified document type by index.
-     * @dev Only the contract owner can view individual certified entries.
-     * @param index The index of the certified document in the array.
-     * @return The certified document type as a string.
+    /*
+     * @notice Gets all certified certificates.
+     * @return certifiedCerts An array of certified certificate addresses.
+     * @dev Output example: ["0xabc...", "0xdef...", "0xghi..."]
      */
-    function getCertified(uint index) external view onlyOwner returns (string memory) {
-        require(index < certified.length, "Index out of bounds");
-        return certified[index];
+    function getCertifiedCertificates() external view returns (address[] memory certifiedCerts) {
+        return certifiedCertificates;
     }
 
-    /**
-     * @notice Updates the certificate address linked to the user.
-     * @dev Only the contract owner can update this field.
-     * @param _newCertificateAddress The new certificate address.
-     */
-    function updateCertificateAddress(address _newCertificateAddress) external onlyOwner {
-        certificateAddress = _newCertificateAddress;
-    }
 }
