@@ -16,6 +16,10 @@ contract Certificate {
     string public documentHash;
     string public jsonHash;
 
+    // Certificate name and organization name
+    string public certificateName;
+    string public orgName;
+
     // Activation details
     string private activeCode;
     uint256 public activeTime;
@@ -61,16 +65,23 @@ contract Certificate {
         _;
     }
 
-
-
     /**
      * @notice Initializes the Certificate contract with an owner and activation code.
      * @param _activeCode The activation code for the certificate.
      * @param _documentHash The hash of the certified document.
      * @param _jsonHash The hash of the VP(Data).
      * @param _disableTime The time limit for the certificate to be disabled.
+     * @param _certificateName The name of the certificate.
+     * @param _orgName The name of the organization issuing the certificate.
      */
-    constructor(string memory _activeCode, string memory _documentHash, string memory  _jsonHash, uint256 _disableTime) {
+    constructor(
+        string memory _activeCode,
+        string memory _documentHash,
+        string memory _jsonHash,
+        uint256 _disableTime,
+        string memory _certificateName,
+        string memory _orgName
+    ) {
         owner = msg.sender;
         activeCode = _activeCode;
         activeTime = block.timestamp + 1 days; // Default time limit: 1 day
@@ -79,6 +90,8 @@ contract Certificate {
         state = State.Inactive;
         deployTime = block.timestamp;
         disableTime = deployTime + (_disableTime * 1 days);
+        certificateName = _certificateName;
+        orgName = _orgName;
     }
 
     /**
@@ -107,11 +120,18 @@ contract Certificate {
 
     /**
      * @notice Retrieves the certificate data and document hash.
-     * @return The encrypted data, document hash, VPHash, state.
+     * @return The encrypted data, document hash, VPHash, state, disable time, certificate name, and organization name.
      */
-    function getCertificate() external view returns (string memory, string memory, string memory, State, uint256) {
-        return (data, documentHash, jsonHash, state, disableTime);
+    function getCertificate() external view returns (
+        string memory,
+        string memory,
+        string memory,
+        State,
+        uint256,
+        string memory,
+        string memory
+    ) {
+        return (data, documentHash, jsonHash, state, disableTime, certificateName, orgName);
     }
-
 
 }

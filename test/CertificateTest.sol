@@ -9,7 +9,7 @@ contract CertificateTest {
 
     function beforeEach() public {
         // Set disableTime (or active validity period) to 1 day for testing expiry
-        certificate = new Certificate("code", "docHash", "jsonHash", 1);
+        certificate = new Certificate("code", "docHash", "jsonHash", 1, "CertName", "OrgName");
     }
 
     // Test 3.1: Certificate deployment should set initial state to Inactive.
@@ -52,5 +52,24 @@ contract CertificateTest {
     function testUpdateCertificateState() public {
         certificate.updateState(Certificate.State.Disabled, 5);
         Assert.equal(uint(certificate.state()), uint(Certificate.State.Disabled), "Certificate should be in the Disabled state after update.");
+    }
+
+    // Test 3.6: Retrieve certificate details.
+    function testGetCertificate() public {
+        (
+            string memory data,
+            string memory documentHash,
+            string memory jsonHash,
+            Certificate.State state,
+            uint256 disableTime,
+            string memory certificateName,
+            string memory orgName
+        ) = certificate.getCertificate();
+
+        Assert.equal(documentHash, "docHash", "Document hash should match.");
+        Assert.equal(jsonHash, "jsonHash", "JSON hash should match.");
+        Assert.equal(uint(state), uint(Certificate.State.Inactive), "Initial state should be Inactive.");
+        Assert.equal(certificateName, "CertName", "Certificate name should match.");
+        Assert.equal(orgName, "OrgName", "Organization name should match.");
     }
 }

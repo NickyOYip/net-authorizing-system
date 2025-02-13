@@ -1,13 +1,17 @@
-import React from "react";
-import WalletConnect from "../components/WalletConnect";
+import React, { useState } from "react";
+import WalletConnect from "./components/WalletConnect";
+import Dashboard from "./components/Dashboard"; // Another component that needs the wallet address
 
-function App() {
+const App = () => {
+    const [walletAddress, setWalletAddress] = useState(null);
+
     return (
-        <div className="App">
-            <h1>Blockchain App</h1>
-            <WalletConnect />
+        <div>
+            <h1>My Blockchain App</h1>
+            <WalletConnect setWalletAddress={setWalletAddress} />
+            <Dashboard walletAddress={walletAddress} />
         </div>
     );
-}
+};
 
 export default App;
