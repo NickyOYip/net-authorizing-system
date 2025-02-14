@@ -2131,15 +2131,15 @@
     "absolutePath": "project:/contracts/Factory.sol",
     "exportedSymbols": {
       "Factory": [
-        386
+        401
       ]
     },
-    "id": 387,
+    "id": 402,
     "license": "MIT",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 311,
+        "id": 326,
         "literals": [
           "solidity",
           ">=",
@@ -2159,9 +2159,9 @@
         "contractDependencies": [],
         "contractKind": "contract",
         "fullyImplemented": true,
-        "id": 386,
+        "id": 401,
         "linearizedBaseContracts": [
-          386
+          401
         ],
         "name": "Factory",
         "nameLocation": "78:7:1",
@@ -2170,12 +2170,12 @@
           {
             "constant": false,
             "functionSelector": "f5bf1911",
-            "id": 315,
+            "id": 330,
             "mutability": "mutable",
             "name": "userToContract",
             "nameLocation": "211:14:1",
             "nodeType": "VariableDeclaration",
-            "scope": 386,
+            "scope": 401,
             "src": "176:49:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2184,9 +2184,9 @@
               "typeString": "mapping(address => address)"
             },
             "typeName": {
-              "id": 314,
+              "id": 329,
               "keyType": {
-                "id": 312,
+                "id": 327,
                 "name": "address",
                 "nodeType": "ElementaryTypeName",
                 "src": "184:7:1",
@@ -2202,7 +2202,7 @@
                 "typeString": "mapping(address => address)"
               },
               "valueType": {
-                "id": 313,
+                "id": 328,
                 "name": "address",
                 "nodeType": "ElementaryTypeName",
                 "src": "195:7:1",
@@ -2218,29 +2218,29 @@
           {
             "anonymous": false,
             "documentation": {
-              "id": 316,
+              "id": 331,
               "nodeType": "StructuredDocumentation",
               "src": "234:286:1",
               "text": " @notice Event emitted when a new user is registered.\n @param user The address of the newly registered user.\n @param contractAddress The contract address associated with the user.\n @param timestamp The timestamp when the registration took place."
             },
             "eventSelector": "05345a91f639184e946e5aac384b1e9f74ae9ab08d775a7deddb3180cebecb23",
-            "id": 324,
+            "id": 339,
             "name": "UserRegistered",
             "nameLocation": "532:14:1",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 323,
+              "id": 338,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 318,
+                  "id": 333,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "user",
                   "nameLocation": "563:4:1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 324,
+                  "scope": 339,
                   "src": "547:20:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2249,7 +2249,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 317,
+                    "id": 332,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "547:7:1",
@@ -2263,13 +2263,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 320,
+                  "id": 335,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "contractAddress",
                   "nameLocation": "577:15:1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 324,
+                  "scope": 339,
                   "src": "569:23:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2278,7 +2278,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 319,
+                    "id": 334,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "569:7:1",
@@ -2292,13 +2292,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 322,
+                  "id": 337,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "timestamp",
                   "nameLocation": "602:9:1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 324,
+                  "scope": 339,
                   "src": "594:17:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2307,7 +2307,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 321,
+                    "id": 336,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "594:7:1",
@@ -2325,7 +2325,7 @@
           },
           {
             "body": {
-              "id": 357,
+              "id": 372,
               "nodeType": "Block",
               "src": "997:420:1",
               "statements": [
@@ -2337,31 +2337,31 @@
                           "typeIdentifier": "t_address",
                           "typeString": "address"
                         },
-                        "id": 340,
+                        "id": 355,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
                         "lValueRequested": false,
                         "leftExpression": {
                           "baseExpression": {
-                            "id": 333,
+                            "id": 348,
                             "name": "userToContract",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 315,
+                            "referencedDeclaration": 330,
                             "src": "1075:14:1",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_address_$_t_address_$",
                               "typeString": "mapping(address => address)"
                             }
                           },
-                          "id": 335,
+                          "id": 350,
                           "indexExpression": {
-                            "id": 334,
+                            "id": 349,
                             "name": "userAddress",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 327,
+                            "referencedDeclaration": 342,
                             "src": "1090:11:1",
                             "typeDescriptions": {
                               "typeIdentifier": "t_address",
@@ -2385,7 +2385,7 @@
                           "arguments": [
                             {
                               "hexValue": "30",
-                              "id": 338,
+                              "id": 353,
                               "isConstant": false,
                               "isLValue": false,
                               "isPure": true,
@@ -2407,7 +2407,7 @@
                                 "typeString": "int_const 0"
                               }
                             ],
-                            "id": 337,
+                            "id": 352,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": true,
@@ -2419,14 +2419,14 @@
                               "typeString": "type(address)"
                             },
                             "typeName": {
-                              "id": 336,
+                              "id": 351,
                               "name": "address",
                               "nodeType": "ElementaryTypeName",
                               "src": "1106:7:1",
                               "typeDescriptions": {}
                             }
                           },
-                          "id": 339,
+                          "id": 354,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -2449,7 +2449,7 @@
                       },
                       {
                         "hexValue": "5573657220616c726561647920726567697374657265642e",
-                        "id": 341,
+                        "id": 356,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -2475,7 +2475,7 @@
                           "typeString": "literal_string \"User already registered.\""
                         }
                       ],
-                      "id": 332,
+                      "id": 347,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -2489,7 +2489,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 342,
+                    "id": 357,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2504,37 +2504,37 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 343,
+                  "id": 358,
                   "nodeType": "ExpressionStatement",
                   "src": "1067:78:1"
                 },
                 {
                   "expression": {
-                    "id": 348,
+                    "id": 363,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 344,
+                        "id": 359,
                         "name": "userToContract",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 315,
+                        "referencedDeclaration": 330,
                         "src": "1216:14:1",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_address_$_t_address_$",
                           "typeString": "mapping(address => address)"
                         }
                       },
-                      "id": 346,
+                      "id": 361,
                       "indexExpression": {
-                        "id": 345,
+                        "id": 360,
                         "name": "userAddress",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 327,
+                        "referencedDeclaration": 342,
                         "src": "1231:11:1",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2555,11 +2555,11 @@
                     "nodeType": "Assignment",
                     "operator": "=",
                     "rightHandSide": {
-                      "id": 347,
+                      "id": 362,
                       "name": "contractAddress",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 329,
+                      "referencedDeclaration": 344,
                       "src": "1246:15:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
@@ -2572,7 +2572,7 @@
                       "typeString": "address"
                     }
                   },
-                  "id": 349,
+                  "id": 364,
                   "nodeType": "ExpressionStatement",
                   "src": "1216:45:1"
                 },
@@ -2580,11 +2580,11 @@
                   "eventCall": {
                     "arguments": [
                       {
-                        "id": 351,
+                        "id": 366,
                         "name": "userAddress",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 327,
+                        "referencedDeclaration": 342,
                         "src": "1363:11:1",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2592,11 +2592,11 @@
                         }
                       },
                       {
-                        "id": 352,
+                        "id": 367,
                         "name": "contractAddress",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 329,
+                        "referencedDeclaration": 344,
                         "src": "1376:15:1",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2605,7 +2605,7 @@
                       },
                       {
                         "expression": {
-                          "id": 353,
+                          "id": 368,
                           "name": "block",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
@@ -2616,7 +2616,7 @@
                             "typeString": "block"
                           }
                         },
-                        "id": 354,
+                        "id": 369,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -2645,18 +2645,18 @@
                           "typeString": "uint256"
                         }
                       ],
-                      "id": 350,
+                      "id": 365,
                       "name": "UserRegistered",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 324,
+                      "referencedDeclaration": 339,
                       "src": "1348:14:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_address_$_t_uint256_$returns$__$",
                         "typeString": "function (address,address,uint256)"
                       }
                     },
-                    "id": 355,
+                    "id": 370,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2671,20 +2671,20 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 356,
+                  "id": 371,
                   "nodeType": "EmitStatement",
                   "src": "1343:66:1"
                 }
               ]
             },
             "documentation": {
-              "id": 325,
+              "id": 340,
               "nodeType": "StructuredDocumentation",
               "src": "621:304:1",
               "text": " @notice Registers a new user by associating their address with a contract address.\n @dev Anyone can call this function to add users.\n @param userAddress The address of the user to register.\n @param contractAddress The contract address to associate with the user."
             },
             "functionSelector": "52c28fab",
-            "id": 358,
+            "id": 373,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
@@ -2692,17 +2692,17 @@
             "nameLocation": "940:3:1",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 330,
+              "id": 345,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 327,
+                  "id": 342,
                   "mutability": "mutable",
                   "name": "userAddress",
                   "nameLocation": "952:11:1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 358,
+                  "scope": 373,
                   "src": "944:19:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2711,7 +2711,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 326,
+                    "id": 341,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "944:7:1",
@@ -2725,12 +2725,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 329,
+                  "id": 344,
                   "mutability": "mutable",
                   "name": "contractAddress",
                   "nameLocation": "973:15:1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 358,
+                  "scope": 373,
                   "src": "965:23:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2739,7 +2739,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 328,
+                    "id": 343,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "965:7:1",
@@ -2755,12 +2755,12 @@
               "src": "943:46:1"
             },
             "returnParameters": {
-              "id": 331,
+              "id": 346,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "997:0:1"
             },
-            "scope": 386,
+            "scope": 401,
             "src": "931:486:1",
             "stateMutability": "nonpayable",
             "virtual": false,
@@ -2768,23 +2768,23 @@
           },
           {
             "body": {
-              "id": 384,
+              "id": 399,
               "nodeType": "Block",
               "src": "1833:162:1",
               "statements": [
                 {
                   "assignments": [
-                    367
+                    382
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 367,
+                      "id": 382,
                       "mutability": "mutable",
                       "name": "contractAddr",
                       "nameLocation": "1852:12:1",
                       "nodeType": "VariableDeclaration",
-                      "scope": 384,
+                      "scope": 399,
                       "src": "1844:20:1",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -2793,7 +2793,7 @@
                         "typeString": "address"
                       },
                       "typeName": {
-                        "id": 366,
+                        "id": 381,
                         "name": "address",
                         "nodeType": "ElementaryTypeName",
                         "src": "1844:7:1",
@@ -2806,27 +2806,27 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 371,
+                  "id": 386,
                   "initialValue": {
                     "baseExpression": {
-                      "id": 368,
+                      "id": 383,
                       "name": "userToContract",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 315,
+                      "referencedDeclaration": 330,
                       "src": "1867:14:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_address_$_t_address_$",
                         "typeString": "mapping(address => address)"
                       }
                     },
-                    "id": 370,
+                    "id": 385,
                     "indexExpression": {
-                      "id": 369,
+                      "id": 384,
                       "name": "userAddress",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 361,
+                      "referencedDeclaration": 376,
                       "src": "1882:11:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
@@ -2855,17 +2855,17 @@
                           "typeIdentifier": "t_address",
                           "typeString": "address"
                         },
-                        "id": 378,
+                        "id": 393,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
                         "lValueRequested": false,
                         "leftExpression": {
-                          "id": 373,
+                          "id": 388,
                           "name": "contractAddr",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 367,
+                          "referencedDeclaration": 382,
                           "src": "1913:12:1",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
@@ -2878,7 +2878,7 @@
                           "arguments": [
                             {
                               "hexValue": "30",
-                              "id": 376,
+                              "id": 391,
                               "isConstant": false,
                               "isLValue": false,
                               "isPure": true,
@@ -2900,7 +2900,7 @@
                                 "typeString": "int_const 0"
                               }
                             ],
-                            "id": 375,
+                            "id": 390,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": true,
@@ -2912,14 +2912,14 @@
                               "typeString": "type(address)"
                             },
                             "typeName": {
-                              "id": 374,
+                              "id": 389,
                               "name": "address",
                               "nodeType": "ElementaryTypeName",
                               "src": "1929:7:1",
                               "typeDescriptions": {}
                             }
                           },
-                          "id": 377,
+                          "id": 392,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -2942,7 +2942,7 @@
                       },
                       {
                         "hexValue": "4e6f207375636820757365722e",
-                        "id": 379,
+                        "id": 394,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -2968,7 +2968,7 @@
                           "typeString": "literal_string \"No such user.\""
                         }
                       ],
-                      "id": 372,
+                      "id": 387,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -2982,7 +2982,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 380,
+                    "id": 395,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2997,38 +2997,38 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 381,
+                  "id": 396,
                   "nodeType": "ExpressionStatement",
                   "src": "1905:52:1"
                 },
                 {
                   "expression": {
-                    "id": 382,
+                    "id": 397,
                     "name": "contractAddr",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 367,
+                    "referencedDeclaration": 382,
                     "src": "1975:12:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 365,
-                  "id": 383,
+                  "functionReturnParameters": 380,
+                  "id": 398,
                   "nodeType": "Return",
                   "src": "1968:19:1"
                 }
               ]
             },
             "documentation": {
-              "id": 359,
+              "id": 374,
               "nodeType": "StructuredDocumentation",
               "src": "1425:337:1",
               "text": " @notice Retrieves the contract address associated with a specific user.\n @dev This function is publicly viewable and does not modify the blockchain state.\n @param userAddress The address of the user whose contract address is being queried.\n @return The contract address associated with the user."
             },
             "functionSelector": "51cdac6b",
-            "id": 385,
+            "id": 400,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
@@ -3036,17 +3036,17 @@
             "nameLocation": "1777:4:1",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 362,
+              "id": 377,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 361,
+                  "id": 376,
                   "mutability": "mutable",
                   "name": "userAddress",
                   "nameLocation": "1790:11:1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 385,
+                  "scope": 400,
                   "src": "1782:19:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3055,7 +3055,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 360,
+                    "id": 375,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1782:7:1",
@@ -3071,17 +3071,17 @@
               "src": "1781:21:1"
             },
             "returnParameters": {
-              "id": 365,
+              "id": 380,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 364,
+                  "id": 379,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 385,
+                  "scope": 400,
                   "src": "1824:7:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3090,7 +3090,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 363,
+                    "id": 378,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1824:7:1",
@@ -3105,14 +3105,14 @@
               ],
               "src": "1823:9:1"
             },
-            "scope": 386,
+            "scope": 401,
             "src": "1768:227:1",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "public"
           }
         ],
-        "scope": 387,
+        "scope": 402,
         "src": "69:1929:1",
         "usedErrors": []
       }
@@ -3125,7 +3125,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-02-13T16:42:36.567Z",
+  "updatedAt": "2025-02-14T10:12:07.767Z",
   "devdoc": {
     "events": {
       "UserRegistered(address,address,uint256)": {

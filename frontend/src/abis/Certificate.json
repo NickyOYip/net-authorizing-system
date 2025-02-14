@@ -68,6 +68,12 @@
         "internalType": "uint256",
         "name": "disableTime",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
       }
     ],
     "name": "StateUpdated",
@@ -261,6 +267,11 @@
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
         "internalType": "string",
         "name": "",
         "type": "string"
@@ -269,6 +280,11 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",

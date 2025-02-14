@@ -61,15 +61,19 @@ contract CertificateTest {
             string memory documentHash,
             string memory jsonHash,
             Certificate.State state,
+            uint256 deployTime,
             uint256 disableTime,
             string memory certificateName,
-            string memory orgName
+            string memory orgName,
+            address owner
         ) = certificate.getCertificate();
 
+        Assert.isAbove(deployTime, 0, "Deploy time should be greater than 0");
         Assert.equal(documentHash, "docHash", "Document hash should match.");
         Assert.equal(jsonHash, "jsonHash", "JSON hash should match.");
         Assert.equal(uint(state), uint(Certificate.State.Inactive), "Initial state should be Inactive.");
         Assert.equal(certificateName, "CertName", "Certificate name should match.");
         Assert.equal(orgName, "OrgName", "Organization name should match.");
+        Assert.equal(owner, address(this), "Owner address should match the contract creator.");
     }
 }

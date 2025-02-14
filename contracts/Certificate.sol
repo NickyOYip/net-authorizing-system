@@ -32,14 +32,14 @@ contract Certificate {
 
     // Events
     event CertificateActivated(address indexed user, uint256 timestamp);
-    event StateUpdated(State newState, uint256 disableTime);
+    event StateUpdated(State newState, uint256 disableTime, uint256 timestamp);
 
     /**
      * @notice Modifier to restrict functions to the contract owner.
      */
     modifier onlyOwner() {
         require(msg.sender == owner, "[Certificate][AddressErr]:Not the contract owner.");
-        _;
+        _; 
     }
 
     /**
@@ -47,7 +47,7 @@ contract Certificate {
      */
     modifier onlyUser() {
         require(msg.sender == userAddress, "[Certificate][AddressErr]:Not the linked user.");
-        _;
+        _; 
     }
 
     /**
@@ -62,7 +62,7 @@ contract Certificate {
 
     modifier checkState(State stateToCheck) {
         require(state == stateToCheck, string(abi.encodePacked("[Certificate][StateErr]:Contract is ", stateToString(state), ".")));
-        _;
+        _; 
     }
 
     /**
@@ -116,11 +116,12 @@ contract Certificate {
     function updateState(State _newState, uint256 _disableTime) external onlyOwner {
         disableTime = deployTime + (_disableTime * 1 days);
         state = _newState;
+        emit StateUpdated(_newState, disableTime, block.timestamp);
     }
 
     /**
-     * @notice Retrieves the certificate data and document hash.
-     * @return The encrypted data, document hash, VPHash, state, disable time, certificate name, and organization name.
+     * @notice Retrieves the certificate data along with document hash, VPHash, state, deploy time, disable time, certificate name, organization name, and owner address.
+     * @return The encrypted data, document hash, VPHash, state, deploy time, disable time, certificate name, organization name, and owner address.
      */
     function getCertificate() external view returns (
         string memory,
@@ -128,10 +129,12 @@ contract Certificate {
         string memory,
         State,
         uint256,
+        uint256,
         string memory,
-        string memory
+        string memory,
+        address
     ) {
-        return (data, documentHash, jsonHash, state, disableTime, certificateName, orgName);
+        return (data, documentHash, jsonHash, state, deployTime, disableTime, certificateName, orgName, owner);
     }
 
 }

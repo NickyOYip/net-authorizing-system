@@ -1,8 +1,9 @@
 import { ethers } from "ethers";
+import { dataStore } from "../store/dataStore";
 
 export async function connectWallet() {
     if (!window.ethereum) {
-        alert("MetaMask is not installed. Please install it to use this app./n https://metamask.io/");
+        alert("MetaMask is not installed. Please install it to use this app. https://metamask.io/");
         console.error("❌ MetaMask not found.");
         return null;
     }
