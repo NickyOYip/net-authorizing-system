@@ -3125,7 +3125,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-02-14T10:12:07.767Z",
+  "updatedAt": "2025-02-14T14:30:30.627Z",
   "devdoc": {
     "events": {
       "UserRegistered(address,address,uint256)": {

@@ -14,7 +14,7 @@ class DataStore {
         this.factoryAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // Only one factory instance
         this.chainId = 42; //chain u use
         this.registerTime = null; // Registration time
-
+        this.userAddress = null; // UserContract address
         this.init();
     }
 
@@ -25,6 +25,7 @@ class DataStore {
 
         const factoryContract = new ethers.Contract(this.factoryAddress, FactoryABI, this.provider);
         const userAddress = await factoryContract.find(this.provider.getSigner().getAddress());
+        this.userAddress = userAddress;
         const userContract = new ethers.Contract(userAddress, UserABI, this.provider);
 
         // Listen for UserRegistered event to get the registration time

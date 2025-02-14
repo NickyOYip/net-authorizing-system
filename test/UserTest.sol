@@ -11,7 +11,7 @@ contract UserTest {
 
     function beforeEach() public {
         user = new User();
-        certificate = new Certificate("code", "docHash", "jsonHash", 10);
+        certificate = new Certificate("code", "docHash", "jsonHash", 10, "CertName", "OrgName");
     }
 
     // Test 2.1: Adding a Certificate.
