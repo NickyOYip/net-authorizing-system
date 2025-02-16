@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import CertificateABI from '../abi/Certificate.json';
+import CertificateABI from '../abis/Certificate.json';
 import { History } from './historyModel';
 
 // Certificate Contract Data

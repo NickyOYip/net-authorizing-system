@@ -1,17 +1,17 @@
-import React, { useState } from "react";
-import WalletConnect from "./components/WalletConnect";
-import Dashboard from "./components/Dashboard"; // Another component that needs the wallet address
+import { useContext } from 'react';
+import { MetaMaskContext } from './MetaMaskProvider.jsx';
 
-const App = () => {
-    const [walletAddress, setWalletAddress] = useState(null);
+function App() {
+  const { connect, account, network } = useContext(MetaMaskContext);
 
-    return (
-        <div>
-            <h1>My Blockchain App</h1>
-            <WalletConnect setWalletAddress={setWalletAddress} />
-            <Dashboard walletAddress={walletAddress} />
-        </div>
-    );
-};
+  return (
+    <>
+      <h1>My React App</h1>
+      <button onClick={connect}>Connect to MetaMask</button>
+      {account && <p>Connected Account: {account}</p>}
+      {network && <p>Network: {network}</p>}
+    </>
+  );
+}
 
 export default App;
