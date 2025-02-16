@@ -1,0 +1,46 @@
+.contract-info {
+    background: #f5f5f5;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.address-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.address-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.address {
+    font-family: monospace;
+    background: #e0e0e0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.copy-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.copy-button:hover {
+    background: #0056b3;
+}
+
+.no-contract {
+    color: #666;
+    font-style: italic;
+}

@@ -12,6 +12,7 @@ const DataProvider = ({ children }) => {
   const [data, setData] = useState({
     account: null,
     network: null,
+    userContractAddress: null, // Add this line
     userProfile: new UserProfile({ owner: '', certificatesList: [], certifiedCertificates: [], history: [] }),
     factoryAddress: '0x5a2a8D8Af8F4a11faf997B2d5C9671A41F534f35',
 

@@ -43,8 +43,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -57,8 +56,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_certificate\",\"type\":\"address\"}],\"name\":\"addCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_certificate\",\"type\":\"address\"}],\"name\":\"addCertifiedCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCertificates\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"certificates\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCertifiedCertificates\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"certifiedCerts\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"addCertificate(address)\":{\"details\":\"Reverts if the certificate already exists.\",\"params\":{\"_certificate\":\"The address of the certificate to add.\"}},\"addCertifiedCertificate(address)\":{\"details\":\"Reverts if the certificate is already certified.\",\"params\":{\"_certificate\":\"The address of the certificate to certify.\"}},\"getCertificates()\":{\"details\":\"Output example: [\\\"0x123...\\\", \\\"0x456...\\\", \\\"0x789...\\\"]\",\"returns\":{\"certificates\":\"An array of certificate addresses.\"}}},\"title\":\"User Contract\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"addCertificate(address)\":{\"notice\":\"Adds a certificate to the general list.\"},\"addCertifiedCertificate(address)\":{\"notice\":\"Adds a certificate to the certified list.\"},\"constructor\":{\"notice\":\"Initializes the User contract and sets the contract owner.\"},\"getCertificates()\":{\"notice\":\"Gets all stored certificates.\"}},\"notice\":\"This contract represents a user's profile, storing certified certificates and encrypted view codes.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/User.sol\":\"User\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/User.sol\":{\"keccak256\":\"0x0a1049072e94c9c00c103ea486a3b476ae7c9907f8233789cbeb44a6dac9e981\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2d21075c435fd023129186a26e96577f91d49beba2b19a4fa16ac74e7afcbf8d\",\"dweb:/ipfs/QmPg7dDy4SybtmFdRJnyGiQKnMwEW8bnrqtQEhFGDt4Lyx\"]}},\"version\":1}",
@@ -3418,8 +3416,7 @@
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-02-16T18:51:46.780Z",
-  "networkType": "ethereum",
+  "updatedAt": "2025-02-16T21:18:10.902Z",
   "devdoc": {
     "kind": "dev",
     "methods": {
