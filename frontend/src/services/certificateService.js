@@ -166,3 +166,62 @@ export async function addCertificateToUser(provider, userContractAddress, certif
         throw error;
     }
 }
+
+/**
+ * @notice Activates a certificate using the provided code
+ * @param {object} provider - The ethers provider
+ * @param {string} certificateAddress - The address of the certificate to activate
+ * @param {string} activationCode - The activation code
+ * @param {string} userAddress - The address of the user activating the certificate
+ * @returns {Promise<void>}
+ */
+export async function activateCertificate(provider, certificateAddress, activationCode, userAddress) {
+    try {
+        console.log('Activating certificate:', {
+            certificate: certificateAddress,
+            activationCode: activationCode,
+            user: userAddress
+        });
+
+        const signer = await provider.getSigner();
+        const certificate = new ethers.Contract(
+            certificateAddress,
+            CertificateABI.abi,
+            signer
+        );
+
+        // Get additional data if needed (like current timestamp)
+        const timestamp = Math.floor(Date.now() / 1000);
+        const data = JSON.stringify({ timestamp });
+
+        // Call the activation function
+        const tx = await certificate.activateCertificate(
+            userAddress,
+            activationCode,
+            data,
+            { gasLimit: 300000 }
+        );
+
+        console.log('Activation transaction sent:', tx.hash);
+        await tx.wait();
+        console.log('Certificate activated successfully');
+
+        return true;
+    } catch (error) {
+        console.error('Activation error:', {
+            error,
+            message: error.message,
+            certificate: certificateAddress
+        });
+
+        if (error.message.includes('Invalid activation code')) {
+            throw new Error('The activation code provided is invalid');
+        } else if (error.message.includes('Activation time expired')) {
+            throw new Error('The certificate activation period has expired');
+        } else if (error.message.includes('Contract is')) {
+            throw new Error('The certificate is not in the correct state for activation');
+        }
+        
+        throw error;
+    }
+}

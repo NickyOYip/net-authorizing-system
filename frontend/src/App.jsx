@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { MetaMaskContext } from './MetaMaskProvider.jsx';
 import ContractInfo from './components/ContractInfo';
 import AddCertificate from './components/AddCertificate';
+import ActivateCertificate from './components/ActivateCertificate';
 import './styles/ContractInfo.css';
 import './styles/AddCertificate.css';
 
@@ -16,6 +17,7 @@ function App() {
             {network && <p>Network: {network}</p>}
             <ContractInfo />
             {account && <AddCertificate />}
+            {account && <ActivateCertificate />}
         </div>
     );
 }
