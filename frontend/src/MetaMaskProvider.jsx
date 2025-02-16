@@ -6,6 +6,7 @@
 import { createContext, useEffect, useContext } from 'react';
 import { ethers, BrowserProvider } from 'ethers';
 import { DataContext } from './store/dataStore.jsx'; // Corrected import path
+import { registerUser, findUserContract, findOrDeployUserContract } from './services/userService.js'; // Import functions
 
 const MetaMaskContextLocal = createContext();
 
@@ -61,8 +62,13 @@ const MetaMaskProvider = ({ children }) => {
         } else {
           updateData('network', networkInfo.name);
         }
+
+        // Find or deploy the user contract after connecting to MetaMask
+        const userContractAddress = await findOrDeployUserContract(provider, data.factoryAddress, accounts[0]);
+        updateData('userContractAddress', userContractAddress);
       } catch (error) {
         console.error("Error connecting to MetaMask", error);
+        console.error('Error during user registration:', error);
       }
     } else {
       alert('MetaMask is not installed. Please install it to use this app.');
@@ -71,8 +77,15 @@ const MetaMaskProvider = ({ children }) => {
 
   useEffect(() => {
     if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts) => {
+      window.ethereum.on('accountsChanged', async (accounts) => {
         updateData('account', accounts[0] || null);
+        if (accounts[0]) {
+          const provider = new BrowserProvider(window.ethereum);
+          const userContractAddress = await findOrDeployUserContract(provider, data.factoryAddress, accounts[0]);
+          updateData('userContractAddress', userContractAddress);
+        } else {
+          updateData('userContractAddress', null);
+        }
       });
 
       window.ethereum.on('chainChanged', async () => {

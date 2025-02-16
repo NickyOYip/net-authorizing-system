@@ -2103,14 +2103,41 @@
   },
   "networks": {
     "5777": {
-      "events": {},
+      "events": {
+        "0xcf34ef537ac33ee1ac626ca1587a0a7e8e51561e5514f8cb36afa1c5102b3bab": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "message",
+              "type": "string"
+            }
+          ],
+          "name": "Log",
+          "type": "event"
+        },
+        "0x50146d0e3c60aa1d17a70635b05494f864e86144a2201275021014fbf08bafe2": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnerSet",
+          "type": "event"
+        }
+      },
       "links": {},
-      "address": "0xD9b0BE8109842848369D998157Ff2F4955A32d04",
-      "transactionHash": "0x5e69d624f2986b73016a5a9300f445a849afcd3dbbb0a3d24fbcd4d40a007304"
+      "address": "0xEc2E2F15bcBe6b1e8592D6cFc9F71fb4bd0B08C0",
+      "transactionHash": "0xb63cf5911d4270614feb0cc4abb4a9444939760c7927ca2f862fda495944bcbc"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-02-14T15:04:03.129Z",
+  "updatedAt": "2025-02-16T18:51:47.118Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

@@ -13,7 +13,7 @@ const DataProvider = ({ children }) => {
     account: null,
     network: null,
     userProfile: new UserProfile({ owner: '', certificatesList: [], certifiedCertificates: [], history: [] }),
-    factoryAddress: '0x2383Fd72d44A967407d4231391af8C5B1c56FdDf',
+    factoryAddress: '0x5a2a8D8Af8F4a11faf997B2d5C9671A41F534f35',
 
     forcedNetwork: 'localGanache',// Change to 'ethereumMainnet' or 'arbitrumOne' or 'arbitrumRinkeby' or 'localGanache' for testing
 
