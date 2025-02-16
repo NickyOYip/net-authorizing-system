@@ -31,12 +31,21 @@ contract User {
     constructor() {
         owner = msg.sender;
     }
+
+    /**
+     * @notice Gets the contract owner address
+     * @return The address of the contract owner
+     */
+    function getOwner() external view returns (address) {
+        return owner;
+    }
+
     /**
      * @notice Adds a certificate to the general list.
      * @param _certificate The address of the certificate to add.
      * @dev Reverts if the certificate already exists.
      */
-    function addCertificate(address _certificate) external {
+    function addCertificate(address _certificate) external onlyOwner {
         require(!isInCertificatesList[_certificate], "[User][AddressErr]:Certificate already exists");
         certificatesList.push(_certificate);
         isInCertificatesList[_certificate] = true;
@@ -47,7 +56,7 @@ contract User {
      * @param _certificate The address of the certificate to certify.
      * @dev Reverts if the certificate is already certified.
      */
-    function addCertifiedCertificate(address _certificate) external {
+    function addCertifiedCertificate(address _certificate) external onlyOwner {
         require(!isInCertifiedList[_certificate], "[User][AddressErr]:Certificate already exists");
         certifiedCertificates.push(_certificate);
         isInCertifiedList[_certificate] = true;

@@ -1,9 +1,9 @@
 .contract-info {
-    background: #f5f5f5;
-    padding: 1rem;
+    max-width: 600px;
+    margin: 1rem auto;
+    padding: 1.5rem;
     border-radius: 8px;
-    margin: 1rem 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: #1a1a1a;
 }
 
 .address-container {
@@ -21,26 +21,46 @@
 
 .address {
     font-family: monospace;
-    background: #e0e0e0;
+    background: #2a2a2a;
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
 }
 
 .copy-button {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 0.25rem 0.75rem;
-    border-radius: 4px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #1a1a1a;
     cursor: pointer;
-    font-size: 0.875rem;
+    transition: border-color 0.25s;
 }
 
 .copy-button:hover {
-    background: #0056b3;
+    border-color: #646cff;
 }
 
 .no-contract {
-    color: #666;
+    color: #888;
     font-style: italic;
+}
+
+@media (prefers-color-scheme: light) {
+    .contract-info {
+        background-color: #f9f9f9;
+    }
+
+    .address {
+        background: #e5e5e5;
+    }
+
+    .copy-button {
+        background-color: #f9f9f9;
+    }
+
+    .no-contract {
+        color: #666;
+    }
 }

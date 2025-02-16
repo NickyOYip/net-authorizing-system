@@ -92,7 +92,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -105,7 +106,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -118,7 +120,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -131,7 +134,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -144,7 +148,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -157,7 +162,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -170,7 +176,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -183,7 +190,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -196,7 +204,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [
@@ -290,7 +299,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_activeCode\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_documentHash\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_jsonHash\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_disableTime\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_certificateName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_orgName\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"CertificateActivated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"enum Certificate.State\",\"name\":\"newState\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"disableTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"StateUpdated\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_userAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_activeCode\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_data\",\"type\":\"string\"}],\"name\":\"activateCertificate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"activeTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"certificateName\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"deployTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"disableTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"documentHash\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCertificate\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"internalType\":\"enum Certificate.State\",\"name\":\"\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"jsonHash\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"orgName\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state\",\"outputs\":[{\"internalType\":\"enum Certificate.State\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"enum Certificate.State\",\"name\":\"_newState\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"_disableTime\",\"type\":\"uint256\"}],\"name\":\"updateState\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"userAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"activateCertificate(address,string,string)\":{\"params\":{\"_activeCode\":\"The activation code provided by the user.\",\"_userAddress\":\"The address of the user activating the certificate.\"}},\"constructor\":{\"params\":{\"_activeCode\":\"The activation code for the certificate.\",\"_certificateName\":\"The name of the certificate.\",\"_disableTime\":\"The time limit for the certificate to be disabled.\",\"_documentHash\":\"The hash of the certified document.\",\"_jsonHash\":\"The hash of the VP(Data).\",\"_orgName\":\"The name of the organization issuing the certificate.\"}},\"getCertificate()\":{\"returns\":{\"_0\":\"The encrypted data, document hash, VPHash, state, deploy time, disable time, certificate name, organization name, and owner address.\"}},\"updateState(uint8,uint256)\":{\"params\":{\"_disableTime\":\"The timestamp when the certificate should be disabled .\",\"_newState\":\"Indicates the state of the certificate.\"}}},\"title\":\"Certificate Contract\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"activateCertificate(address,string,string)\":{\"notice\":\"Activates the certificate if within the activation time limit.\"},\"constructor\":{\"notice\":\"Initializes the Certificate contract with an owner and activation code.\"},\"getCertificate()\":{\"notice\":\"Retrieves the certificate data along with document hash, VPHash, state, deploy time, disable time, certificate name, organization name, and owner address.\"},\"updateState(uint8,uint256)\":{\"notice\":\"Updates the certificate's state and sets a disable time if needed.\"}},\"notice\":\"This contract manages certificate data, state transitions, and activation processes.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/Certificate.sol\":\"Certificate\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/Certificate.sol\":{\"keccak256\":\"0x48f8c4008ccb77bcc1b776e78ab5184305a3ffb88250f3214b832db83c0b6aa7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b29123c40daf31f95e8de0b6a95a414967df80fd69a513c8fe18f92eccde7c0f\",\"dweb:/ipfs/QmQBN1PsLaDQ9yLHMymj5os9urfr5nq4GSjd89yEsD9nvF\"]}},\"version\":1}",
@@ -16603,12 +16613,13 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x3b00f7715B33F8d87570769eF27a14e0D043a4e2",
-      "transactionHash": "0x134a108472f83905bc2ac88bbd393cfaf039465bee334b7c0112dc6fc5d3f5f3"
+      "address": "0xA161CE7Bc3bBcF27F7d887Fb136db8f08869f877",
+      "transactionHash": "0x0bd5162bca74a3ed5209f882657e64de81092850c8b74b5aadb66a126ec8a6f1"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-02-16T21:18:10.888Z",
+  "updatedAt": "2025-02-16T22:47:55.201Z",
+  "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
     "methods": {

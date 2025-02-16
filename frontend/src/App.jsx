@@ -1,22 +1,23 @@
 import { useContext } from 'react';
 import { MetaMaskContext } from './MetaMaskProvider.jsx';
 import ContractInfo from './components/ContractInfo';
+import AddCertificate from './components/AddCertificate';
 import './styles/ContractInfo.css';
+import './styles/AddCertificate.css';
 
 function App() {
-  const { connect, account, network } = useContext(MetaMaskContext);
+    const { connect, account, network } = useContext(MetaMaskContext);
 
-  return (
-    <div className="App">
-      <h1>My React App</h1>
-      {/* Button to connect to MetaMask */}
-      <button onClick={connect}>Connect to MetaMask</button>
-      {/* Display connected account and network */}
-      {account && <p>Connected Account: {account}</p>}
-      {network && <p>Network: {network}</p>}
-      <ContractInfo />
-    </div>
-  );
+    return (
+        <div className="App">
+            <h1>Certificate Management System</h1>
+            <button onClick={connect}>Connect to MetaMask</button>
+            {account && <p>Connected Account: {account}</p>}
+            {network && <p>Network: {network}</p>}
+            <ContractInfo />
+            {account && <AddCertificate />}
+        </div>
+    );
 }
 
 export default App;

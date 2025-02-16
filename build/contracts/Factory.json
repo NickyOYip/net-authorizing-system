@@ -43,7 +43,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [
@@ -80,7 +81,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"UserRegistered\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"userAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"}],\"name\":\"add\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"userAddress\",\"type\":\"address\"}],\"name\":\"find\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"userToContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"events\":{\"UserRegistered(address,address,uint256)\":{\"params\":{\"contractAddress\":\"The contract address associated with the user.\",\"timestamp\":\"The timestamp when the registration took place.\",\"user\":\"The address of the newly registered user.\"}}},\"kind\":\"dev\",\"methods\":{\"add(address,address)\":{\"details\":\"Anyone can call this function to add users.\",\"params\":{\"contractAddress\":\"The contract address to associate with the user.\",\"userAddress\":\"The address of the user to register.\"}},\"find(address)\":{\"details\":\"This function is publicly viewable and does not modify the blockchain state.\",\"params\":{\"userAddress\":\"The address of the user whose contract address is being queried.\"},\"returns\":{\"_0\":\"The contract address associated with the user.\"}}},\"version\":1},\"userdoc\":{\"events\":{\"UserRegistered(address,address,uint256)\":{\"notice\":\"Event emitted when a new user is registered.\"}},\"kind\":\"user\",\"methods\":{\"add(address,address)\":{\"notice\":\"Registers a new user by associating their address with a contract address.\"},\"find(address)\":{\"notice\":\"Retrieves the contract address associated with a specific user.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/Factory.sol\":\"Factory\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/Factory.sol\":{\"keccak256\":\"0x58f4cef86e890ba3d9a76f3e07b0b03c5f416921da819c4c94eee98f43a5201b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://14e7885774a8d21fba75c705546dd41d0b1b03bdd5c0a83163d9421542787198\",\"dweb:/ipfs/QmS4RwdnMoNqo8KWUQwAe7f78k6zFCrK5rGVaFooKN4Zs8\"]}},\"version\":1}",
@@ -3127,12 +3129,13 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x5a2a8D8Af8F4a11faf997B2d5C9671A41F534f35",
-      "transactionHash": "0x8862a8732d6dc48be52baadabba775ad9d624d0fa953089070fba52f138b6504"
+      "address": "0x8C4d5D16a71Fc61eaE1289366467f19237d47660",
+      "transactionHash": "0x2cb44ca7cf7fc829bd61bd406983779b636a2c8ee8cebc14fb8ebea5775a0c1e"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-02-16T21:18:10.896Z",
+  "updatedAt": "2025-02-16T22:47:54.644Z",
+  "networkType": "ethereum",
   "devdoc": {
     "events": {
       "UserRegistered(address,address,uint256)": {
