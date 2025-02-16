@@ -4,10 +4,10 @@
  */
 
 import { createContext, useEffect, useContext } from 'react';
-import { ethers } from 'ethers';
+import { ethers, BrowserProvider } from 'ethers';
 import { DataContext } from './store/dataStore.jsx'; // Corrected import path
 
-export const MetaMaskContext = createContext();
+const MetaMaskContextLocal = createContext();
 
 /**
  * @title MetaMaskProvider
@@ -25,14 +25,47 @@ const MetaMaskProvider = ({ children }) => {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         updateData('account', accounts[0]);
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const network = await provider.getNetwork();
-        updateData('network', network.name);
+        const provider = new BrowserProvider(window.ethereum);
+        const networkInfo = await provider.getNetwork();
+        
+        // Retrieve target chain details from the datastore
+        const targetChain = data.networkOptions[data.forcedNetwork];
+        const targetChainId = parseInt(targetChain.chainId, 16);
+        if (networkInfo.chainId !== targetChainId) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: targetChain.chainId }]
+            });
+          } catch (error) {
+            if (error.code === 4902) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: targetChain.chainId,
+                  chainName: targetChain.chainName,
+                  rpcUrls: targetChain.rpcUrls,
+                  blockExplorerUrls: targetChain.blockExplorerUrls,
+                  nativeCurrency: targetChain.nativeCurrency
+                }]
+              });
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: targetChain.chainId }]
+              });
+            } else {
+              throw error;
+            }
+          }
+          updateData('network', targetChain.chainName);
+        } else {
+          updateData('network', networkInfo.name);
+        }
       } catch (error) {
         console.error("Error connecting to MetaMask", error);
       }
     } else {
-      window.open('https://metamask.io/download.html', '_blank');
+      alert('MetaMask is not installed. Please install it to use this app.');
     }
   };
 
@@ -43,18 +76,54 @@ const MetaMaskProvider = ({ children }) => {
       });
 
       window.ethereum.on('chainChanged', async () => {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        // Use BrowserProvider instead of ethers.providers.Web3Provider
+        const provider = new BrowserProvider(window.ethereum);
         const network = await provider.getNetwork();
-        updateData('network', network.name);
+
+        // Retrieve target chain details from the datastore
+        const targetChain = data.networkOptions[data.forcedNetwork];
+        const targetChainId = parseInt(targetChain.chainId, 16);
+        if (network.chainId !== targetChainId) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: targetChain.chainId }]
+            });
+          } catch (error) {
+            if (error.code === 4902) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: targetChain.chainId,
+                  chainName: targetChain.chainName,
+                  rpcUrls: targetChain.rpcUrls,
+                  blockExplorerUrls: targetChain.blockExplorerUrls,
+                  nativeCurrency: targetChain.nativeCurrency
+                }]
+              });
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: targetChain.chainId }]
+              });
+            } else {
+              console.error('Failed to switch network', error);
+              return;
+            }
+          }
+          updateData('network', targetChain.chainName);
+        } else {
+          updateData('network', network.name);
+        }
       });
     }
-  }, [updateData]);
+  }, [updateData, data.networkOptions, data.forcedNetwork]);
 
   return (
-    <MetaMaskContext.Provider value={{ connect, account: data.account, network: data.network }}>
+    <MetaMaskContextLocal.Provider value={{ connect, account: data.account, network: data.network }}>
       {children}
-    </MetaMaskContext.Provider>
+    </MetaMaskContextLocal.Provider>
   );
 };
 
+export { MetaMaskContextLocal as MetaMaskContext };
 export default MetaMaskProvider;

@@ -7,7 +7,9 @@ function App() {
   return (
     <>
       <h1>My React App</h1>
+      {/* Button to connect to MetaMask */}
       <button onClick={connect}>Connect to MetaMask</button>
+      {/* Display connected account and network */}
       {account && <p>Connected Account: {account}</p>}
       {network && <p>Network: {network}</p>}
     </>
