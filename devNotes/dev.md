@@ -122,3 +122,5 @@ The roles of user, verifier, and certifier are conceptual and any user can perfo
 ## Conclusion
 
 This setup allows your DApp to manage user profiles, certificates, and their states using the smart contracts deployed on the blockchain, while providing a seamless user experience through the React frontend. The DApp can also listen for events emitted by the smart contracts to react to changes on the blockchain and update the UI accordingly. The conceptual roles of user, verifier, and certifier ensure a comprehensive verification platform where certificates can be deployed, activated, and validated efficiently. Any user can perform any role, and a single user can perform all three roles.
+
+Note: The global data store is reactive and automatically refreshes with any update, ensuring that the latest data is immediately available in the UI.
