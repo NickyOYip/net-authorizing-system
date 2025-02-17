@@ -90,9 +90,10 @@ export async function deployCertificate(provider, data) {
  * @param {object} provider - The ethers provider
  * @param {string} userContractAddress - The address of the user's contract
  * @param {string} certificateAddress - The address of the deployed certificate
+ * @param {function} refetchCallback - Optional callback to refetch user profile
  * @returns {Promise<void>}
  */
-export async function addCertificateToUser(provider, userContractAddress, certificateAddress) {
+export async function addCertificateToUser(provider, userContractAddress, certificateAddress, refetchCallback) {
     try {
         console.log('Adding certificate to certified list:', {
             userContract: userContractAddress,
@@ -114,6 +115,9 @@ export async function addCertificateToUser(provider, userContractAddress, certif
         console.log('Transaction sent:', tx.hash);
         await tx.wait();
         console.log('Certificate successfully added to certified list');
+        
+        // Refetch user profile after successful transaction
+        if (refetchCallback) await refetchCallback();
 
     } catch (error) {
         if (error.message.includes('Not the contract owner')) {
@@ -136,9 +140,10 @@ export async function addCertificateToUser(provider, userContractAddress, certif
  * @param {string} activationCode - The activation code
  * @param {string} userAddress - The address of the user activating the certificate
  * @param {object} signer - The ethers signer
+ * @param {function} refetchCallback - Optional callback to refetch user profile
  * @returns {Promise<boolean>} True if the activation and addition were successful
  */
-export async function activateCertificate(certificateAddress, userContractAddress, activationCode, userAddress, signer) {
+export async function activateCertificate(certificateAddress, userContractAddress, activationCode, userAddress, signer, refetchCallback) {
     try {
         console.log('Starting certificate activation process:', {
             certificateAddress,
@@ -163,6 +168,8 @@ export async function activateCertificate(certificateAddress, userContractAddres
         await tx2.wait();
         console.log('Certificate added to user contract');
 
+        // Refetch user profile after successful activation
+        if (refetchCallback) await refetchCallback();
         return true;
     } catch (error) {
         console.error('Error in activation process:', error);

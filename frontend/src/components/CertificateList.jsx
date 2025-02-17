@@ -1,10 +1,11 @@
 import React, { useEffect, useContext, useState } from 'react';
 import { DataContext } from '../store/dataStore';
-import { fetchUserProfile } from '../services/fetchData';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { ethers } from 'ethers';
 
 export const CertificateList = () => {
-  const { data, updateData } = useContext(DataContext);
+  const { data } = useContext(DataContext);
+  const { refetchUserProfile } = useUserProfile();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -16,13 +17,7 @@ export const CertificateList = () => {
       setError(null);
 
       try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const userProfile = await fetchUserProfile(
-          provider,
-          data.userContractAddress,
-          data.account
-        );
-        updateData('userProfile', userProfile);
+        await refetchUserProfile();
       } catch (err) {
         console.error('Error loading user profile:', err);
         setError('Failed to load certificates. Please try again later.');

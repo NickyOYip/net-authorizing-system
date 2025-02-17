@@ -1,13 +1,13 @@
 import { useState, useContext } from 'react';
 import { ethers } from 'ethers';
-import { MetaMaskContext } from '../MetaMaskProvider';
 import { DataContext } from '../store/dataStore';
 import { activateCertificate } from '../services/certificateService';
+import { useUserProfile } from '../hooks/useUserProfile';
 import '../styles/ActivateCertificate.css';
 
 function ActivateCertificate() {
-    const { account } = useContext(MetaMaskContext);
     const { data } = useContext(DataContext);
+    const { refetchUserProfile } = useUserProfile();
     const [formData, setFormData] = useState({
         certificateAddress: '',
         activationCode: ''
@@ -17,37 +17,29 @@ function ActivateCertificate() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Starting activation process...');
         setLoading(true);
-
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
-            
-            console.log('Activation parameters:', {
-                certificateAddress: formData.certificateAddress,
-                userContractAddress: data.userContractAddress,
-                activationCode: formData.activationCode,
-                userAddress: account
-            });
 
             await activateCertificate(
                 formData.certificateAddress,
                 data.userContractAddress,
                 formData.activationCode,
-                account,
-                signer
+                data.account,
+                signer,
+                refetchUserProfile // Pass the refetch callback
             );
 
             setResult({
                 success: true,
-                message: 'Certificate activated and added to your list successfully!'
+                message: 'Certificate activated successfully!'
             });
-        } catch (err) {
-            console.error('Activation error:', err);
+        } catch (error) {
+            console.error('Activation error:', error);
             setResult({
                 success: false,
-                error: err.message
+                error: error.message
             });
         } finally {
             setLoading(false);
@@ -67,7 +59,6 @@ function ActivateCertificate() {
                             ...prev,
                             certificateAddress: e.target.value
                         }))}
-                        placeholder="0x..."
                         required
                     />
                 </div>
@@ -81,23 +72,18 @@ function ActivateCertificate() {
                             ...prev,
                             activationCode: e.target.value
                         }))}
-                        placeholder="Enter activation code"
                         required
                     />
                 </div>
 
-                <button type="submit" disabled={loading || !data.account}>
+                <button type="submit" disabled={loading}>
                     {loading ? 'Activating...' : 'Activate Certificate'}
                 </button>
             </form>
 
             {result && (
                 <div className={`result ${result.success ? 'success' : 'error'}`}>
-                    {result.success ? (
-                        <p>{result.message}</p>
-                    ) : (
-                        <p>Error: {result.error}</p>
-                    )}
+                    {result.success ? result.message : `Error: ${result.error}`}
                 </div>
             )}
         </div>

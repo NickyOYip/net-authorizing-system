@@ -7,6 +7,7 @@ import { createContext, useEffect, useContext } from 'react';
 import { ethers, BrowserProvider } from 'ethers';
 import { DataContext } from './store/dataStore.jsx'; // Corrected import path
 import { registerUser, findUserContract, findOrDeployUserContract } from './services/userService.js'; // Import functions
+import { useUserProfile } from './hooks/useUserProfile';
 
 const MetaMaskContextLocal = createContext();
 
@@ -17,6 +18,7 @@ const MetaMaskContextLocal = createContext();
  */
 const MetaMaskProvider = ({ children }) => {
   const { data, updateData } = useContext(DataContext);
+  const { refetchUserProfile } = useUserProfile();
 
   /**
    * @notice Connects to MetaMask and updates the account and network in the data store
@@ -66,6 +68,9 @@ const MetaMaskProvider = ({ children }) => {
         // Find or deploy the user contract after connecting to MetaMask
         const userContractAddress = await findOrDeployUserContract(provider, data.factoryAddress, accounts[0]);
         updateData('userContractAddress', userContractAddress);
+        
+        // Refresh user profile data after connection
+        await refetchUserProfile();
       } catch (error) {
         console.error("Error connecting to MetaMask", error);
         console.error('Error during user registration:', error);
@@ -86,6 +91,8 @@ const MetaMaskProvider = ({ children }) => {
           const provider = new BrowserProvider(window.ethereum);
           const userContractAddress = await findOrDeployUserContract(provider, data.factoryAddress, accounts[0]);
           updateData('userContractAddress', userContractAddress);
+          // Refresh user profile data when account changes
+          await refetchUserProfile();
         } else {
           updateData('userContractAddress', null);
         }
@@ -132,7 +139,7 @@ const MetaMaskProvider = ({ children }) => {
         }
       });
     }
-  }, [updateData, data.networkOptions, data.forcedNetwork]);
+  }, [updateData, data.networkOptions, data.forcedNetwork, refetchUserProfile]);
 
   return (
     <MetaMaskContextLocal.Provider value={{ connect, account: data.account, network: data.network }}>

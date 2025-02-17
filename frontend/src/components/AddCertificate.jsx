@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../store/dataStore';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { generateActivationCode, calculateHash, deployCertificate, addCertificateToUser } from '../services/certificateService';
 
 /**
@@ -9,6 +10,7 @@ import { generateActivationCode, calculateHash, deployCertificate, addCertificat
  */
 function AddCertificate() {
     const { data } = useContext(DataContext);
+    const { refetchUserProfile } = useUserProfile();
     const [formData, setFormData] = useState({
         certificateName: '',
         orgName: '',
@@ -66,8 +68,13 @@ function AddCertificate() {
             const certificateAddress = await deployCertificate(provider, certificateData);
             console.log('Certificate deployed at:', certificateAddress);
 
-            // Add certificate to user contract
-            await addCertificateToUser(provider, data.userContractAddress, certificateAddress);
+            // Add certificate to user contract with refetch callback
+            await addCertificateToUser(
+                provider, 
+                data.userContractAddress, 
+                certificateAddress,
+                refetchUserProfile // Pass the refetch callback
+            );
             console.log('Certificate added to user contract');
 
             setResult({
