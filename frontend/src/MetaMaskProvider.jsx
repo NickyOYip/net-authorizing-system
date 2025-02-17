@@ -71,7 +71,10 @@ const MetaMaskProvider = ({ children }) => {
         console.error('Error during user registration:', error);
       }
     } else {
-      alert('MetaMask is not installed. Please install it to use this app.');
+      // Redirect to MetaMask installation page
+      const metamaskInstallUrl = 'https://metamask.io/download/';
+      window.open(metamaskInstallUrl, '_blank', 'noopener,noreferrer');
+      alert('MetaMask is not installed. A new tab has been opened where you can install MetaMask. Please refresh this page after installation.');
     }
   };
 

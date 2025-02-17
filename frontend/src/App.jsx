@@ -3,8 +3,10 @@ import { MetaMaskContext } from './MetaMaskProvider.jsx';
 import ContractInfo from './components/ContractInfo';
 import AddCertificate from './components/AddCertificate';
 import ActivateCertificate from './components/ActivateCertificate';
+import CertificateValidator from './components/CertificateValidator';
 import './styles/ContractInfo.css';
 import './styles/AddCertificate.css';
+import './styles/CertificateValidator.css';
 
 function App() {
     const { connect, account, network } = useContext(MetaMaskContext);
@@ -18,6 +20,7 @@ function App() {
             <ContractInfo />
             {account && <AddCertificate />}
             {account && <ActivateCertificate />}
+            <CertificateValidator />
         </div>
     );
 }

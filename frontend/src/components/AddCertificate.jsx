@@ -26,17 +26,13 @@ function AddCertificate() {
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const content = e.target.result;
-                const hash = await calculateHash(content);
-                setFormData(prev => ({
-                    ...prev,
-                    documentFile: file,
-                    documentHash: hash
-                }));
-            };
-            reader.readAsText(file);
+            const arrayBuffer = await file.arrayBuffer();
+            const hash = await calculateHash(arrayBuffer);
+            setFormData(prev => ({
+                ...prev,
+                documentFile: file,
+                documentHash: hash
+            }));
         }
     };
 

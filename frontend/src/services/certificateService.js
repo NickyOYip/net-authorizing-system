@@ -16,16 +16,20 @@ export function generateActivationCode() {
 }
 
 /**
- * @notice Calculates SHA-256 hash of provided content
- * @param {string} content - The content to hash
- * @returns {Promise<string>} The calculated hash in hexadecimal format
+ * @notice Calculates SHA-256 hash for a string or ArrayBuffer.
+ * @param {string|ArrayBuffer} content - The content to hash.
+ * @returns {Promise<string>} The SHA-256 hash as a hex string with a '0x' prefix.
  */
 export async function calculateHash(content) {
-    const msgBuffer = new TextEncoder().encode(content);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
+  const data = typeof content === 'string'
+    ? new TextEncoder().encode(content)
+    : content instanceof ArrayBuffer
+      ? content
+      : (() => { throw new Error('Unsupported content type for hashing'); })();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 /**
@@ -33,48 +37,6 @@ export async function calculateHash(content) {
  * @param {object} provider - The ethers provider
  * @returns {Promise<void>}
  */
-async function ensureCorrectNetwork(provider) {
-    try {
-        const network = await provider.getNetwork();
-        console.log('Current network:', network);
-
-        // Hardhat network configuration
-        const targetNetwork = {
-            chainId: "0x7A69", // 31337 in hex
-            chainName: "Hardhat Local",
-            nativeCurrency: {
-                name: "ETH",
-                symbol: "ETH",
-                decimals: 18
-            },
-            rpcUrls: ["http://127.0.0.1:8545/"],
-            blockExplorerUrls: []
-        };
-
-        if (network.chainId !== parseInt(targetNetwork.chainId, 16)) {
-            try {
-                // Try to switch to the network first
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: targetNetwork.chainId }]
-                });
-            } catch (switchError) {
-                // If the network doesn't exist, add it
-                if (switchError.code === 4902) {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [targetNetwork]
-                    });
-                } else {
-                    throw switchError;
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Network configuration error:', error);
-        throw new Error('Failed to configure network. Please ensure MetaMask is properly set up.');
-    }
-}
 
 /**
  * @notice Deploys a new certificate contract
