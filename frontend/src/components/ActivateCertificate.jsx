@@ -1,10 +1,12 @@
 import { useState, useContext } from 'react';
 import { ethers } from 'ethers';
+import { MetaMaskContext } from '../MetaMaskProvider';
 import { DataContext } from '../store/dataStore';
 import { activateCertificate } from '../services/certificateService';
 import '../styles/ActivateCertificate.css';
 
 function ActivateCertificate() {
+    const { account } = useContext(MetaMaskContext);
     const { data } = useContext(DataContext);
     const [formData, setFormData] = useState({
         certificateAddress: '',
@@ -15,24 +17,37 @@ function ActivateCertificate() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('Starting activation process...');
         setLoading(true);
+
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            
+            console.log('Activation parameters:', {
+                certificateAddress: formData.certificateAddress,
+                userContractAddress: data.userContractAddress,
+                activationCode: formData.activationCode,
+                userAddress: account
+            });
+
             await activateCertificate(
-                provider,
                 formData.certificateAddress,
+                data.userContractAddress,
                 formData.activationCode,
-                data.account // Current user's address
+                account,
+                signer
             );
+
             setResult({
                 success: true,
-                message: 'Certificate activated successfully!'
+                message: 'Certificate activated and added to your list successfully!'
             });
-        } catch (error) {
-            console.error('Activation error:', error);
+        } catch (err) {
+            console.error('Activation error:', err);
             setResult({
                 success: false,
-                error: error.message
+                error: err.message
             });
         } finally {
             setLoading(false);

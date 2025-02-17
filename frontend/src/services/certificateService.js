@@ -168,60 +168,42 @@ export async function addCertificateToUser(provider, userContractAddress, certif
 }
 
 /**
- * @notice Activates a certificate using the provided code
- * @param {object} provider - The ethers provider
+ * @notice Activates a certificate using the provided code and adds it to the user's list
  * @param {string} certificateAddress - The address of the certificate to activate
+ * @param {string} userContractAddress - The address of the user's contract
  * @param {string} activationCode - The activation code
  * @param {string} userAddress - The address of the user activating the certificate
- * @returns {Promise<void>}
+ * @param {object} signer - The ethers signer
+ * @returns {Promise<boolean>} True if the activation and addition were successful
  */
-export async function activateCertificate(provider, certificateAddress, activationCode, userAddress) {
+export async function activateCertificate(certificateAddress, userContractAddress, activationCode, userAddress, signer) {
     try {
-        console.log('Activating certificate:', {
-            certificate: certificateAddress,
-            activationCode: activationCode,
-            user: userAddress
+        console.log('Starting certificate activation process:', {
+            certificateAddress,
+            userContractAddress,
+            activationCode,
+            userAddress
         });
 
-        const signer = await provider.getSigner();
-        const certificate = new ethers.Contract(
-            certificateAddress,
-            CertificateABI.abi,
-            signer
-        );
+        // Step 1: Activate the certificate
+        const certificateContract = new ethers.Contract(certificateAddress, CertificateABI.abi, signer);
+        console.log('Calling certificate activation...');
+        const tx1 = await certificateContract.activateCertificate(userAddress, activationCode, JSON.stringify({ timestamp: Date.now() }));
+        console.log('Certificate activation tx sent:', tx1.hash);
+        await tx1.wait();
+        console.log('Certificate activation confirmed');
 
-        // Get additional data if needed (like current timestamp)
-        const timestamp = Math.floor(Date.now() / 1000);
-        const data = JSON.stringify({ timestamp });
-
-        // Call the activation function
-        const tx = await certificate.activateCertificate(
-            userAddress,
-            activationCode,
-            data,
-            { gasLimit: 300000 }
-        );
-
-        console.log('Activation transaction sent:', tx.hash);
-        await tx.wait();
-        console.log('Certificate activated successfully');
+        // Step 2: Add certificate to user's list
+        const userContract = new ethers.Contract(userContractAddress, UserABI.abi, signer);
+        console.log('Adding certificate to user contract...');
+        const tx2 = await userContract.addCertificate(certificateAddress);
+        console.log('Add to user contract tx sent:', tx2.hash);
+        await tx2.wait();
+        console.log('Certificate added to user contract');
 
         return true;
     } catch (error) {
-        console.error('Activation error:', {
-            error,
-            message: error.message,
-            certificate: certificateAddress
-        });
-
-        if (error.message.includes('Invalid activation code')) {
-            throw new Error('The activation code provided is invalid');
-        } else if (error.message.includes('Activation time expired')) {
-            throw new Error('The certificate activation period has expired');
-        } else if (error.message.includes('Contract is')) {
-            throw new Error('The certificate is not in the correct state for activation');
-        }
-        
+        console.error('Error in activation process:', error);
         throw error;
     }
 }
