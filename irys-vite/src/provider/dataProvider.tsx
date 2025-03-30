@@ -11,10 +11,17 @@ export const DataContext = createContext();
 const DataProvider = ({ children }) => {
   // Initialize the global state
   const [data, setData] = useState({
-    account: null,
-    network: null,
-    userContractAddress: null, // Add this line
+
+    //wallet instance
+    ethProvider: null, // ethers.BrowserProvider instance
+    irysUploader: null, // Irys uploader instance
+    
+
+    //fetch by contract
+    userContractAddress: null, 
     userProfile: new UserProfile({ owner: '', certificatesList: [], certifiedCertificates: [], history: [] }),
+
+    //network setting
     factoryAddress: '0x8C4d5D16a71Fc61eaE1289366467f19237d47660',
 
     forcedNetwork: 'localGanache',// Change to 'ethereumMainnet' or 'sepolia' or 'localGanache' for testing
