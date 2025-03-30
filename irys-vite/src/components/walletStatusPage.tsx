@@ -10,9 +10,7 @@ function walletStatusPage() {
     <div>
       <button onClick={connectWallet}>Connect Wallet</button>
       <p>ETHwalletStatus:{walletStatus}</p>
-      <p>Adress:{}</p>
       <p>irysStatus:{irysStatus}</p>
-      <p>Adress:{}</p>
     </div>
   );
 }

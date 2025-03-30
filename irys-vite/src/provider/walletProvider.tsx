@@ -25,15 +25,16 @@ function WalletProvider({children}) {
     try {
       // connect to wallet
       const provider = new ethers.BrowserProvider(window.ethereum);
+      const network = await provider.getNetwork();
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
-      setWalletStatus(`Connected: ${address}`);
+      setWalletStatus(`Connected: ${address}, Network: ${network.name}`);
       // update context with provider 
       updateData({ ethProvider: provider });
       console.log("ETH provider updated in context:", provider);
       // connect to Irys
-      const irysUploader = await WebUploader(WebEthereum).withAdapter(EthersV6Adapter(provider));
+      const irysUploader = await WebUploader(WebEthereum).withAdapter(EthersV6Adapter(provider)).withRpc("https://testnet-explorer.irys.xyz/").devnet();
       setIrysStatus(`Connected to Irys: ${irysUploader.address}`);
       // update context with Irys uploader
       updateData({ irysUploader: irysUploader });

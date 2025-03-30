@@ -1,4 +1,5 @@
 import { walletStatusPage as WalletStatusPage } from "./components/walletStatusPage";
+import { TestIrysActionPage } from "./components/testIrysActionPage";
 
 
 function App() {
@@ -7,6 +8,7 @@ function App() {
     <div>
       <h1>IRYS Vite</h1>
       <WalletStatusPage />
+      <TestIrysActionPage />
     </div>
   );
 }
