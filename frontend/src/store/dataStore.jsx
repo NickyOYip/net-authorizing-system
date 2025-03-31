@@ -66,6 +66,7 @@ const DataProvider = ({ children }) => {
     },
     
     // Add other global state variables here
+    
   });
 
   /**

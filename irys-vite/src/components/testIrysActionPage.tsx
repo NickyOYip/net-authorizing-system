@@ -42,7 +42,9 @@ function TestIrysActionPage() {
       setResultMessage("Please select a file");
       return;
     }
-    
+    const file = files[0];
+    const fileSizeMB = file.size / (1024 * 1024);
+    console.log(`File size: ${fileSizeMB.toFixed(2)} MB`);
     try {
       setResultMessage("Uploading...");
       const receipt = await IrysActions.uploadData(data.irysUploader, files[0]);
