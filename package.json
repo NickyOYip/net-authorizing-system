@@ -1,42 +1,40 @@
 {
-  "name": "net-authorizing-system",
-  "version": "1.0.0",
-  "description": "",
-  "main": "truffle-config.js",
-  "directories": {
-    "test": "test"
+  "name": "material-dashboard-clone",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^13.5.0",
+    "bootstrap": "^5.3.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-scripts": "^3.0.1",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/NickyOYip/net-authorizing-system.git"
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/NickyOYip/net-authorizing-system/issues"
-  },
-  "homepage": "https://github.com/NickyOYip/net-authorizing-system#readme",
-  "dependencies": {
-    "@irys/upload": "^0.0.15",
-    "@irys/upload-ethereum": "^0.0.16",
-    "@irys/web-upload": "^0.0.15",
-    "@irys/web-upload-ethereum": "^0.0.16",
-    "@irys/web-upload-ethereum-ethers-v6": "^0.0.16",
-    "axios": "^1.8.4",
-    "ethers": "^6.13.5",
-    "express": "^4.21.2",
-    "react": "^19.0.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "crypto-browserify": "^3.12.1",
-    "os-browserify": "^0.3.0",
-    "path-browserify": "^1.0.1",
-    "stream-browserify": "^3.0.0",
-    "vite-plugin-node-polyfills": "^0.23.0"
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

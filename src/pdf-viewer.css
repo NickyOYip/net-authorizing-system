@@ -1,0 +1,25 @@
+.pdf-viewer-page {
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  padding: 3rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+}
+
+.viewer-container {
+  max-width: 900px;
+  width: 100%;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.loading-message,
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  color: #777;
+  font-style: italic;
+}
