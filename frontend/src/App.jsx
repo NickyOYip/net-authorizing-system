@@ -8,22 +8,65 @@ import CertificateList from './components/CertificateList';
 import './styles/ContractInfo.css';
 import './styles/AddCertificate.css';
 import './styles/CertificateValidator.css';
+import React from "react";
+
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+//import DocumentManagement from './jsx/DocumentManagement';
+import Certify from './components/Certify';
+import Update from './components/Update';
+import Create from './components/Create';
+import View from './components/View';
+import Verify from './components/Verify';
+import Dashboard from './components/Dashboard';
+import Activate from './components/Activate';
+import Profile from './components/Profile';
+import DocumentManagement from './components/DocumentManagement.jsx';
+import "./styles/material-dashboard.css";
+import "./styles/material-dashboard.min.css";
+import "./styles/nucleo-icons.css";
+import "./styles/nucleo-svg.css";
 
 function App() {
     const { connect, account, network } = useContext(MetaMaskContext);
 
     return (
-        <div className="App">
-            <h1>Certificate Management System</h1>
-            <button onClick={connect}>Connect to MetaMask</button>
-            {account && <p>Connected Account: {account}</p>}
-            {network && <p>Network: {network}</p>}
-            <ContractInfo />
-            {account && <AddCertificate />}
-            {account && <ActivateCertificate />}
-            {account && <CertificateList />}
-            <CertificateValidator />
+        <div className="App" style={{ backgroundColor: "whitesmoke", height: "200vh" }}>
+
+            {/** <div style={{padding:"30px", display: "flex"}}>
+                <h1 style={{paddingLeft:"60px", paddingTop:"0px"}}>Certificate Management System</h1>
+                <button onClick={connect} style={{marginLeft:"60px",borderRadius:"10px"}}>Connect to MetaMask</button>
+            </div>
+            */}
+
+            <BrowserRouter>
+
+                {!account ? (
+                    <div style={{ padding: "30px", display: "flex",width:"100vw"}}>
+                        <h1 style={{ paddingLeft: "60px", paddingTop: "0px" }}>Certificate Management System</h1>
+                        <button onClick={connect} style={{ marginLeft: "60px", borderRadius: "10px" }}>Connect to MetaMask</button>
+                    </div>
+                ) : (
+                    <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/upload" element={<Create />} />
+                        <Route path="/documentManagement" element={<DocumentManagement />}/>
+                        <Route path="/view" element={<View />} />
+                        <Route path="/Upload" element={<Update />} />
+                        <Route path="/certify" element={<Certify />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/activate" element={<Activate />} />
+                        <Route path="/verify" element={<Verify />} />
+                    </Routes>
+                )}
+
+            </BrowserRouter>
+
+
+
+
+
         </div>
+
     );
 }
 
