@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from "../Sidebar_shison";
+import Sidebar from "./Sidebar";
 const Activate = () => {
     const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
