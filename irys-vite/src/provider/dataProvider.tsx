@@ -15,53 +15,22 @@ const DataProvider = ({ children }) => {
     //wallet instance
     ethProvider: null, // ethers.BrowserProvider instance
     irysUploader: null, // Irys uploader instance
-    
-
-    //fetch by contract
-    userContractAddress: null, 
-    userProfile: new UserProfile({ owner: '', certificatesList: [], certifiedCertificates: [], history: [] }),
 
     //network setting
-    factoryAddress: '0x8C4d5D16a71Fc61eaE1289366467f19237d47660',
-
-    forcedNetwork: 'localGanache',// Change to 'ethereumMainnet' or 'sepolia' or 'localGanache' for testing
-
-    networkOptions: {
-      ethereumMainnet: {
-        chainId: '0x1', // 1 in hexadecimal
-        chainName: 'Ethereum Mainnet',
-        nativeCurrency: {
-          name: 'Ether',
-          symbol: 'ETH',
-          decimals: 18,
-        },
-        rpcUrls: ['https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'], // Replace with your Infura Project ID
-        blockExplorerUrls: ['https://etherscan.io'],
-      },
-      sepolia: {
-        chainId: '0x10F3F', // 11155111 in hexadecimal
-        chainName: 'Sepolia Testnet',
-        nativeCurrency: {
-          name: 'Ether',
-          symbol: 'ETH',
-          decimals: 18,
-        },
-        rpcUrls: ['https://eth-sepolia.g.alchemy.com/v2/demo'],
-        blockExplorerUrls: ['https://sepolia.etherscan.io'],
-      },      
-      localGanache: {
-        chainId: '0x539', // 1337 in hexadecimal
-        chainName: 'Local Ganache',
-        nativeCurrency: {
-          name: 'Ether',
-          symbol: 'ETH',
-          decimals: 18,
-        },
-        rpcUrls: ['http://127.0.0.1:7545'],
-        blockExplorerUrls: [], // Typically, no block explorer for local development
-      },
+    masterFactoryAddress: '0x562531026275B63cd926ee558c6613A61Cda6aFa',
+    broadcastFactory:{// ftech from master factory
+      version: null,
+      address: null,
     },
-    
+    publicFactory:{
+      version: null,
+      address: null,
+    },
+    privateFactory:{
+      version: null,
+      address: null,
+    },
+
     // Add other global state variables here
   });
 

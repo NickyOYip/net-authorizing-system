@@ -6,6 +6,9 @@ const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "";
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
 
+// Remove 0x prefix if present and ensure it's a string
+const cleanPrivateKey = PRIVATE_KEY.startsWith('0x') ? PRIVATE_KEY.slice(2) : PRIVATE_KEY;
+
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
@@ -31,7 +34,7 @@ module.exports = {
     },
     sepolia: {
       url: SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
-      accounts: PRIVATE_KEY ? [`0x${PRIVATE_KEY}`] : [],
+      accounts: cleanPrivateKey ? [`0x${cleanPrivateKey}`] : [],
       chainId: 11155111,
     },
   },
