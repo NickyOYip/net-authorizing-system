@@ -14,7 +14,7 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
-import Sidebar from "../Sidebar_shison";
+import Sidebar from "./Sidebar";
 import React, { useEffect, useContext, useState } from 'react';
 import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
@@ -58,7 +58,7 @@ const Profile = () => {
     <div className="g-sidenav-show bg-gray-100">
       <Sidebar />
       {/* Main Content */}
-      <div className="main-content position-relative max-height-vh-100 h-100" style={{ marginLeft: '50px', maxHeight: "100vh", height: "100", position: "relative" }}>
+      <div className="main-content position-relative max-height-vh-100 h-100" style={{ marginLeft: '50px', maxHeight: "100vh", height: "100", width :"98vw" ,position: "relative" }}>
         {/* Navbar */}
         <nav className="navbar navbar-main navbar-expand-lg px-0 mx-3 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
           <div className="container-fluid py-1 px-3">

@@ -1,24 +1,33 @@
 import React, { useState, useContext } from 'react';
-import Sidebar from "../Sidebar_shison";
+import Sidebar from "./Sidebar";
 import { data } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { generateActivationCode, calculateHash, deployCertificate, addCertificateToUser } from '../services/certificateService';
-
-function Update() {
-
+import CreateCert from './Create';
+function Update(type) {
+    const certType = type.type;
     const { data } = useContext(DataContext);
     const { refetchUserProfile } = useUserProfile();
     const [formData, setFormData] = useState({
-        certificateName: '',
-        orgName: '',
-        data: '',
-        documentFile: null,
-        disableTime: 30, // Default 30 days
+        certificateTitle: '',
+        startDate: '',
+        endDate: '',
+        jsonFile: null,
+        documentFile: null
     });
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+
+    const handleDateChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+          ...prev,
+          [name]: type === 'checkbox' ? checked : value
+        }));
+      };
+    
 
     /**
      * @notice Handles file input changes and calculates document hash
@@ -50,7 +59,7 @@ function Update() {
             const activeCode = generateActivationCode();
             console.log('Generated activation code:', activeCode);
 
-            const jsonHash = await calculateHash(formData.data);
+            const jsonHash = await calculateHash(formData.jsonFile);
             console.log('Calculated JSON hash:', jsonHash);
 
             const certificateData = {
@@ -59,6 +68,7 @@ function Update() {
                 jsonHash,
                 owner: data.account
             };
+
             console.log('Prepared certificate data:', certificateData);
 
             const provider = new ethers.BrowserProvider(window.ethereum);
@@ -102,9 +112,7 @@ function Update() {
     };
 
     return (
-        <div>
-            {/* Sidebar */}
-            <Sidebar />
+        <div style={{ width: "100%", }}>
             <div
                 className="container"
                 style={{
@@ -112,15 +120,14 @@ function Update() {
                     flexDirection: 'column',
                     alignItems: 'left',  // Center content horizontally
                     justifyContent: 'left', // Center content vertically
-                    height: '100vh', // Full viewport height
+                    height: 'fit-content', // Full viewport height
                     textAlign: 'left', // Ensure text is centered
                 }}
             >
-                <div className='card' style={{ padding: '30px', marginTop: '50px', borderRadius: '20px' }}>
-                    <h1>Upload/Update Document</h1>
+                <div style={{ padding: '30px', marginTop: '5px', borderRadius: '20px' }}>
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label style={{ fontSize: '20px' }}>Certificate Name</label>
+                            <label style={{ fontSize: '20px' }}>{certType} Certificate Title</label>
                             <input
                                 type="text"
                                 value={formData.certificateName}
@@ -131,43 +138,33 @@ function Update() {
                                 required
                             />
                         </div>
+
                         <div className="form-group">
-                            <label style={{ fontSize: '20px' }}>Organization Name</label>
+                            <label htmlFor="date" style={{ fontSize: '20px' }}>{certType} Select Start Date:</label>
                             <input
-                                type="text"
-                                value={formData.orgName}
-                                onChange={e => setFormData(prev => ({
-                                    ...prev,
-                                    orgName: e.target.value
-                                }))}
-                                required
-                            />
-                        </div>
-
-
-                        {/* <label style={{ fontSize: '20px', paddingRight: '30px' }}>
-                            This is an
-                            <select style={{ fontSize: '15px', marginLeft: '20px' }} name="action" value={formData.action} onChange={handleInputChange}>
-                                <option>Update</option>
-                                <option>Upload</option>
-                            </select>
-                        </label><br />*/}
-
-                        <div className="form-group">
-                            <label style={{ fontSize: '20px' }}>Certificate Data</label>
-                            <textarea
-                                value={formData.data}
-                                onChange={e => setFormData(prev => ({
-                                    ...prev,
-                                    data: e.target.value
-                                }))}
-                                placeholder="Enter certificate data here..."
+                                type="date"
+                                id="startDate"
+                                name="startDate"
+                                value={formData.date}
+                                onChange={handleDateChange}
                                 required
                             />
                         </div>
 
                         <div className="form-group">
-                            <label style={{ fontSize: '20px' }}>Document File</label>
+                            <label htmlFor="date" style={{ fontSize: '20px' }}>{certType} Select End Date:</label>
+                            <input
+                                type="date"
+                                id="endDate"
+                                name="endDate"
+                                value={formData.date}
+                                onChange={handleDateChange}
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label style={{ fontSize: '20px' }}>{certType} Certificate JSON File</label>
                             <input
                                 type="file"
                                 onChange={handleFileChange}
@@ -176,15 +173,10 @@ function Update() {
                         </div>
 
                         <div className="form-group">
-                            <label>Disable Time (days)</label>
+                            <label style={{ fontSize: '20px' }}>{certType} Certificate File</label>
                             <input
-                                type="number"
-                                value={formData.disableTime}
-                                onChange={e => setFormData(prev => ({
-                                    ...prev,
-                                    disableTime: e.target.value
-                                }))}
-                                min="1"
+                                type="file"
+                                onChange={handleFileChange}
                                 required
                             />
                         </div>
@@ -194,7 +186,6 @@ function Update() {
                         </button>
 
                     </form>
-                    {/*JSON of this page's input*/}
 
                     {result && (
                         <div className={`result ${result.success ? 'success' : 'error'}`}>

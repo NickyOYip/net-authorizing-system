@@ -1,76 +1,177 @@
-import Sidebar from "../Sidebar_shison";
+import Sidebar from "./Sidebar";
 import React, { useEffect, useContext, useState } from 'react';
 import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { ethers } from 'ethers'; 
+import { ethers } from 'ethers';
+import PropTypes from 'prop-types';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import SaveIcon from '@mui/icons-material/Save';
+import { MyCert } from "./MyCert";
 
+const Docs = () => {
+    const [value, setValue] = React.useState(0);
+    const { data } = useContext(DataContext);
+    const { refetchUserProfile } = useUserProfile();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-const DocumentManagement = () => {
+    useEffect(() => {
+        const loadUserProfile = async () => {
+            if (!data.account || !data.userContractAddress) return;
 
-    const [certificates, setCertificates] = useState([
-        { id: 1, name: "Sample Certificate 1", version: "v1.0", status: "✅ Certified", uploadDate: "2024-01-01" },
-        { id: 2, name: "Sample Certificate 2", version: "v2.1", status: "⏳ Pending", uploadDate: "2024-02-01" },
-    ]);
+            setLoading(true);
+            setError(null);
 
-    const [newCertificate, setNewCertificate] = useState({ name: "", version: "", status: "⏳ Pending" });
+            try {
+                await refetchUserProfile();
+            } catch (err) {
+                console.error('Error loading user profile:', err);
+                setError('Failed to load certificates. Please try again later.');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setNewCertificate({ ...newCertificate, [name]: value });
+        loadUserProfile();
+    }, [data.account, data.userContractAddress]);
+
+    function CustomTabPanel(props) {
+        const { children, value, index, ...other } = props;
+        if (!loading) {
+            return (
+                <div
+                    role="tabpanel"
+                    hidden={value !== index}
+                    id={`simple-tabpanel-${index}`}
+                    aria-labelledby={`simple-tab-${index}`}
+                    {...other}
+                >
+                    {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+                </div>
+            );
+        }
+        else {
+            return (
+                <div
+                    role="tabpanel"
+                    hidden={value !== index}
+                    id={`simple-tabpanel-${index}`}
+                    aria-labelledby={`simple-tab-${index}`}
+                    {...other}
+                >
+                    {value === index &&
+                        <Box sx={{ p: 3 }}>
+                            <row>
+                                <Button
+                                    fullwidth
+                                    loading
+                                    loadingPosition="end"
+                                    endIcon={<SaveIcon />}
+                                    variant="outlined"
+                                    style={{ color: "black" }}
+                                >
+                                    Loading
+                                </Button>
+
+                            </row>
+                        </Box>}
+                </div>
+            )
+        }
+
+    }
+
+    CustomTabPanel.propTypes = {
+        children: PropTypes.node,
+        index: PropTypes.number.isRequired,
+        value: PropTypes.number.isRequired,
     };
 
-    const toView = () => {
-        window.location.href = "/view";
-      };
-      const toUpload= () => {
-        window.location.href = "/upload";
-      };
+    function a11yProps(index) {
+        return {
+            id: `simple-tab-${index}`,
+            'aria-controls': `simple-tabpanel-${index}`,
+        };
+    }
+
+
+
+    //handles change of tab
+    const handleChange = (event, newValue) => {
+        setValue(newValue);
+    };
 
     return (
-        <div>
-            <Sidebar />
+        <>
+            <Sidebar></Sidebar>
+            <main className="main-content position-relative max-height-vh-100 h-100 border-radius-lg " style={{ marginLeft: "30px", width: "98vw" }}>
+                <div className="container-fluid py-1 px-3">
+                    <div className="container-fluid py-2">
+                        <div className="row">
+                            <div className="col-12">
+                                <div style={{ alignItems: "center", justifyItems: "center" }}>
+                                    <h1 style={{ padding: "20px" }}>Document Management</h1>
+                                </div>
+                                <div className="card" style={{ alignItems: "center" }}>
+                                    <Box sx={{ width: "85%", }}>
+                                        <Box sx={{ padding: 2, borderBottom: 1, borderColor: 'divider', width: "100%", justifyItems: "left" }}>
+                                            <Tabs className="border-radius-lg"
+                                                value={value} onChange={handleChange}
+                                                sx={{ width: "100%", justifyItems: "center" }}
+                                                variant="scrollable" 
+                                                scrollButtons="auto"
+                                            >
+                                                <Tab 
+                                                    sx={{ width: "20%", color: "black",fontSize:"20px"}} label="Active" {...a11yProps(0)} />
 
-            <div className="container" style={{ textAlign: 'center', padding: '20px' }}>
-                <h1>Document Management</h1>
+                                                <Tab 
+                                                    sx={{ width: "20%", color: "black",fontSize:"20px"}} label="Broadcast" {...a11yProps(1)} />
 
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-                    <thead>
-                        <tr>
-                            <th>Certificate Name</th>
-                            <th>Version</th>
-                            <th>Status</th>
-                            <th>Upload Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {certificates.map(cert => (
-                            <tr key={cert.id}>
-                                <td>{cert.name}</td>
-                                <td>{cert.version}</td>
-                                <td>{cert.status}</td>
-                                <td>{cert.uploadDate}</td>
-                                <td>
-                                    <button className="button blue-button" onClick={toView}>View</button>
-                                    <button className="button gray-button" onClick={toUpload}>Update</button>
-                                    {/*<button className="button red-button" onClick={() => disableCertificate(cert.id)}>Delete</button>*/}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                                <Tab 
+                                                   sx={{ width: "20%", color: "black",fontSize:"20px"}} label="Public" {...a11yProps(2)} />
 
-                <div className="upload-section" style={{ marginTop: '20px', padding: '15px', background: '#f9f9f9', borderRadius: '5px' }}>
-                    <h3>Add New Certificate</h3>
-                    <row style={{justifyContent:"space-between", padding:"10px"}}>
-                        <input type="text" name="name" placeholder="Certificate Name" value={newCertificate.name} onChange={handleInputChange} style={{margin:"10px"}}/>
-                        <input type="text" name="version" placeholder="Version" value={newCertificate.version} onChange={handleInputChange} style={{margin:"10px"}}/>
-                    </row>
-                    {/*<button className="button green-button" onClick={addCertificate}>Add Certificate</button>*/}
+                                                <Tab
+                                                    sx={{ width: "20%", color: "black",fontSize:"20px"}} label="Private" {...a11yProps(3)} />
+
+                                                <Tab 
+                                                    sx={{ width: "20%", color: "black",fontSize:"20px"}} label="Inactive" {...a11yProps(4)} />
+
+
+                                            </Tabs>
+                                        </Box>
+
+                                        <CustomTabPanel value={value} index={4}>
+                                            {MyCert('Inactive')}
+                                        </CustomTabPanel>
+
+                                        <CustomTabPanel value={value} index={1}>
+                                            {MyCert('Active')}
+                                        </CustomTabPanel>
+
+                                        <CustomTabPanel value={value} index={2}>
+                                            {MyCert('Active')}
+                                        </CustomTabPanel>
+
+                                        <CustomTabPanel value={value} index={3}>
+                                            {MyCert('Active')}
+                                        </CustomTabPanel>
+
+                                        <CustomTabPanel value={value} index={0}>
+                                            {MyCert('All')}
+                                        </CustomTabPanel>
+
+                                    </Box>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
                 </div>
-            </div>
-        </div>
-    );
-};
-
-export default DocumentManagement;
+            </main>
+        </>)
+}
+export default Docs;
