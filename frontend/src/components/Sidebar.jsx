@@ -2,7 +2,6 @@ import { width } from "@mui/system";
 import React, { useState } from "react";
 import { BiAlignJustify } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
-import NetworkSwitcher from "./NetworkSwitcher";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
