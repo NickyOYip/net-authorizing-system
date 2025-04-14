@@ -4,55 +4,24 @@ import { IoSearchOutline } from "react-icons/io5";
 import Sidebar from "./Sidebar";
 import PdfViewer from './PdfViewer';
 import { pdfjs } from 'react-pdf'
+//import Record from './Record';
 
 function Verify() {
     const location = useLocation();
     const address = location.state || {};
-    const [loading,setLoading]= useState(false);
+    const [loading, setLoading] = useState(false);
+    var type = null;
 
-    const [formData,setFormData] = useState({
+    const [formData, setFormData] = useState({
         jsonFile: null,
         documentFile: null,
     });
 
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-        "pdfjs-dist/build/pdf.worker.min.js",
-        import.meta.url
-    ).toString();
+    if (address.address) {
+        type = address.address.contractAddress;
+        console.log(type);
+    };
 
-    //show record for broadcast/public contracts
-    const Record = () => {
-
-        return (
-            //address type === broadcast/public
-            <div className="col-lg-12">
-                <div className="card" style={{ width: '450px', height: '560px', padding: '30px' }}>
-                    <div className='row' style={{ diaplay: 'flex' }}>
-                        <label>Document Title:</label>
-                        <p>cert.title</p>
-                        <br />
-                        <label>Version:</label>
-                        <p>cert.version</p>
-                        <br />
-                        <label>Type:</label>
-                        <p>Broadcast</p>{/** should be the type of contract */}
-                        <br />
-                        <label>Status:</label>
-                        <p>cert.status</p>{/**Active or Inactive */}
-                        <br />
-                        <label>Content:</label>
-                    </div>
-                    <div className='card'>
-                        {/**pdf file*/}
-                        <p>
-
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-        );
-    }
 
     const handleJsonChange = async (e) => {
         const file = e.target.files[0];
@@ -84,7 +53,7 @@ function Verify() {
         e.preventDefault();
         setLoading(true);
 
-        try{
+        try {
             const documentHash = await calculateHash(formData.documentHash);
             console.log('Calculated Document hash:', documentHash);
 
@@ -97,7 +66,7 @@ function Verify() {
                 activeCode
             });
 
-        }catch (error) {
+        } catch (error) {
             console.error('Detailed error in handleSubmit:', {
                 error,
                 errorMessage: error.message,
@@ -119,18 +88,18 @@ function Verify() {
     return (
         <div style={{ width: "100vw", paddingLeft: "60px", paddingTop: "60px" }}>
             <Sidebar />
-            <div className="row" style={{ display: 'flex' }}>
-                <div className="col-lg-6" style={{ width: '50%', height: '300px', marginTrim: 'all' }}>
-                    <div className="card" style={{ width: '95%', height: '560px', padding: '30px' }}>
-                        {address == 'private' && (
-                            <div>
-                                <h2>This contract is private!</h2>
-                                <p>Please provide us with the JSON file and the contract file of the contract.</p>
+            <div className="row" style={{ display: 'flex', justifyContent: "center" }}>
+                <div className="col-lg-12" style={{ width: '80vw', height: '80vh', marginTrim: 'all', justifyContent: "center" }}>
+                    <h1 style={{ textAlign: "center", padding: "10px" }}>Verify Contract</h1>
+                    {type == 'private' && (
+                        <div style={{ justifyContent: "center" }}>
+                            <h2>This contract is private!</h2>
+                            <p>Please provide us with the JSON file and the contract file of the contract.</p>
                             <div claddName="form">
-                                 <div className="form-group">
-                                 <label>Please input your contract address here</label>
+                                <div className="form-group">
+                                    <label>Please input your contract address here</label>
 
-                                 </div>
+                                </div>
                                 <div className="form-group">
                                     <label>Please upload your JSON file here</label>
                                     <br />
@@ -159,16 +128,15 @@ function Verify() {
                                     }}>Verify</button>
                                 </div>
                             </div>
-                            </div>
-                        )}
-                        {!(address == 'private') &&(
-                            <Record/>
-                        )}
-                    </div>
+                        </div>
+                    )}
+                    {!(address == 'private') && (
+                        <Record />
+                    )}
+
                 </div>
-                <div className='card col-lg-6'>
-                    <PdfViewer></PdfViewer>
-                </div>
+
+
                 {/*Here for the input*/}
                 { /*<Record cert={data} />*/}
 

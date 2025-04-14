@@ -5,7 +5,7 @@ import Tooltip from '@mui/material/Tooltip';
 
 
 export const VerifyCard = () => {
-    const [address, setAddress] = useState(" ");
+    const [contractAddress, setAddress] = useState(" ");
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -13,7 +13,11 @@ export const VerifyCard = () => {
     }
 
     const handleSubmit = () => {
-        console.log('Input value:', address);
+        navigate('/verify', { 
+            state: { 
+              address:{contractAddress},
+            } }
+        )
         
     }
 
@@ -40,7 +44,7 @@ export const VerifyCard = () => {
                                 <input
                                     id="input"
                                     type="text"
-                                    value={address}
+                                    value={contractAddress}
                                     onChange={handleChange}
                                      />
                             </Tooltip>
