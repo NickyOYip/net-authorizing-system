@@ -11,7 +11,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 function PdfViewer() {
     const [numPages, setNumPages] = useState();
     const [pageNum, setPageNum] = useState(1);
-    const [pdfUrl, setPdfUrl] = useState('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf');
+    const [pdfUrl, setPdfUrl] = useState("https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf");
     const [pdfError, setPdfError] = useState();
 
     function onDocumentLoadSuccess({ numPages }) {

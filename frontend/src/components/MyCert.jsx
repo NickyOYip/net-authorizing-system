@@ -1,15 +1,22 @@
 import React, { useEffect, useContext, useState } from 'react';
 import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
-import View from './View';
-
+import { useNavigate} from 'react-router-dom';
 
 export function MyCert(props) {
 
     const { data } = useContext(DataContext);
     const { refetchUserProfile } = useUserProfile();
+    
+    //Dont delete
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
+
+    //this is for showing the Edit button (idk how to fetch data)
+    //contractOwner === currentUser  => button appear 
+    //contractUser === currentUser  => button disappear 
+    const [isOwner, setIsOwner] = useState(true);
 
     useEffect(() => {
         const loadUserProfile = async () => {
@@ -48,7 +55,7 @@ export function MyCert(props) {
             return date.toUTCString();
         }
     }
-
+    // if you pass an array of contracts to display,delete this 
     let info = [];
 
     if (props == 'Inactive') {
@@ -69,14 +76,33 @@ export function MyCert(props) {
         info = data.exampleUserProfile1.certificatesList;
     }
 
-    function viewContract(contractAddress){
-         
-        return(
-            <View
-            address = {contractAddress}
-            ></View>
+
+    //dummy for contract address
+    const contractAddress = "78907fndlks9fnejl543f5434";
+    
+
+    //handle view button 
+    //redirect to View + pass contract address
+    const viewContract = () => {
+        navigate('/view', {
+          state: {
+            address: { contractAddress },
+          },
+          replace: true // Optional: prevents adding to history
+        });
+      };
+
+    //handle Edit button 
+     //redirect to Update + pass contract address
+    const handleEdit=()=> {
+        navigate('/update', {
+            state: {
+              address: { contractAddress },
+            }
+          }
         )
     }
+    
 
     return (
         <div className="card-body px-0 pb-2">
@@ -157,22 +183,36 @@ export function MyCert(props) {
                                 </td>
 
                                 <td style={{ textAlign: "center", alignContent: "center" }}
-                                //or pass contract address
-                                    onClick={()=>{window.location.href = "/view";}}> 
+                                    //or pass contract address
+                                   onClick={viewContract}>
                                     <span className="badge badge-sm bg-gradient-dark" >
                                         View
                                     </span>
                                 </td>
+                                {/* contractOwner == currentUser  => button appear */}
+                                {isOwner ? (
+                                    <td style={{ justifyContent: "center" }}>
+                                        <span className="badge badge-sm bg-gradient-dark" 
+                                              onClick={handleEdit}>
+                                            Edit
+                                        </span>
+                                    </td>
+                                ) : (
+                                    <td style={{ justifyContent: "center" }}>
+                                        <span className="badge badge-sm bg-gradient-dark" >
+                                            N/A
+                                        </span>
+                                    </td>
+                                )}
 
-                                <td style={{ justifyContent: "center" }}>
-                                    <span className="badge badge-sm bg-gradient-dark" >
-                                        Edit
-                                    </span>
-                                </td>
 
                             </tr>))
                         }
-                    </tbody></table></div></div>)
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    )
 
 }
 export default MyCert;

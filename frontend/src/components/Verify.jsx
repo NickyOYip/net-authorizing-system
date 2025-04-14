@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from "./Sidebar";
 import Record from './Record';
-import { calculateHash} from '../services/certificateService';
+import { calculateHash } from '../services/certificateService';
 
 function Verify() {
     const location = useLocation();
@@ -79,13 +79,13 @@ function Verify() {
         } finally {
             setLoading(false);
         }
-        
+
         setFormData(
-        {
-            contractAddress: "",
-            jsonFile: null,
-            documentFile: null,
-        });
+            {
+                contractAddress: "",
+                jsonFile: null,
+                documentFile: null,
+            });
     }
 
 
@@ -98,7 +98,8 @@ function Verify() {
                 <div className="col-lg-12" style={{ width: '80vw', height: '80vh', marginTrim: 'all', justifyContent: "center" }}>
                     <h1 style={{ textAlign: "center", padding: "10px" }}>Verify Contract</h1>
                     {((type == 'broadcast') || type == 'public') && (
-                        <Record />
+                        <Record
+                            address={address} />
                     )}
 
                     {type == "private" && (

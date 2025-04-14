@@ -6,7 +6,8 @@ import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { generateActivationCode, calculateHash, deployCertificate, addCertificateToUser } from '../services/certificateService';
 import CreateCert from '../pages/Create';
-function Update(type) {
+
+function Update({type,address}) {
     const certType = type.type;
     const { data } = useContext(DataContext);
     const { refetchUserProfile } = useUserProfile();
@@ -107,10 +108,6 @@ function Update(type) {
         }
     };
 
-    const toDM = () => {
-        window.location.href = "/DocumentManagement";
-    };
-
     return (
         <div style={{ width: "100%", }}>
             <div
@@ -127,7 +124,7 @@ function Update(type) {
                 <div style={{ padding: '30px', marginTop: '5px', borderRadius: '20px' }}>
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label style={{ fontSize: '20px' }}>{certType} Certificate Title</label>
+                            <label style={{ fontSize: '20px' }}>{certType} Contract Title</label>
                             <input
                                 type="text"
                                 value={formData.certificateName}
@@ -164,7 +161,7 @@ function Update(type) {
                         </div>
 
                         <div className="form-group">
-                            <label style={{ fontSize: '20px' }}>{certType} Certificate JSON File</label>
+                            <label style={{ fontSize: '20px' }}>{certType} Contract JSON File</label>
                             <input
                                 type="file"
                                 onChange={handleFileChange}
@@ -173,7 +170,7 @@ function Update(type) {
                         </div>
 
                         <div className="form-group">
-                            <label style={{ fontSize: '20px' }}>{certType} Certificate File</label>
+                            <label style={{ fontSize: '20px' }}>{certType} Contract Document File</label>
                             <input
                                 type="file"
                                 onChange={handleFileChange}

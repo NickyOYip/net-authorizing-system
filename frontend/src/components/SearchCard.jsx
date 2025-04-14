@@ -1,21 +1,26 @@
 import React, { useState } from "react";
 import '../styles/styles.css';
 import Tooltip from '@mui/material/Tooltip';
+import { useNavigate} from 'react-router-dom';
 
 export const SearchCard = () => {
 
   const [address, setAddress] = useState("");
   const [isOpen, setIsOpen] = useState()
+  const navigate = useNavigate();
+  
   const handleChange = (e) => {
     setAddress(e.target.value);
   }
 
   const handleSubmit = () => {
-    if (address.length === 0) {
 
-    } else {
-      console.log('Input value:', address);
+    navigate('/searchResult', {
+      state: {
+        address: { address },
+      }
     }
+    )
 
   }
 
