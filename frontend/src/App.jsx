@@ -20,6 +20,8 @@ import Verify from './components/Verify';
 import Dashboard from './pages/Dashboard';
 import Activate from './components/Activate';
 import Profile from './pages/Profile';
+import SearchResult from './pages/SearchResult.jsx';
+import Append from './pages/Append.jsx';
 import DocumentManagement from './pages/DocumentManagement.jsx';
 import "./styles/material-dashboard.css";
 import "./styles/material-dashboard.min.css";
@@ -56,6 +58,8 @@ function App() {
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/activate" element={<Activate />} />
                         <Route path="/verify" element={<Verify />} />
+                        <Route path="/searchResult" element={<SearchResult/>} />
+                        <Route path="/update" element={<Append />} />
                     </Routes>
                 )}
 
