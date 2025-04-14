@@ -2,7 +2,8 @@ import { width } from "@mui/system";
 import React, { useState } from "react";
 import { BiAlignJustify } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
-
+import '../styles/styles.css';
+import { colors } from "@mui/material";
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
@@ -13,14 +14,14 @@ const Sidebar = () => {
   };
 
   const list = {
-    backgroundColor: 'whitesmoke',
+    backgroundColor: "white",
     justifyContent: "center",
     alignItems: "centre",
-    borderRadius: "10px",
+    borderRadius: "30px",
     listStyleType: 'none',
     padding: '5px',
     margin: "10px",
-  
+    border:"solid black"
   };
 
   return (
@@ -35,29 +36,29 @@ const Sidebar = () => {
       </button>
 
       {/* Sidebar */}
-      <aside style={{ ...styles.sidenav, width: isOpen ? "230px" : "0px", paddingTop: '80px' }}>
+      <aside style={{ ...styles.sidenav, width: isOpen ? "300px" : "0px", paddingTop: '80px' }}>
         <div className="sidenav-header">
-          <div className="row d-flex" style={{ alignItems: "center", paddingLeft: "10px", flexWrap: "nowrap" }}>
+          <div className="row d-flex" style={{ alignItems: "center", marginLeft: "30px",marginRight: "30px", flexWrap: "nowrap" }}>
+            <h2>Net Authorizing System</h2>
             <br />
-            <h6>Hong Kong Metropolitan University</h6>
           </div>
         </div>
 
-        <ul style={{ paddingLeft: "0px" }} className="sidebar-list">
-          <li style={list } className="functions" onClick={() => navigate("/profile")}>
-            <h6 style={{ textAlign: 'center', paddingTop: '5px' }}>Profile</h6>
+        <ul style={{ marginRight: "30px"}} className="sidebar-list">
+          <li id="list" style={list } className="functions" onClick={() => navigate("/profile")}>
+            <h5 style={{ textAlign: 'center', paddingTop: '5px' }}>Profile</h5>
           </li>
-          <li style={list} className="functions"  onClick={() => navigate("/")}>
-            <h6 style={{ textAlign: 'center', paddingTop: '5px' }}>Dashboard</h6>
+          <li id="list" style={list} className="functions"  onClick={() => navigate("/")}>
+            <h5 style={{ textAlign: 'center', paddingTop: '5px' }}>Dashboard</h5>
           </li>
-          <li style={list} className="functions" onClick={() => navigate("/documentmanagement")}>
-            <h6 style={{ textAlign: 'center', paddingTop: '5px' }}>Document Management</h6>
+          <li id="list" style={list} className="functions" onClick={() => navigate("/documentmanagement")}>
+            <h5 style={{ textAlign: 'center', paddingTop: '5px' }}>Document Management</h5>
           </li>
-          <li style={list} className="functions" onClick={() => navigate("/upload")}>
-            <h6 style={{ textAlign: 'center', paddingTop: '5px' }}>Upload Certificate</h6>
+          <li id="list" style={list} className="functions" onClick={() => navigate("/upload")}>
+            <h5 style={{ textAlign: 'center', paddingTop: '5px' }}>Upload Certificate</h5>
           </li>
-          <li style={ list} className="functions"  onClick={() => navigate("/verify")}>
-            <h6 style={{ textAlign: 'center', paddingTop: '5px' }}>Verify Certificate</h6>
+          <li id="list" style={ list} className="functions"  onClick={() => navigate("/verify")}>
+            <h5 style={{ textAlign: 'center', paddingTop: '5px' }}>Verify Certificate</h5>
           </li>
         </ul>
 
