@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { generateActivationCode, calculateHash, deployCertificate, addCertificateToUser } from '../services/certificateService';
-import CreateCert from './Create';
+import CreateCert from '../pages/Create';
 function Update(type) {
     const certType = type.type;
     const { data } = useContext(DataContext);
