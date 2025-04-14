@@ -94,8 +94,7 @@ const Dashboard = () => {
                         <div className="d-flex">
                           <div className="d-flex">
                             <div className="me-4">
-                              <p className="text-white text-sm opacity-8 mb-0" style={{ height: "60px" }}>User Name</p>
-                              <h6 className="text-white mb-0">{data.exampleUserProfile1.owner}</h6>
+                              <h5 className="text-white sopacity-8 mb-0" style={{ height: "60px" }}>Address</h5>
                             </div>
                           </div>
                         </div>
