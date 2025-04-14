@@ -1,26 +1,28 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { IoSearchOutline } from "react-icons/io5";
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Sidebar from "./Sidebar";
-import PdfViewer from './PdfViewer';
-import { pdfjs } from 'react-pdf'
-//import Record from './Record';
+import Record from './Record';
+import { calculateHash} from '../services/certificateService';
 
 function Verify() {
     const location = useLocation();
     const address = location.state || {};
     const [loading, setLoading] = useState(false);
-    var type = null;
+
+    const [type, setType] = useState(null);
 
     const [formData, setFormData] = useState({
+        contractAddress: "",
         jsonFile: null,
         documentFile: null,
     });
 
-    if (address.address) {
-        type = address.address.contractAddress;
-        console.log(type);
-    };
+    useEffect(() => {
+        if (address.address) {
+            setType(address.address.contractAddress.trim());
+        }
+    }, [address]);
+
 
 
     const handleJsonChange = async (e) => {
@@ -54,6 +56,7 @@ function Verify() {
         setLoading(true);
 
         try {
+
             const documentHash = await calculateHash(formData.documentHash);
             console.log('Calculated Document hash:', documentHash);
 
@@ -73,13 +76,16 @@ function Verify() {
                 errorStack: error.stack,
                 formData: formData
             });
-            setResult({
-                success: false,
-                error: error.message
-            });
         } finally {
             setLoading(false);
         }
+        
+        setFormData(
+        {
+            contractAddress: "",
+            jsonFile: null,
+            documentFile: null,
+        });
     }
 
 
@@ -91,18 +97,34 @@ function Verify() {
             <div className="row" style={{ display: 'flex', justifyContent: "center" }}>
                 <div className="col-lg-12" style={{ width: '80vw', height: '80vh', marginTrim: 'all', justifyContent: "center" }}>
                     <h1 style={{ textAlign: "center", padding: "10px" }}>Verify Contract</h1>
-                    {type == 'private' && (
-                        <div style={{ justifyContent: "center" }}>
-                            <h2>This contract is private!</h2>
-                            <p>Please provide us with the JSON file and the contract file of the contract.</p>
-                            <div claddName="form">
-                                <div className="form-group">
-                                    <label>Please input your contract address here</label>
+                    {((type == 'broadcast') || type == 'public') && (
+                        <Record />
+                    )}
 
+                    {type == "private" && (
+                        <div>
+                            <h4>This contract is private!</h4>
+                            <p>Please provide us with the JSON file and the contract file of the contract.</p>
+                        </div>
+                    )}
+                    {!(type == 'broadcast' || type == 'public') && (
+                        <div className="card" style={{ justifyContent: "center", padding: "30px" }}>
+                            <div className="form">
+                                <div className="form-group">
+                                    <h4>Please input your contract address here</h4>
+                                    <input
+                                        type="text"
+                                        value={formData.certificateName}
+                                        onChange={e => setFormData(prev => ({
+                                            ...prev,
+                                            contractAddress: e.target.value
+                                        }))}
+                                        required
+                                    />
                                 </div>
                                 <div className="form-group">
-                                    <label>Please upload your JSON file here</label>
-                                    <br />
+                                    <h4>Please upload your JSON file here(Private Contract Only)</h4>
+
                                     <input
                                         type="file"
                                         onChange={handleJsonChange}
@@ -111,8 +133,8 @@ function Verify() {
                                 </div>
 
                                 <div style={{ alignItems: 'center', paddingTop: '30px' }}>
-                                    <div>
-                                        <p>And Upload your Document here</p>
+                                    <div className="form-group">
+                                        <h4>And Upload your Document here (Private Contract Only)</h4>
                                         <input
                                             type="file"
                                             onChange={handleDocumentChange}
@@ -120,29 +142,25 @@ function Verify() {
                                         />
                                     </div>
                                     <br />
-                                    <button style={{
-                                        background: "white",
-                                        borderRadius: "5px",
-                                        borderColor: "#0000",
-                                        boxShadow: "2px 2px 5px grey"
-                                    }}>Verify</button>
+                                    <button className='btn btn-lg bg-gradient-dark'
+                                        style={{ fontSize: "20px" }}
+                                        onClick={handleSubmit}
+                                    >Verify Now !</button>
                                 </div>
                             </div>
                         </div>
-                    )}
-                    {!(address == 'private') && (
-                        <Record />
-                    )}
 
+                    )}
                 </div>
-
-
-                {/*Here for the input*/}
-                { /*<Record cert={data} />*/}
 
             </div>
 
+
+            {/*Here for the input*/}
+            { /*<Record cert={data} />*/}
+
         </div>
+
     );
 
 
