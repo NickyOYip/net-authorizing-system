@@ -10,6 +10,8 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import SaveIcon from '@mui/icons-material/Save';
 import { MyCert } from "../components/MyCert";
+import NavBar from '../components/NavBar';
+
 
 const Docs = () => {
     const [value, setValue] = React.useState(0);
@@ -107,6 +109,7 @@ const Docs = () => {
     return (
         <>
             <Sidebar></Sidebar>
+            <NavBar/>
             <main className="main-content position-relative max-height-vh-100 h-100 border-radius-lg " style={{ marginLeft: "30px", width: "98vw" }}>
                 <div className="container-fluid py-1 px-3">
                     <div className="container-fluid py-2">

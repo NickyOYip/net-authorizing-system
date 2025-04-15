@@ -19,6 +19,7 @@ import React, { useEffect, useContext, useState } from 'react';
 import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
 import {MyCert} from '../components/MyCert';
+import NavBar from '../components/NavBar';
 
 const Profile = () => {
   const { data } = useContext(DataContext);
@@ -29,6 +30,7 @@ const Profile = () => {
   return (
     <div className="g-sidenav-show bg-gray-100">
       <Sidebar />
+      <NavBar/>
       {/* Main Content */}
       <div className="main-content position-relative max-height-vh-100 h-100" style={{ marginLeft: '50px', maxHeight: "100vh", height: "100", width: "98vw", position: "relative" }}>
         {/* Navbar */}

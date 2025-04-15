@@ -7,7 +7,7 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import SaveIcon from '@mui/icons-material/Save';
-
+import NavBar from '../components/NavBar';
 const Popup = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
     return (
@@ -37,6 +37,7 @@ const Popup = ({ isOpen, onClose }) => {
         </div>
     )
 }
+
 
 export const Create = () => {
     const [value, setValue] = React.useState(0);
@@ -115,6 +116,7 @@ export const Create = () => {
         <div style={{ width: "100vw", }}>
             {/* Sidebar */}
             <Sidebar />
+            <NavBar/>
             <div
                 className="container-lg"
                 style={{

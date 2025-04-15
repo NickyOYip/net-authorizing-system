@@ -3,6 +3,8 @@ import Update from "../components/Update";
 import React, { useEffect, useContext, useState } from 'react';
 import Button from '@mui/material/Button';
 import SaveIcon from '@mui/icons-material/Save';
+import NavBar from '../components/NavBar';
+
 
 export const Append = () => {
     const [value, setValue] = React.useState(0);
@@ -14,6 +16,7 @@ export const Append = () => {
         <div style={{ width: "100vw", }}>
             {/* Sidebar */}
             <Sidebar />
+            <NavBar/>
             <div
                 className="container-lg"
                 style={{

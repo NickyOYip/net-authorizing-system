@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import SaveIcon from '@mui/icons-material/Save';
 import { MyCert } from "../components/MyCert";
 import Record from "../components/Record";
-
+import NavBar from '../components/NavBar';
 
 const SearchResult = () => {
     //data fectching logic
@@ -47,6 +47,7 @@ const SearchResult = () => {
     return (
         <>
             <Sidebar></Sidebar>
+            <NavBar/>
             <main className="main-content position-relative max-height-vh-100 h-100 border-radius-lg " style={{ marginLeft: "30px", width: "98vw" }}>
                 <div className="container-fluid py-1 px-3">
                     <div className="container-fluid py-2">
