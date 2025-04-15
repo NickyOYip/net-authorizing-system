@@ -4,7 +4,8 @@ export const Activate = ({ isOpen, onClose, contractAddress }) => {
 
     if (!isOpen) return null;
     else {
-        const contractOwner = contractAddress;//fetch contract owner using contractAddress
+        const contractOwner = "4y73925940y7";//fetch contract owner using contractAddress
+        //change this field to contractOwner see contract owner's view 
         const currentUser = " "; //fetch current user address
         const [isFailed, setIsFailed] = useState(null);
         const [noError, setNoError] = useState(true);

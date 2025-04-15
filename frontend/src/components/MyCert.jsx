@@ -2,7 +2,7 @@ import React, { useEffect, useContext, useState } from 'react';
 import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useNavigate } from 'react-router-dom';
-import Activate from './PopUp.jsx';
+import Activate from './Popup.jsx';
 
 export function MyCert(props) {
 
@@ -200,11 +200,13 @@ export function MyCert(props) {
                                         View
                                     </span>
                                 </td>
-                                {/* contractOwner == currentUser  => button appear */}
+                                
                                 {isOwner ? (
-                                    <td style={{ justifyContent: "center" }}>
+                                    <td style={{ justifyContent: "center",alignContent: "center"}}>
                                         <span className="badge badge-sm bg-gradient-dark"
-                                            onClick={handleEdit}>
+                                            onClick={handleEdit}
+                                            style={{marginTop:"3px"}}
+                                            >
                                             Edit
                                         </span>
                                     </td>
