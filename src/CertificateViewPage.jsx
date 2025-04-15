@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ethers } from 'ethers';
 
 // ABI for BroadcastContract
@@ -18,71 +19,67 @@ const BROADCAST_SUB_CONTRACT_ABI = [
 ];
 
 const CertificateViewPage = () => {
-  const [address, setAddress] = useState('');
+  const { contractAddress } = useParams();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleFetch = async () => {
-    if (!ethers.utils.isAddress(address)) {
-      setError('Invalid contract address');
-      return;
-    }
+  useEffect(() => {
+    const fetchCertificate = async () => {
+      if (!ethers.utils.isAddress(contractAddress)) {
+        setError('Invalid contract address');
+        return;
+      }
 
-    setError('');
-    try {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
+      setError('');
+      setLoading(true);
 
-      // Load main contract
-      const mainContract = new ethers.Contract(address, BROADCAST_CONTRACT_ABI, signer);
-      const currentVersion = await mainContract.currentVersion();
-      const subContractAddr = await mainContract.subContracts(currentVersion);
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
 
-      // Load sub-contract
-      const subContract = new ethers.Contract(subContractAddr, BROADCAST_SUB_CONTRACT_ABI, signer);
-      const title = await subContract.title();
-      const jsonHash = await subContract.jsonHash();
-      const softCopyHash = await subContract.softCopyHash();
-      const storageLink = await subContract.storageLink();
-      const startDate = await subContract.startDate();
-      const endDate = await subContract.endDate();
+        const mainContract = new ethers.Contract(contractAddress, BROADCAST_CONTRACT_ABI, signer);
+        const currentVersion = await mainContract.currentVersion();
+        const subContractAddr = await mainContract.subContracts(currentVersion);
 
-      setData({
-        title,
-        jsonHash,
-        softCopyHash,
-        storageLink,
-        startDate: new Date(startDate.toNumber() * 1000).toLocaleString(),
-        endDate: new Date(endDate.toNumber() * 1000).toLocaleString()
-      });
-    } catch (err) {
-      setError('Error fetching certificate data');
-      console.error(err);
-    }
-  };
+        const subContract = new ethers.Contract(subContractAddr, BROADCAST_SUB_CONTRACT_ABI, signer);
+        const title = await subContract.title();
+        const jsonHash = await subContract.jsonHash();
+        const softCopyHash = await subContract.softCopyHash();
+        const storageLink = await subContract.storageLink();
+        const startDate = await subContract.startDate();
+        const endDate = await subContract.endDate();
+
+        setData({
+          title,
+          jsonHash,
+          softCopyHash,
+          storageLink,
+          startDate: new Date(startDate.toNumber() * 1000).toLocaleString(),
+          endDate: new Date(endDate.toNumber() * 1000).toLocaleString()
+        });
+      } catch (err) {
+        console.error(err);
+        setError('Error fetching certificate data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCertificate();
+  }, [contractAddress]);
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Certificate Viewer</h1>
-      <input
-        className="border border-gray-400 px-3 py-2 w-full mb-2 rounded"
-        type="text"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Enter contract address"
-      />
-      <button
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
-        onClick={handleFetch}
-      >
-        Fetch Certificate
-      </button>
+      <p className="mb-2 text-gray-700"><strong>Contract:</strong> {contractAddress}</p>
 
-      {error && <p className="text-red-500 mt-4">{error}</p>}
+      {loading && <p className="text-blue-500">Loading certificate data...</p>}
+      {error && <p className="text-red-500 mt-2">{error}</p>}
 
       {data && (
-        <div className="mt-6 bg-gray-100 p-4 rounded shadow">
+        <div className="mt-4 bg-gray-100 p-4 rounded shadow">
           <p><strong>Title:</strong> {data.title}</p>
           <p><strong>JSON Hash:</strong> {data.jsonHash}</p>
           <p><strong>Soft Copy Hash:</strong> {data.softCopyHash}</p>
