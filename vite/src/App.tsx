@@ -1,9 +1,6 @@
 import * as React from 'react';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import BroadcastIcon from '@mui/icons-material/Podcasts';
-import PublicIcon from '@mui/icons-material/Public';
-import PrivateIcon from '@mui/icons-material/Lock';
-import VerifiedIcon from '@mui/icons-material/VerifiedUser';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { Outlet } from 'react-router';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
 import type { Navigation } from '@toolpad/core/AppProvider';
@@ -11,36 +8,21 @@ import type { Navigation } from '@toolpad/core/AppProvider';
 const NAVIGATION: Navigation = [
   {
     kind: 'header',
-    title: 'Verification System',
+    title: 'Main items',
   },
   {
     title: 'Dashboard',
     icon: <DashboardIcon />,
   },
   {
-    segment: 'broadcast',
-    title: 'Broadcast Contracts',
-    icon: <BroadcastIcon />,
-  },
-  {
-    segment: 'public',
-    title: 'Public Contracts',
-    icon: <PublicIcon />,
-  },
-  {
-    segment: 'private',
-    title: 'Private Contracts',
-    icon: <PrivateIcon />,
-  },
-  {
-    segment: 'verify',
-    title: 'Verify Document',
-    icon: <VerifiedIcon />,
+    segment: 'orders',
+    title: 'Orders',
+    icon: <ShoppingCartIcon />,
   },
 ];
 
 const BRANDING = {
-  title: 'Net Authorizing System',
+  title: 'My Toolpad Core App',
 };
 
 export default function App() {
