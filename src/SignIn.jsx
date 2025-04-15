@@ -1,5 +1,5 @@
 import React from 'react';
-import './material-dashboard.css'; // Assuming it's renamed and in your project
+import './material-dashboard.css';
 
 const SignIn = () => {
   return (
