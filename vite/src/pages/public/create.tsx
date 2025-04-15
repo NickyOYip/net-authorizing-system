@@ -1,329 +1,445 @@
 import * as React from 'react';
+import { useState, useContext, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { Link, useNavigate } from 'react-router';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Divider from '@mui/material/Divider';
+import StepContent from '@mui/material/StepContent';
 import Alert from '@mui/material/Alert';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import IconButton from '@mui/material/IconButton';
-
-const steps = ['Enter Contract Details', 'Recipient Information', 'Upload Documents', 'Review & Submit'];
+import CircularProgress from '@mui/material/CircularProgress';
+import TextField from '@mui/material/TextField';
+import Divider from '@mui/material/Divider';
+import Grid from '@mui/material/Grid';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import SendIcon from '@mui/icons-material/Send';
+import EmailIcon from '@mui/icons-material/Email';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import { DataContext } from '../../provider/dataProvider';
+import { WalletContext } from '../../provider/walletProvider';
+import { usePublicFactory } from '../../hooks/contractHook';
 
 export default function CreatePublicPage() {
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [title, setTitle] = React.useState('');
-  const [startDate, setStartDate] = React.useState<Date | null>(null);
-  const [endDate, setEndDate] = React.useState<Date | null>(null);
-  const [recipientEmail, setRecipientEmail] = React.useState('');
-  const [recipientName, setRecipientName] = React.useState('');
-  const [notificationType, setNotificationType] = React.useState('email');
-  const [jsonFile, setJsonFile] = React.useState<File | null>(null);
-  const [softCopyFile, setSoftCopyFile] = React.useState<File | null>(null);
-  const [activationCode, setActivationCode] = React.useState('');
   const navigate = useNavigate();
+  const { data } = useContext(DataContext);
+  const { walletStatus } = useContext(WalletContext);
+  const { createPublicContract } = usePublicFactory();
+  
+  const [activeStep, setActiveStep] = useState(0);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileHash, setFileHash] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createdContractAddress, setCreatedContractAddress] = useState('');
+  const [error, setError] = useState(null);
 
-  React.useEffect(() => {
-    if (activeStep === 3) {
-      // Generate a random activation code for demo purposes
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-      setActivationCode(code);
+  const isWalletConnected = walletStatus !== 'Not connected';
+
+  // Handle file selection and hash calculation
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setError(null);
+
+    try {
+      // Calculate hash of the file
+      const arrayBuffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      setFileHash(hashHex);
+    } catch (err) {
+      console.error("Error calculating file hash:", err);
+      setError("Failed to process the file. Please try again.");
     }
-  }, [activeStep]);
+  };
 
+  const handleTitleChange = (e) => {
+    setTitle(e.target.value);
+  };
+
+  const handleDescriptionChange = (e) => {
+    setDescription(e.target.value);
+  };
+
+  const handleRecipientChange = (e) => {
+    setRecipient(e.target.value);
+  };
+
+  // Validate email format
+  const isValidEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  // Handle next step in form
   const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    if (activeStep === 0) {
+      if (!title.trim()) {
+        setError("Please enter a contract title");
+        return;
+      }
+      if (!recipient.trim() || !isValidEmail(recipient)) {
+        setError("Please enter a valid recipient email");
+        return;
+      }
+    } else if (activeStep === 1) {
+      if (!selectedFile || !fileHash) {
+        setError("Please select a file to verify");
+        return;
+      }
+    }
+    
+    setActiveStep((prevStep) => prevStep + 1);
+    setError(null);
   };
 
+  // Handle back step in form
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setActiveStep((prevStep) => prevStep - 1);
+    setError(null);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // Here you would handle the contract creation logic
-    // For now we'll just navigate back to the contracts list
-    alert('Contract created successfully! The activation code has been sent to the recipient.');
+  // Handle contract creation
+  const handleCreateContract = useCallback(async () => {
+    if (!isWalletConnected) {
+      setError("Please connect your wallet first");
+      return;
+    }
+
+    if (!title.trim() || !fileHash || !recipient.trim()) {
+      setError("Contract title, recipient and document are required");
+      return;
+    }
+
+    if (!isValidEmail(recipient)) {
+      setError("Please enter a valid recipient email");
+      return;
+    }
+
+    if (!data.publicFactory?.address) {
+      setError("Factory contract address not found");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      setError(null);
+
+      // Call the hook to create a new public contract
+      const result = await createPublicContract(
+        data.publicFactory.address,
+        title,
+        description,
+        fileHash,
+        recipient
+      );
+      
+      console.log("Contract created:", result);
+      setCreatedContractAddress(result.contractAddress);
+      setActiveStep(3); // Move to success step
+      
+      // Optional: Upload the file to Irys storage
+      // This would require additional implementation using the irys uploader from context
+      
+    } catch (err) {
+      console.error("Contract creation failed:", err);
+      setError(`Failed to create contract: ${err.message}`);
+    } finally {
+      setCreating(false);
+    }
+  }, [
+    isWalletConnected, 
+    title, 
+    description, 
+    fileHash, 
+    recipient,
+    data.publicFactory?.address, 
+    createPublicContract
+  ]);
+
+  // Redirect to the new contract after creation
+  const handleViewContract = () => {
+    navigate(`/public/${createdContractAddress}`);
+  };
+
+  // Navigate back to contracts list
+  const handleBackToList = () => {
     navigate('/public');
   };
 
-  return (
-    <div>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Button
-          component={Link}
-          to="/public"
-          startIcon={<ArrowBackIcon />}
-          sx={{ mr: 2 }}
+  if (!isWalletConnected) {
+    return (
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Create Public Contract
+        </Typography>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          Please connect your wallet to create a public contract.
+        </Alert>
+        <Button 
+          variant="outlined" 
+          onClick={() => navigate('/public')}
+          sx={{ mt: 2 }}
         >
           Back to Contracts
         </Button>
-        <Typography variant="h4">
-          Create New Public Contract
-        </Typography>
       </Box>
+    );
+  }
 
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+  return (
+    <div>
+      <Typography variant="h4" gutterBottom>
+        Create Public Contract
+      </Typography>
+      
+      <Typography variant="body1" paragraph>
+        Public contracts require activation by the recipient before they can be accessed. The recipient will receive an activation link.
+      </Typography>
+      
+      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
 
-        <form onSubmit={handleSubmit}>
-          {activeStep === 0 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  id="title"
-                  label="Contract Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  helperText="Enter a descriptive title for your contract"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker
-                    label="Start Date"
-                    value={startDate}
-                    onChange={(newValue) => setStartDate(newValue)}
-                    sx={{ width: '100%' }}
+        <Stepper activeStep={activeStep} orientation="vertical">
+          {/* Step 1: Contract Information */}
+          <Step>
+            <StepLabel>Contract Information</StepLabel>
+            <StepContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Contract Title"
+                    value={title}
+                    onChange={handleTitleChange}
+                    helperText="Enter a title for your contract"
+                    variant="outlined"
                   />
-                </LocalizationProvider>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker
-                    label="End Date"
-                    value={endDate}
-                    onChange={(newValue) => setEndDate(newValue)}
-                    sx={{ width: '100%' }}
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={description}
+                    onChange={handleDescriptionChange}
+                    multiline
+                    rows={4}
+                    helperText="Provide a description of this document (optional)"
+                    variant="outlined"
                   />
-                </LocalizationProvider>
-              </Grid>
-            </Grid>
-          )}
-
-          {activeStep === 1 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Recipient Information
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  The recipient will receive an activation code to access this contract.
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="recipientName"
-                  label="Recipient Name"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="recipientEmail"
-                  label="Recipient Email"
-                  value={recipientEmail}
-                  onChange={(e) => setRecipientEmail(e.target.value)}
-                  type="email"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel id="notification-type-label">Notification Method</InputLabel>
-                  <Select
-                    labelId="notification-type-label"
-                    id="notification-type"
-                    value={notificationType}
-                    label="Notification Method"
-                    onChange={(e) => setNotificationType(e.target.value)}
-                  >
-                    <MenuItem value="email">Email</MenuItem>
-                    <MenuItem value="sms">SMS</MenuItem>
-                    <MenuItem value="both">Both Email & SMS</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          )}
-
-          {activeStep === 2 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Upload Documents
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Upload the JSON metadata and soft copy files for this contract. These will be stored securely and hashed for verification.
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<CloudUploadIcon />}
-                  fullWidth
-                  sx={{ height: '100px' }}
-                >
-                  Upload JSON Metadata
-                  <input
-                    type="file"
-                    accept="application/json"
-                    hidden
-                    onChange={(e) => setJsonFile(e.target.files?.[0] || null)}
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Recipient Email"
+                    value={recipient}
+                    onChange={handleRecipientChange}
+                    helperText="Enter the email of the person who will activate this contract"
+                    variant="outlined"
+                    InputProps={{
+                      startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    }}
+                    error={recipient.trim() !== '' && !isValidEmail(recipient)}
                   />
-                </Button>
-                {jsonFile && (
-                  <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
-                    {jsonFile.name}
-                  </Typography>
-                )}
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<CloudUploadIcon />}
-                  fullWidth
-                  sx={{ height: '100px' }}
-                >
-                  Upload Soft Copy
-                  <input
-                    type="file"
-                    accept="application/pdf,image/*"
-                    hidden
-                    onChange={(e) => setSoftCopyFile(e.target.files?.[0] || null)}
-                  />
-                </Button>
-                {softCopyFile && (
-                  <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
-                    {softCopyFile.name}
-                  </Typography>
-                )}
-              </Grid>
-            </Grid>
-          )}
-
-          {activeStep === 3 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Review Contract Details
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle1">Contract Title:</Typography>
-                <Typography variant="body1" gutterBottom>{title}</Typography>
-
-                <Typography variant="subtitle1">Duration:</Typography>
-                <Typography variant="body1" gutterBottom>
-                  {startDate?.toLocaleDateString()} - {endDate?.toLocaleDateString()}
-                </Typography>
-
-                <Typography variant="subtitle1">Recipient:</Typography>
-                <Typography variant="body1" gutterBottom>
-                  {recipientName} ({recipientEmail})
-                </Typography>
-
-                <Typography variant="subtitle1">Notification Method:</Typography>
-                <Typography variant="body1" gutterBottom>
-                  {notificationType === 'email' ? 'Email' : 
-                   notificationType === 'sms' ? 'SMS' : 
-                   'Both Email & SMS'}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle1">JSON File:</Typography>
-                <Typography variant="body1" gutterBottom>{jsonFile?.name || 'None'}</Typography>
-
-                <Typography variant="subtitle1">Soft Copy File:</Typography>
-                <Typography variant="body1" gutterBottom>{softCopyFile?.name || 'None'}</Typography>
+                </Grid>
               </Grid>
               
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
+              <Box sx={{ mb: 2, mt: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  sx={{ mt: 1, mr: 1 }}
+                >
+                  Continue
+                </Button>
+                <Button
+                  onClick={handleBackToList}
+                  sx={{ mt: 1, mr: 1 }}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            </StepContent>
+          </Step>
+          
+          {/* Step 2: Document Upload */}
+          <Step>
+            <StepLabel>Document Upload</StepLabel>
+            <StepContent>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body1" paragraph>
+                  Upload the document to be verified by the contract.
+                </Typography>
                 
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  An activation code will be sent to the recipient. They'll need this code to access and verify the contract.
-                </Alert>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                  <Typography variant="subtitle1" sx={{ mr: 2 }}>
-                    Activation Code:
-                  </Typography>
-                  <Typography variant="h6" fontFamily="monospace" fontWeight="bold" sx={{ flexGrow: 1 }}>
-                    {activationCode}
-                  </Typography>
-                  <IconButton 
-                    onClick={() => navigator.clipboard.writeText(activationCode)}
-                    title="Copy to clipboard"
+                <input
+                  accept="*/*"
+                  style={{ display: 'none' }}
+                  id="contained-button-file"
+                  type="file"
+                  onChange={handleFileChange}
+                />
+                <label htmlFor="contained-button-file">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ mb: 2 }}
                   >
-                    <ContentCopyIcon />
-                  </IconButton>
+                    Select File
+                  </Button>
+                </label>
+                
+                {selectedFile && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2">Selected File:</Typography>
+                    <Typography variant="body2">{selectedFile.name}</Typography>
+                    <Typography variant="caption" component="div" sx={{ wordBreak: 'break-all' }}>
+                      Hash: {fileHash ? `${fileHash.substring(0, 20)}...${fileHash.substring(fileHash.length - 10)}` : 'Calculating...'}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+              
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  sx={{ mt: 1, mr: 1 }}
+                  disabled={!selectedFile || !fileHash}
+                >
+                  Continue
+                </Button>
+                <Button
+                  onClick={handleBack}
+                  sx={{ mt: 1, mr: 1 }}
+                >
+                  Back
+                </Button>
+              </Box>
+            </StepContent>
+          </Step>
+          
+          {/* Step 3: Review & Create */}
+          <Step>
+            <StepLabel>Review & Create</StepLabel>
+            <StepContent>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Contract Details
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Title</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {title}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Description</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {description || 'No description provided'}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Recipient</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {recipient}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Document</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {selectedFile?.name}
+                  </Typography>
+                </CardContent>
+              </Card>
+              
+              <Alert severity="info" sx={{ mt: 3, mb: 3 }}>
+                Once created, this public contract will be accessible only after the recipient activates it with their wallet. You'll need to provide them with the contract address.
+              </Alert>
+              
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleCreateContract}
+                  sx={{ mt: 1, mr: 1 }}
+                  startIcon={<SendIcon />}
+                  disabled={creating}
+                >
+                  {creating ? (
+                    <>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Contract'
+                  )}
+                </Button>
+                <Button
+                  onClick={handleBack}
+                  sx={{ mt: 1, mr: 1 }}
+                  disabled={creating}
+                >
+                  Back
+                </Button>
+              </Box>
+            </StepContent>
+          </Step>
+          
+          {/* Step 4: Success */}
+          <Step>
+            <StepLabel>Contract Created</StepLabel>
+            <StepContent>
+              <Box sx={{ textAlign: 'center', py: 3 }}>
+                <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 2 }} />
+                <Typography variant="h5" gutterBottom color="success.main">
+                  Contract Created Successfully!
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  Your public contract has been created. Share the contract address with {recipient} to activate it.
+                </Typography>
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                  Contract Address:
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2, wordBreak: 'break-all' }}>
+                  {createdContractAddress}
+                </Typography>
+                
+                <Box sx={{ mt: 3 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleViewContract}
+                    sx={{ mr: 2 }}
+                  >
+                    View Contract
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handleBackToList}
+                  >
+                    Back to List
+                  </Button>
                 </Box>
-              </Grid>
-            </Grid>
-          )}
-
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-            {activeStep > 0 && (
-              <Button onClick={handleBack} sx={{ mr: 1 }}>
-                Back
-              </Button>
-            )}
-
-            {activeStep < steps.length - 1 ? (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleNext}
-                disabled={
-                  (activeStep === 0 && (!title || !startDate || !endDate)) ||
-                  (activeStep === 1 && (!recipientName || !recipientEmail)) ||
-                  (activeStep === 2 && (!jsonFile || !softCopyFile))
-                }
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-              >
-                Create Contract
-              </Button>
-            )}
-          </Box>
-        </form>
-      </Paper>
+              </Box>
+            </StepContent>
+          </Step>
+        </Stepper>
+      </Box>
     </div>
   );
 }

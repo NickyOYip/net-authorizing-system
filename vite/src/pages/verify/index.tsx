@@ -1,65 +1,150 @@
 import * as React from 'react';
+import { useState, useContext } from 'react';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import CircularProgress from '@mui/material/CircularProgress';
+import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
-import AlertTitle from '@mui/material/AlertTitle';
+import CircularProgress from '@mui/material/CircularProgress';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import SearchIcon from '@mui/icons-material/Search';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Divider from '@mui/material/Divider';
-import Stack from '@mui/material/Stack';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
+import { DataContext } from '../../provider/dataProvider';
+import { WalletContext } from '../../provider/walletProvider';
+import { 
+  useBroadcastContract, 
+  usePublicContract, 
+  usePrivateContract 
+} from '../../hooks/contractHook';
+
+const steps = ['Select Document', 'Enter Contract Information', 'Verify Document'];
 
 export default function VerifyDocumentPage() {
-  const [contractId, setContractId] = React.useState<string>('');
-  const [documentFile, setDocumentFile] = React.useState<File | null>(null);
-  const [isVerifying, setIsVerifying] = React.useState<boolean>(false);
-  const [verificationResult, setVerificationResult] = React.useState<'none' | 'success' | 'failure'>('none');
-  const [contractDetails, setContractDetails] = React.useState<any>(null);
+  const { data } = useContext(DataContext);
+  const { walletStatus } = useContext(WalletContext);
+  const { verifyDocument: verifyBroadcastDocument } = useBroadcastContract();
+  const { verifyDocument: verifyPublicDocument } = usePublicContract();
+  const { verifyDocument: verifyPrivateDocument } = usePrivateContract();
+  
+  // State for file upload
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileHash, setFileHash] = useState('');
+  const [activeStep, setActiveStep] = useState(0);
+  const [contractType, setContractType] = useState('');
+  const [contractAddress, setContractAddress] = useState('');
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleVerify = () => {
-    if (!contractId || !documentFile) return;
-    
-    setIsVerifying(true);
-    
-    // Simulate verification process - in a real app this would call an API
-    setTimeout(() => {
-      setIsVerifying(false);
+  // Handle file selection
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setError(null);
+
+    try {
+      // Calculate hash of the file
+      const arrayBuffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       
-      // For demo purposes, we'll randomly show success or failure
-      const isSuccess = Math.random() > 0.3;
-      setVerificationResult(isSuccess ? 'success' : 'failure');
-      
-      if (isSuccess) {
-        // Mock contract details for successful verification
-        setContractDetails({
-          id: contractId,
-          title: 'Certificate of Achievement',
-          issuer: 'Example University',
-          issuedTo: 'John Doe',
-          issuedOn: '2025-03-10',
-          expiresOn: '2030-03-10',
-          contractType: 'Public',
-          verificationCount: 3,
-          lastVerified: '2025-04-15'
-        });
-      } else {
-        setContractDetails(null);
-      }
-    }, 2000);
+      setFileHash(hashHex);
+      setActiveStep(1);
+    } catch (err) {
+      console.error("Error calculating file hash:", err);
+      setError("Failed to process the file. Please try again.");
+    }
   };
 
+  // Handle contract type selection
+  const handleContractTypeChange = (event) => {
+    setContractType(event.target.value);
+    setError(null);
+  };
+
+  // Handle contract address input
+  const handleAddressChange = (event) => {
+    setContractAddress(event.target.value);
+    setError(null);
+  };
+
+  // Proceed to verification step
+  const handleProceedToVerify = () => {
+    if (!contractType) {
+      setError("Please select a contract type.");
+      return;
+    }
+    
+    if (!contractAddress) {
+      setError("Please enter a contract address.");
+      return;
+    }
+    
+    setActiveStep(2);
+  };
+
+  // Handle document verification
+  const handleVerifyDocument = async () => {
+    if (!contractAddress || !fileHash || !contractType) {
+      setError("Missing required information for verification.");
+      return;
+    }
+
+    setVerifying(true);
+    setError(null);
+
+    try {
+      let verifyResult;
+      
+      switch (contractType) {
+        case 'broadcast':
+          verifyResult = await verifyBroadcastDocument(contractAddress, fileHash);
+          break;
+        case 'public':
+          verifyResult = await verifyPublicDocument(contractAddress, fileHash);
+          break;
+        case 'private':
+          verifyResult = await verifyPrivateDocument(contractAddress, fileHash);
+          break;
+        default:
+          throw new Error("Invalid contract type selected");
+      }
+      
+      console.log("Verification result:", verifyResult);
+      setVerificationResult({
+        isVerified: verifyResult.verified,
+        documentInfo: verifyResult.documentInfo || {},
+        timestamp: verifyResult.timestamp ? new Date(Number(verifyResult.timestamp) * 1000).toLocaleString() : 'Unknown',
+        version: verifyResult.version || 'Unknown'
+      });
+    } catch (err) {
+      console.error("Document verification failed:", err);
+      setError(`Verification failed: ${err.message}`);
+      setVerificationResult(null);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  // Reset the verification process
   const handleReset = () => {
-    setContractId('');
-    setDocumentFile(null);
-    setVerificationResult('none');
-    setContractDetails(null);
+    setSelectedFile(null);
+    setFileHash('');
+    setContractType('');
+    setContractAddress('');
+    setActiveStep(0);
+    setVerificationResult(null);
+    setError(null);
   };
 
   return (
@@ -69,125 +154,270 @@ export default function VerifyDocumentPage() {
       </Typography>
       
       <Typography variant="body1" paragraph>
-        Verify the authenticity of a document by providing its Contract ID and uploading the document file.
+        Verify the authenticity of documents stored on the blockchain. Upload a document and provide the contract address to check if it matches the stored hash.
       </Typography>
       
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <TextField
-              required
-              fullWidth
-              id="contractId"
-              label="Contract ID"
-              value={contractId}
-              onChange={(e) => setContractId(e.target.value)}
-              placeholder="Enter the contract ID (0x...)"
-              disabled={isVerifying || verificationResult !== 'none'}
+      <Paper sx={{ p: 3, mt: 2, mb: 4 }}>
+        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+        
+        {/* Step 1: Upload Document */}
+        {activeStep === 0 && (
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <input
+              accept="*/*"
+              style={{ display: 'none' }}
+              id="contained-button-file"
+              type="file"
+              onChange={handleFileChange}
             />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<CloudUploadIcon />}
-              fullWidth
-              sx={{ height: '55px' }}
-              disabled={isVerifying || verificationResult !== 'none'}
-            >
-              Upload Document
-              <input
-                type="file"
-                accept="application/pdf,image/*,.json"
-                hidden
-                onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-              />
-            </Button>
-            {documentFile && (
-              <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
-                {documentFile.name}
+            <label htmlFor="contained-button-file">
+              <Button
+                variant="contained"
+                component="span"
+                startIcon={<CloudUploadIcon />}
+                sx={{ mb: 2 }}
+              >
+                Select Document to Verify
+              </Button>
+            </label>
+            
+            {selectedFile && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Selected file: {selectedFile.name}
               </Typography>
             )}
-          </Grid>
-          
-          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button 
-              variant="outlined" 
-              onClick={handleReset}
-              disabled={isVerifying || (verificationResult === 'none' && !contractId && !documentFile)}
-            >
-              Reset
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleVerify}
-              disabled={!contractId || !documentFile || isVerifying || verificationResult !== 'none'}
-            >
-              {isVerifying ? <CircularProgress size={24} /> : 'Verify Document'}
-            </Button>
-          </Grid>
-        </Grid>
+          </Box>
+        )}
         
-        {verificationResult !== 'none' && (
-          <Box sx={{ mt: 4 }}>
-            <Divider sx={{ mb: 3 }} />
-            
-            {verificationResult === 'success' ? (
-              <Stack spacing={3}>
-                <Alert severity="success" icon={<VerifiedUserIcon />}>
-                  <AlertTitle>Verification Successful</AlertTitle>
-                  The document was successfully verified against the contract. It is authentic.
-                </Alert>
-                
-                {contractDetails && (
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        Contract Details
-                      </Typography>
-                      
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="subtitle2">Contract ID:</Typography>
-                          <Typography variant="body2" paragraph>{contractDetails.id}</Typography>
-                          
-                          <Typography variant="subtitle2">Title:</Typography>
-                          <Typography variant="body2" paragraph>{contractDetails.title}</Typography>
-                          
-                          <Typography variant="subtitle2">Issuer:</Typography>
-                          <Typography variant="body2" paragraph>{contractDetails.issuer}</Typography>
-                          
-                          <Typography variant="subtitle2">Issued To:</Typography>
-                          <Typography variant="body2" paragraph>{contractDetails.issuedTo}</Typography>
-                        </Grid>
-                        
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="subtitle2">Issued On:</Typography>
-                          <Typography variant="body2" paragraph>{contractDetails.issuedOn}</Typography>
-                          
-                          <Typography variant="subtitle2">Expires On:</Typography>
-                          <Typography variant="body2" paragraph>{contractDetails.expiresOn}</Typography>
-                          
-                          <Typography variant="subtitle2">Contract Type:</Typography>
-                          <Typography variant="body2" paragraph>{contractDetails.contractType}</Typography>
-                          
-                          <Typography variant="subtitle2">Verification Stats:</Typography>
-                          <Typography variant="body2" paragraph>
-                            Verified {contractDetails.verificationCount} times (Last: {contractDetails.lastVerified})
+        {/* Step 2: Contract Information */}
+        {activeStep === 1 && (
+          <Box sx={{ py: 2 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Select Contract Type:
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Button
+                      fullWidth
+                      variant={contractType === 'broadcast' ? 'contained' : 'outlined'}
+                      color="primary"
+                      onClick={() => setContractType('broadcast')}
+                      sx={{ py: 1.5 }}
+                    >
+                      Broadcast Contract
+                    </Button>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Button
+                      fullWidth
+                      variant={contractType === 'public' ? 'contained' : 'outlined'}
+                      color="secondary"
+                      onClick={() => setContractType('public')}
+                      sx={{ py: 1.5 }}
+                    >
+                      Public Contract
+                    </Button>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Button
+                      fullWidth
+                      variant={contractType === 'private' ? 'contained' : 'outlined'}
+                      color="success"
+                      onClick={() => setContractType('private')}
+                      sx={{ py: 1.5 }}
+                    >
+                      Private Contract
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Contract Address"
+                  variant="outlined"
+                  value={contractAddress}
+                  onChange={handleAddressChange}
+                  placeholder="Enter the contract address (0x...)"
+                  helperText="Enter the blockchain address of the contract to verify against"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleProceedToVerify}
+                  disabled={!contractAddress || !contractType}
+                  startIcon={<SearchIcon />}
+                >
+                  Proceed to Verification
+                </Button>
+                <Button
+                  sx={{ ml: 2 }}
+                  onClick={handleReset}
+                >
+                  Start Over
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+        
+        {/* Step 3: Verification */}
+        {activeStep === 2 && (
+          <Box sx={{ py: 2 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Document Information:
+                </Typography>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f5f5f5' }}>
+                  <Typography variant="body2">
+                    <strong>File Hash:</strong> {fileHash.substring(0, 20)}...{fileHash.substring(fileHash.length - 10)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    <strong>Contract Type:</strong> {contractType.charAt(0).toUpperCase() + contractType.slice(1)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    <strong>Contract Address:</strong> {contractAddress}
+                  </Typography>
+                </Paper>
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Verification Status:
+                </Typography>
+                <Paper 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 2, 
+                    bgcolor: verificationResult ? 
+                      (verificationResult.isVerified ? '#e8f5e9' : '#ffebee') : 
+                      '#ffffff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '120px'
+                  }}
+                >
+                  {verifying ? (
+                    <Box sx={{ textAlign: 'center' }}>
+                      <CircularProgress size={40} sx={{ mb: 2 }} />
+                      <Typography>Verifying document...</Typography>
+                    </Box>
+                  ) : verificationResult ? (
+                    <>
+                      {verificationResult.isVerified ? (
+                        <Box sx={{ textAlign: 'center' }}>
+                          <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 1 }} />
+                          <Typography variant="h6" color="success.main" gutterBottom>
+                            Document Verified Successfully
                           </Typography>
-                        </Grid>
+                        </Box>
+                      ) : (
+                        <Box sx={{ textAlign: 'center' }}>
+                          <VerifiedUserIcon color="error" sx={{ fontSize: 60, mb: 1 }} />
+                          <Typography variant="h6" color="error" gutterBottom>
+                            Document Verification Failed
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            The document does not match the recorded hash on the blockchain.
+                          </Typography>
+                        </Box>
+                      )}
+                    </>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleVerifyDocument}
+                      startIcon={<VerifiedUserIcon />}
+                    >
+                      Verify Now
+                    </Button>
+                  )}
+                </Paper>
+              </Grid>
+              
+              {verificationResult?.isVerified && (
+                <Grid item xs={12}>
+                  <Paper variant="outlined" sx={{ p: 3, mt: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <VerifiedUserIcon color="success" sx={{ mr: 1 }} />
+                      <Typography variant="h6">
+                        Document Details
+                      </Typography>
+                    </Box>
+                    <Divider sx={{ mb: 3 }} />
+                    
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Document Title:
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {verificationResult.documentInfo.title || 'Untitled Document'}
+                        </Typography>
+                        
+                        <Typography variant="subtitle2" gutterBottom>
+                          Created By:
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {verificationResult.documentInfo.owner || 'Unknown'}
+                        </Typography>
+                        
+                        <Typography variant="subtitle2" gutterBottom>
+                          Contract Version:
+                        </Typography>
+                        <Typography variant="body1">
+                          {verificationResult.version}
+                        </Typography>
                       </Grid>
-                    </CardContent>
-                  </Card>
-                )}
-              </Stack>
-            ) : (
-              <Alert severity="error" icon={<ErrorOutlineIcon />}>
-                <AlertTitle>Verification Failed</AlertTitle>
-                The document could not be verified against the provided contract ID. This document may be altered or the contract ID may be incorrect.
-              </Alert>
-            )}
+                      
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Verification Timestamp:
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {verificationResult.timestamp}
+                        </Typography>
+                        
+                        <Typography variant="subtitle2" gutterBottom>
+                          Description:
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {verificationResult.documentInfo.description || 'No description provided'}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                </Grid>
+              )}
+              
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Button onClick={handleReset}>
+                  Verify Another Document
+                </Button>
+              </Grid>
+            </Grid>
           </Box>
         )}
       </Paper>

@@ -1,181 +1,346 @@
 import * as React from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import Button from '@mui/material/Button';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
 import Alert from '@mui/material/Alert';
-import AlertTitle from '@mui/material/AlertTitle';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useParams, Link, useNavigate } from 'react-router';
+import TextField from '@mui/material/TextField';
+import Divider from '@mui/material/Divider';
+import Grid from '@mui/material/Grid';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import { DataContext } from '../../provider/dataProvider';
+import { WalletContext } from '../../provider/walletProvider';
+import { usePublicContract, usePrivateContract } from '../../hooks/contractHook';
+
+const steps = ['Verify Contract', 'Connect Wallet', 'Activate Contract'];
 
 export default function ActivateContractPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [activationCode, setActivationCode] = React.useState('');
-  const [isActivating, setIsActivating] = React.useState(false);
-  const [activationSuccess, setActivationSuccess] = React.useState(false);
-  const [contractType, setContractType] = React.useState<'public' | 'private'>('public');
-  const [error, setError] = React.useState<string | null>(null);
+  const { data } = useContext(DataContext);
+  const { walletStatus, connectWallet } = useContext(WalletContext);
+  const { getContractDetails: getPublicDetails, activateContract: activatePublicContract } = usePublicContract();
+  const { getContractDetails: getPrivateDetails, activateContract: activatePrivateContract } = usePrivateContract();
+  
+  const [contractType, setContractType] = useState('');
+  const [contractDetails, setContractDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activating, setActivating] = useState(false);
+  const [error, setError] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
+  const [accessCode, setAccessCode] = useState('');
+  const [activationSuccess, setActivationSuccess] = useState(false);
+
+  const isWalletConnected = walletStatus !== 'Not connected';
 
   // Determine contract type from URL path
-  React.useEffect(() => {
+  useEffect(() => {
     const path = window.location.pathname;
-    if (path.includes('/public/')) {
+    
+    if (path.includes('/public/activate')) {
       setContractType('public');
-    } else if (path.includes('/private/')) {
+    } else if (path.includes('/private/activate')) {
       setContractType('private');
+    } else {
+      setError('Unknown contract type for activation');
     }
   }, []);
 
-  // For mock purposes - get contract details
-  const contractData = {
-    id: id || '0x123',
-    title: contractType === 'public' ? 'Employment Certificate' : 'Medical Records Access',
-    recipient: 'john.doe@example.com',
-    created: '2025-04-05',
+  // Load contract details
+  useEffect(() => {
+    const fetchContractDetails = async () => {
+      if (!id || !contractType) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        let details;
+        
+        // Get details based on contract type
+        if (contractType === 'public') {
+          details = await getPublicDetails(id);
+        } else if (contractType === 'private') {
+          details = await getPrivateDetails(id);
+        } else {
+          throw new Error(`Invalid contract type for activation: ${contractType}`);
+        }
+        
+        if (details.user) {
+          setError('This contract has already been activated');
+        }
+        
+        setContractDetails({
+          ...details,
+          deployTime: details.deployTime ? new Date(Number(details.deployTime) * 1000).toLocaleString() : 'Unknown',
+        });
+        
+        setLoading(false);
+        if (isWalletConnected) {
+          setActiveStep(1);
+        }
+      } catch (err) {
+        console.error("Failed to load contract details:", err);
+        setError(`Failed to load contract: ${err.message}`);
+        setLoading(false);
+      }
+    };
+
+    fetchContractDetails();
+  }, [id, contractType, getPublicDetails, getPrivateDetails, isWalletConnected]);
+
+  // Move to next step when wallet is connected
+  useEffect(() => {
+    if (isWalletConnected && activeStep === 0) {
+      setActiveStep(1);
+    }
+  }, [isWalletConnected, activeStep]);
+
+  const handleAccessCodeChange = (e) => {
+    setAccessCode(e.target.value);
   };
 
-  const handleActivationCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setActivationCode(e.target.value);
-    setError(null);
-  };
-
-  const handleActivate = () => {
-    if (!activationCode) {
-      setError('Please enter the activation code');
+  const handleActivateContract = async () => {
+    if (!isWalletConnected) {
+      setError('Please connect your wallet first');
       return;
     }
 
-    setIsActivating(true);
-    setError(null);
+    if (!id) {
+      setError('Contract ID is missing');
+      return;
+    }
 
-    // Simulate API call for activation - in a real app this would call a blockchain transaction
-    setTimeout(() => {
-      if (activationCode === '12345' || activationCode === 'TEST123') {
-        setActivationSuccess(true);
-      } else {
-        setError('Invalid activation code. Please check and try again.');
+    try {
+      setActivating(true);
+      setError(null);
+      
+      let result;
+      if (contractType === 'public') {
+        result = await activatePublicContract(id);
+      } else if (contractType === 'private') {
+        // For private contracts, we need an access code/key
+        if (!accessCode.trim()) {
+          throw new Error('Access code is required for private contracts');
+        }
+        result = await activatePrivateContract(id, accessCode);
       }
-      setIsActivating(false);
-    }, 2000);
+      
+      console.log('Contract activation result:', result);
+      setActivationSuccess(true);
+      setActiveStep(2);
+      
+      // Redirect after successful activation
+      setTimeout(() => {
+        navigate(`/${contractType}/${id}`);
+      }, 3000);
+    } catch (err) {
+      console.error('Contract activation failed:', err);
+      setError(`Failed to activate contract: ${err.message}`);
+    } finally {
+      setActivating(false);
+    }
   };
 
-  const goToContract = () => {
-    navigate(`/${contractType}/${id}`);
-  };
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  const navigateBackUrl = `/${contractType}`;
+  if (error && !activationSuccess) {
+    return (
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Activate Contract
+        </Typography>
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+        <Button 
+          variant="outlined" 
+          onClick={() => navigate(`/${contractType}`)}
+          sx={{ mt: 2 }}
+        >
+          Return to Contracts
+        </Button>
+      </Box>
+    );
+  }
+
+  if (!contractDetails) {
+    return (
+      <Alert severity="warning">
+        Contract not found. This contract may not exist or you may not have permission to view it.
+      </Alert>
+    );
+  }
 
   return (
     <div>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Button
-          component={Link}
-          to={navigateBackUrl}
-          startIcon={<ArrowBackIcon />}
-          sx={{ mr: 2 }}
-        >
-          Back to Contracts
-        </Button>
-        <Typography variant="h4">
-          Activate Contract
-        </Typography>
-      </Box>
-
-      <Paper sx={{ p: 3, mb: 3 }}>
-        {!activationSuccess ? (
-          <>
-            <Typography variant="h5" gutterBottom>
-              {contractData.title}
-            </Typography>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              ID: {contractData.id}
-            </Typography>
-
-            <Alert severity={contractType === 'private' ? 'warning' : 'info'} sx={{ my: 3 }}>
-              <AlertTitle>
-                {contractType === 'private' 
-                  ? 'This is a private contract requiring secure activation' 
-                  : 'This contract requires activation'}
-              </AlertTitle>
-              Enter the activation code that was sent to {contractData.recipient} to activate this contract.
-            </Alert>
-
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
-                <TextField
-                  required
-                  fullWidth
-                  id="activationCode"
-                  label="Activation Code"
-                  value={activationCode}
-                  onChange={handleActivationCodeChange}
-                  placeholder={contractType === 'private' ? "Enter your secure activation code" : "Enter activation code"}
-                  error={!!error}
-                  helperText={error || `The code was sent to ${contractData.recipient}`}
-                  disabled={isActivating}
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-              <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={isActivating ? <CircularProgress size={20} /> : <LockOpenIcon />}
-                  onClick={handleActivate}
-                  disabled={isActivating}
-                  fullWidth
-                  size="large"
-                >
-                  {isActivating ? 'Activating...' : 'Activate Contract'}
-                </Button>
-              </Grid>
-              {contractType === 'private' && (
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary">
-                    Need help? Contact support at support@netauthorizing.example
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-          </>
-        ) : (
+      <Typography variant="h4" gutterBottom>
+        Activate Contract
+      </Typography>
+      
+      <Typography variant="body1" paragraph>
+        {contractType === 'public' 
+          ? 'Activate this contract to gain access to the document and verify its authenticity.' 
+          : 'Activate this encrypted contract with your access key to view the secure document.'}
+      </Typography>
+      
+      <Paper sx={{ p: 3, mt: 2, mb: 4 }}>
+        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+        
+        {activeStep === 0 && (
           <Box sx={{ textAlign: 'center', py: 3 }}>
-            <CheckCircleOutlineIcon color="success" style={{ fontSize: 80 }} />
-            <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-              Contract Activated Successfully!
+            <Typography variant="h6" gutterBottom>
+              Connect Your Wallet
             </Typography>
             <Typography variant="body1" paragraph>
-              The {contractType} contract "{contractData.title}" has been successfully activated.
-              You can now view and verify the contract.
+              To activate this contract, you need to connect your Ethereum wallet.
             </Typography>
-
-            <Card sx={{ mb: 3, mt: 4, maxWidth: 500, mx: 'auto' }}>
-              <CardContent>
-                <Typography variant="subtitle1">Contract ID:</Typography>
-                <Typography variant="body1" gutterBottom>{contractData.id}</Typography>
-
-                <Typography variant="subtitle1">Title:</Typography>
-                <Typography variant="body1" gutterBottom>{contractData.title}</Typography>
-
-                <Typography variant="subtitle1">Status:</Typography>
-                <Typography variant="body1" color="success.main" fontWeight="bold">Active</Typography>
-              </CardContent>
-            </Card>
-
             <Button
               variant="contained"
               color="primary"
-              onClick={goToContract}
-              size="large"
-              sx={{ mt: 2 }}
+              onClick={connectWallet}
+              startIcon={<FingerprintIcon />}
+            >
+              Connect Wallet
+            </Button>
+          </Box>
+        )}
+        
+        {activeStep === 1 && (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Contract Information
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Title</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {contractDetails.title || 'Untitled Contract'}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Owner</Typography>
+                  <Typography variant="body2" sx={{ mb: 2, wordBreak: 'break-all' }}>
+                    {contractDetails.owner || 'Unknown'}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Created</Typography>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    {contractDetails.deployTime}
+                  </Typography>
+                  
+                  {contractType === 'private' && (
+                    <>
+                      <Typography variant="subtitle2" color="text.secondary">Access Code</Typography>
+                      <TextField
+                        fullWidth
+                        variant="outlined"
+                        margin="normal"
+                        placeholder="Enter your access code"
+                        value={accessCode}
+                        onChange={handleAccessCodeChange}
+                        helperText="This code was provided by the contract creator"
+                        type="password"
+                        size="small"
+                      />
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Ready to Activate
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  
+                  <Typography variant="body1" paragraph>
+                    By activating this contract, you will:
+                  </Typography>
+                  <ul>
+                    <li>
+                      <Typography variant="body2" gutterBottom>
+                        Gain access to the document associated with this contract
+                      </Typography>
+                    </li>
+                    <li>
+                      <Typography variant="body2" gutterBottom>
+                        Register your wallet address as an authorized user
+                      </Typography>
+                    </li>
+                    <li>
+                      <Typography variant="body2" gutterBottom>
+                        Be able to verify the document authenticity at any time
+                      </Typography>
+                    </li>
+                  </ul>
+                  
+                  <Box sx={{ mt: 3 }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleActivateContract}
+                      startIcon={<LockOpenIcon />}
+                      disabled={contractType === 'private' && !accessCode.trim()}
+                      fullWidth
+                    >
+                      {activating ? (
+                        <>
+                          <CircularProgress size={20} sx={{ mr: 1 }} />
+                          Activating...
+                        </>
+                      ) : (
+                        'Activate Contract'
+                      )}
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        )}
+        
+        {activeStep === 2 && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 2 }} />
+            <Typography variant="h5" gutterBottom color="success.main">
+              Contract Activated Successfully!
+            </Typography>
+            <Typography variant="body1" paragraph>
+              You now have access to the document. You will be redirected to the contract details page.
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate(`/${contractType}/${id}`)}
             >
               View Contract Details
             </Button>

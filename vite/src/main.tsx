@@ -13,6 +13,8 @@ import CreatePublicPage from './pages/public/create';
 import CreatePrivatePage from './pages/private/create';
 import ContractDetailsPage from './pages/contract-details';
 import ActivateContractPage from './pages/activate';
+import DataProvider from './provider/dataProvider';
+import WalletProvider from './provider/walletProvider';
 
 const router = createBrowserRouter([
   {
@@ -97,6 +99,10 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <DataProvider>
+      <WalletProvider>
+        <RouterProvider router={router} />
+      </WalletProvider>
+    </DataProvider>
   </React.StrictMode>,
 );

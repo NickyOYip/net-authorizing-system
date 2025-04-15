@@ -1,471 +1,597 @@
 import * as React from 'react';
+import { useState, useContext, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { Link, useNavigate } from 'react-router';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Divider from '@mui/material/Divider';
+import StepContent from '@mui/material/StepContent';
 import Alert from '@mui/material/Alert';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import IconButton from '@mui/material/IconButton';
-import Slider from '@mui/material/Slider';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
+import CircularProgress from '@mui/material/CircularProgress';
+import TextField from '@mui/material/TextField';
+import Divider from '@mui/material/Divider';
+import Grid from '@mui/material/Grid';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import SendIcon from '@mui/icons-material/Send';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
 import SecurityIcon from '@mui/icons-material/Security';
-import Chip from '@mui/material/Chip';
-
-const steps = ['Enter Contract Details', 'Recipient Information', 'Security Settings', 'Upload Documents', 'Review & Submit'];
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { DataContext } from '../../provider/dataProvider';
+import { WalletContext } from '../../provider/walletProvider';
+import { usePrivateFactory } from '../../hooks/contractHook';
 
 export default function CreatePrivatePage() {
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [title, setTitle] = React.useState('');
-  const [startDate, setStartDate] = React.useState<Date | null>(null);
-  const [endDate, setEndDate] = React.useState<Date | null>(null);
-  const [recipientEmail, setRecipientEmail] = React.useState('');
-  const [recipientName, setRecipientName] = React.useState('');
-  const [notificationType, setNotificationType] = React.useState('email');
-  const [jsonFile, setJsonFile] = React.useState<File | null>(null);
-  const [softCopyFile, setSoftCopyFile] = React.useState<File | null>(null);
-  const [activationCode, setActivationCode] = React.useState('');
-  const [encryptionLevel, setEncryptionLevel] = React.useState<number>(2);
-  const [requiresIdentityVerification, setRequiresIdentityVerification] = React.useState<boolean>(false);
-  const [accessLimitCount, setAccessLimitCount] = React.useState<number>(5);
-  const [enableExpiration, setEnableExpiration] = React.useState<boolean>(true);
   const navigate = useNavigate();
+  const { data } = useContext(DataContext);
+  const { walletStatus } = useContext(WalletContext);
+  const { createPrivateContract } = usePrivateFactory();
+  
+  const [activeStep, setActiveStep] = useState(0);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [accessCode, setAccessCode] = useState('');
+  const [showAccessCode, setShowAccessCode] = useState(false);
+  const [generateRandomCode, setGenerateRandomCode] = useState(true);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileHash, setFileHash] = useState('');
+  const [encryptedFileHash, setEncryptedFileHash] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createdContractAddress, setCreatedContractAddress] = useState('');
+  const [error, setError] = useState(null);
 
+  const isWalletConnected = walletStatus !== 'Not connected';
+
+  // Generate a random access code when component mounts or when the checkbox is toggled
   React.useEffect(() => {
-    if (activeStep === 4) {
-      // Generate a random activation code for demo purposes
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-      setActivationCode(code);
+    if (generateRandomCode) {
+      const randomCode = Math.random().toString(36).substring(2, 10) +
+                         Math.random().toString(36).substring(2, 10);
+      setAccessCode(randomCode);
     }
-  }, [activeStep]);
+  }, [generateRandomCode]);
 
+  // Handle file selection, hash calculation, and encryption
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setError(null);
+
+    try {
+      // Calculate hash of the file
+      const arrayBuffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      setFileHash(hashHex);
+      
+      // For demonstration, simulate encryption by combining the hash with a salt
+      // In a real implementation, this would use proper encryption with the access code
+      const salt = accessCode || 'default-salt';
+      const encoder = new TextEncoder();
+      const saltedData = encoder.encode(hashHex + salt);
+      const encryptedBuffer = await crypto.subtle.digest('SHA-256', saltedData);
+      const encryptedArray = Array.from(new Uint8Array(encryptedBuffer));
+      const encryptedHex = encryptedArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      setEncryptedFileHash(encryptedHex);
+    } catch (err) {
+      console.error("Error processing the file:", err);
+      setError("Failed to process the file. Please try again.");
+    }
+  };
+
+  const handleTitleChange = (e) => {
+    setTitle(e.target.value);
+  };
+
+  const handleDescriptionChange = (e) => {
+    setDescription(e.target.value);
+  };
+
+  const handleRecipientChange = (e) => {
+    setRecipient(e.target.value);
+  };
+
+  const handleAccessCodeChange = (e) => {
+    setAccessCode(e.target.value);
+    
+    // Re-encrypt the file hash when access code changes, if a file is selected
+    if (fileHash) {
+      encryptFileHash(fileHash, e.target.value);
+    }
+  };
+
+  const toggleShowAccessCode = () => {
+    setShowAccessCode(!showAccessCode);
+  };
+
+  const handleGenerateRandomToggle = (e) => {
+    setGenerateRandomCode(e.target.checked);
+    if (!e.target.checked) {
+      setAccessCode('');
+    }
+  };
+
+  // Function to "encrypt" the file hash with the access code
+  const encryptFileHash = async (hash, code) => {
+    if (!hash || !code) return;
+    
+    try {
+      const salt = code;
+      const encoder = new TextEncoder();
+      const saltedData = encoder.encode(hash + salt);
+      const encryptedBuffer = await crypto.subtle.digest('SHA-256', saltedData);
+      const encryptedArray = Array.from(new Uint8Array(encryptedBuffer));
+      const encryptedHex = encryptedArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      setEncryptedFileHash(encryptedHex);
+    } catch (err) {
+      console.error("Error encrypting file hash:", err);
+    }
+  };
+
+  // Validate email format
+  const isValidEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  // Handle next step in form
   const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    if (activeStep === 0) {
+      if (!title.trim()) {
+        setError("Please enter a contract title");
+        return;
+      }
+      if (!recipient.trim() || !isValidEmail(recipient)) {
+        setError("Please enter a valid recipient email");
+        return;
+      }
+      if (!accessCode.trim() || accessCode.length < 8) {
+        setError("Please provide an access code of at least 8 characters");
+        return;
+      }
+    } else if (activeStep === 1) {
+      if (!selectedFile || !fileHash || !encryptedFileHash) {
+        setError("Please select a file to verify");
+        return;
+      }
+    }
+    
+    setActiveStep((prevStep) => prevStep + 1);
+    setError(null);
   };
 
+  // Handle back step in form
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setActiveStep((prevStep) => prevStep - 1);
+    setError(null);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // Here you would handle the contract creation logic
-    // For now we'll just navigate back to the contracts list
-    alert('Private contract created successfully! The secure activation code has been sent to the recipient.');
+  // Handle contract creation
+  const handleCreateContract = useCallback(async () => {
+    if (!isWalletConnected) {
+      setError("Please connect your wallet first");
+      return;
+    }
+
+    if (!title.trim() || !encryptedFileHash || !recipient.trim() || !accessCode.trim()) {
+      setError("Contract title, recipient, access code and document are required");
+      return;
+    }
+
+    if (!isValidEmail(recipient)) {
+      setError("Please enter a valid recipient email");
+      return;
+    }
+
+    if (!data.privateFactory?.address) {
+      setError("Factory contract address not found");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      setError(null);
+
+      // Call the hook to create a new private contract
+      const result = await createPrivateContract(
+        data.privateFactory.address,
+        title,
+        description,
+        encryptedFileHash, // Use the encrypted hash for private contracts
+        recipient,
+        accessCode
+      );
+      
+      console.log("Contract created:", result);
+      setCreatedContractAddress(result.contractAddress);
+      setActiveStep(3); // Move to success step
+      
+      // Optional: Upload the encrypted file to Irys storage
+      // This would require additional implementation using the irys uploader from context
+      
+    } catch (err) {
+      console.error("Contract creation failed:", err);
+      setError(`Failed to create contract: ${err.message}`);
+    } finally {
+      setCreating(false);
+    }
+  }, [
+    isWalletConnected, 
+    title, 
+    description, 
+    encryptedFileHash,
+    recipient,
+    accessCode,
+    data.privateFactory?.address, 
+    createPrivateContract
+  ]);
+
+  // Redirect to the new contract after creation
+  const handleViewContract = () => {
+    navigate(`/private/${createdContractAddress}`);
+  };
+
+  // Navigate back to contracts list
+  const handleBackToList = () => {
     navigate('/private');
   };
 
-  const encryptionLevelMarks = [
-    {
-      value: 1,
-      label: 'Standard',
-    },
-    {
-      value: 2,
-      label: 'High',
-    },
-    {
-      value: 3,
-      label: 'Maximum',
-    },
-  ];
-
-  const getEncryptionLevelLabel = (value: number) => {
-    switch (value) {
-      case 1:
-        return 'Standard';
-      case 2:
-        return 'High';
-      case 3:
-        return 'Maximum';
-      default:
-        return '';
-    }
-  };
-
-  return (
-    <div>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Button
-          component={Link}
-          to="/private"
-          startIcon={<ArrowBackIcon />}
-          sx={{ mr: 2 }}
+  if (!isWalletConnected) {
+    return (
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Create Private Contract
+        </Typography>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          Please connect your wallet to create a private contract.
+        </Alert>
+        <Button 
+          variant="outlined" 
+          onClick={() => navigate('/private')}
+          sx={{ mt: 2 }}
         >
           Back to Contracts
         </Button>
-        <Typography variant="h4">
-          Create New Private Contract
-        </Typography>
       </Box>
+    );
+  }
 
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+  return (
+    <div>
+      <Typography variant="h4" gutterBottom>
+        Create Private Contract
+      </Typography>
+      
+      <Typography variant="body1" paragraph>
+        Private contracts provide the highest level of security. Documents are encrypted and only accessible with an access code.
+      </Typography>
+      
+      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
 
-        <form onSubmit={handleSubmit}>
-          {activeStep === 0 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  Private contracts offer the highest level of security and are suitable for sensitive or confidential information.
-                </Alert>
-                <TextField
-                  required
-                  fullWidth
-                  id="title"
-                  label="Contract Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  helperText="Enter a descriptive title for your contract"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker
-                    label="Start Date"
-                    value={startDate}
-                    onChange={(newValue) => setStartDate(newValue)}
-                    sx={{ width: '100%' }}
+        <Stepper activeStep={activeStep} orientation="vertical">
+          {/* Step 1: Contract Information */}
+          <Step>
+            <StepLabel>Contract Information</StepLabel>
+            <StepContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Contract Title"
+                    value={title}
+                    onChange={handleTitleChange}
+                    helperText="Enter a title for your contract"
+                    variant="outlined"
                   />
-                </LocalizationProvider>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker
-                    label="End Date"
-                    value={endDate}
-                    onChange={(newValue) => setEndDate(newValue)}
-                    disabled={!enableExpiration}
-                    sx={{ width: '100%' }}
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={description}
+                    onChange={handleDescriptionChange}
+                    multiline
+                    rows={4}
+                    helperText="Provide a description of this document (optional)"
+                    variant="outlined"
                   />
-                </LocalizationProvider>
-                <FormControlLabel
-                  control={
-                    <Switch 
-                      checked={enableExpiration} 
-                      onChange={(e) => setEnableExpiration(e.target.checked)} 
-                    />
-                  }
-                  label="Enable expiration date"
-                />
-              </Grid>
-            </Grid>
-          )}
-
-          {activeStep === 1 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Recipient Information
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  The recipient will receive a secure activation code to access this private contract.
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="recipientName"
-                  label="Recipient Name"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="recipientEmail"
-                  label="Recipient Email"
-                  value={recipientEmail}
-                  onChange={(e) => setRecipientEmail(e.target.value)}
-                  type="email"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel id="notification-type-label">Notification Method</InputLabel>
-                  <Select
-                    labelId="notification-type-label"
-                    id="notification-type"
-                    value={notificationType}
-                    label="Notification Method"
-                    onChange={(e) => setNotificationType(e.target.value)}
-                  >
-                    <MenuItem value="email">Email</MenuItem>
-                    <MenuItem value="sms">SMS</MenuItem>
-                    <MenuItem value="both">Both Email & SMS</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch 
-                      checked={requiresIdentityVerification} 
-                      onChange={(e) => setRequiresIdentityVerification(e.target.checked)} 
-                    />
-                  }
-                  label="Require identity verification"
-                />
-                <Typography variant="caption" color="text.secondary" display="block">
-                  The recipient will need to verify their identity before accessing the contract
-                </Typography>
-              </Grid>
-            </Grid>
-          )}
-
-          {activeStep === 2 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Security Settings
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Configure the security level for this private contract.
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <SecurityIcon color={encryptionLevel === 3 ? "error" : "primary"} sx={{ mr: 1 }} />
-                  <Typography id="encryption-level-slider" gutterBottom>
-                    Encryption Level
-                  </Typography>
-                </Box>
-                <Slider
-                  value={encryptionLevel}
-                  onChange={(_, newValue) => setEncryptionLevel(newValue as number)}
-                  aria-labelledby="encryption-level-slider"
-                  step={1}
-                  marks={encryptionLevelMarks}
-                  min={1}
-                  max={3}
-                  sx={{ mb: 4 }}
-                />
-                <Alert severity={encryptionLevel === 3 ? "warning" : "info"}>
-                  {encryptionLevel === 1 && "Standard encryption is suitable for most general documents."}
-                  {encryptionLevel === 2 && "High encryption is recommended for sensitive business documents."}
-                  {encryptionLevel === 3 && "Maximum encryption is designed for highly confidential information, but may impact performance."}
-                </Alert>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography gutterBottom>
-                  Access Limit (Number of times the document can be accessed)
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Slider
-                    value={accessLimitCount}
-                    onChange={(_, newValue) => setAccessLimitCount(newValue as number)}
-                    aria-label="Access limit"
-                    min={1}
-                    max={20}
-                    sx={{ mr: 2, width: '80%' }}
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Recipient Email"
+                    value={recipient}
+                    onChange={handleRecipientChange}
+                    helperText="Enter the email of the person who will activate this contract"
+                    variant="outlined"
+                    InputProps={{
+                      startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    }}
+                    error={recipient.trim() !== '' && !isValidEmail(recipient)}
                   />
-                  <Typography>
-                    {accessLimitCount} {accessLimitCount === 1 ? 'time' : 'times'}
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          )}
-
-          {activeStep === 3 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Upload Documents
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Upload the JSON metadata and soft copy files for this contract. These will be stored securely, encrypted, and hashed for verification.
-                </Typography>
-                <Chip
-                  icon={<SecurityIcon />}
-                  label={`${getEncryptionLevelLabel(encryptionLevel)} Encryption`}
-                  color={encryptionLevel === 3 ? "error" : "primary"}
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<CloudUploadIcon />}
-                  fullWidth
-                  sx={{ height: '100px' }}
-                >
-                  Upload JSON Metadata
-                  <input
-                    type="file"
-                    accept="application/json"
-                    hidden
-                    onChange={(e) => setJsonFile(e.target.files?.[0] || null)}
-                  />
-                </Button>
-                {jsonFile && (
-                  <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
-                    {jsonFile.name} (Will be encrypted)
-                  </Typography>
-                )}
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<CloudUploadIcon />}
-                  fullWidth
-                  sx={{ height: '100px' }}
-                >
-                  Upload Soft Copy
-                  <input
-                    type="file"
-                    accept="application/pdf,image/*"
-                    hidden
-                    onChange={(e) => setSoftCopyFile(e.target.files?.[0] || null)}
-                  />
-                </Button>
-                {softCopyFile && (
-                  <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
-                    {softCopyFile.name} (Will be encrypted)
-                  </Typography>
-                )}
-              </Grid>
-            </Grid>
-          )}
-
-          {activeStep === 4 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Review Contract Details
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle1">Contract Title:</Typography>
-                <Typography variant="body1" gutterBottom>{title}</Typography>
-
-                <Typography variant="subtitle1">Duration:</Typography>
-                <Typography variant="body1" gutterBottom>
-                  {startDate?.toLocaleDateString()} - {enableExpiration ? endDate?.toLocaleDateString() : 'No expiration'}
-                </Typography>
-
-                <Typography variant="subtitle1">Recipient:</Typography>
-                <Typography variant="body1" gutterBottom>
-                  {recipientName} ({recipientEmail})
-                </Typography>
-
-                <Typography variant="subtitle1">Notification Method:</Typography>
-                <Typography variant="body1" gutterBottom>
-                  {notificationType === 'email' ? 'Email' : 
-                   notificationType === 'sms' ? 'SMS' : 
-                   'Both Email & SMS'}
-                </Typography>
-
-                <Typography variant="subtitle1">Identity Verification:</Typography>
-                <Typography variant="body1" gutterBottom>
-                  {requiresIdentityVerification ? 'Required' : 'Not Required'}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle1">Security Level:</Typography>
-                <Chip 
-                  icon={<SecurityIcon />} 
-                  label={`${getEncryptionLevelLabel(encryptionLevel)} Encryption`}
-                  color={encryptionLevel === 3 ? "error" : "primary"}
-                  sx={{ mb: 1 }}
-                />
-
-                <Typography variant="subtitle1" sx={{ mt: 2 }}>Access Limit:</Typography>
-                <Typography variant="body1" gutterBottom>
-                  {accessLimitCount} {accessLimitCount === 1 ? 'time' : 'times'}
-                </Typography>
-
-                <Typography variant="subtitle1">JSON File:</Typography>
-                <Typography variant="body1" gutterBottom>{jsonFile?.name || 'None'}</Typography>
-
-                <Typography variant="subtitle1">Soft Copy File:</Typography>
-                <Typography variant="body1" gutterBottom>{softCopyFile?.name || 'None'}</Typography>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Card variant="outlined" sx={{ bgcolor: '#f5f5f5' }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <SecurityIcon color="success" sx={{ mr: 1 }} />
+                        <Typography variant="h6" gutterBottom>
+                          Security Settings
+                        </Typography>
+                      </Box>
+                      
+                      <FormControlLabel
+                        control={
+                          <Checkbox 
+                            checked={generateRandomCode}
+                            onChange={handleGenerateRandomToggle}
+                            color="primary"
+                          />
+                        }
+                        label="Generate random access code"
+                      />
+                      
+                      <TextField
+                        required
+                        fullWidth
+                        margin="normal"
+                        label="Access Code"
+                        value={accessCode}
+                        onChange={handleAccessCodeChange}
+                        helperText="This code will be required to access the document. Share it securely with the recipient."
+                        variant="outlined"
+                        disabled={generateRandomCode}
+                        type={showAccessCode ? 'text' : 'password'}
+                        InputProps={{
+                          startAdornment: <LockIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={toggleShowAccessCode}
+                                edge="end"
+                              >
+                                {showAccessCode ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
               </Grid>
               
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
+              <Box sx={{ mb: 2, mt: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  sx={{ mt: 1, mr: 1 }}
+                >
+                  Continue
+                </Button>
+                <Button
+                  onClick={handleBackToList}
+                  sx={{ mt: 1, mr: 1 }}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            </StepContent>
+          </Step>
+          
+          {/* Step 2: Document Upload */}
+          <Step>
+            <StepLabel>Document Upload</StepLabel>
+            <StepContent>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body1" paragraph>
+                  Upload the document to be encrypted and verified by the contract.
+                </Typography>
                 
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  A secure activation code will be sent to the recipient. They'll need this code to access the private contract.
-                </Alert>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                  <Typography variant="subtitle1" sx={{ mr: 2 }}>
-                    Secure Activation Code:
-                  </Typography>
-                  <Typography variant="h6" fontFamily="monospace" fontWeight="bold" sx={{ flexGrow: 1 }}>
-                    {activationCode}
-                  </Typography>
-                  <IconButton 
-                    onClick={() => navigator.clipboard.writeText(activationCode)}
-                    title="Copy to clipboard"
+                <input
+                  accept="*/*"
+                  style={{ display: 'none' }}
+                  id="contained-button-file"
+                  type="file"
+                  onChange={handleFileChange}
+                />
+                <label htmlFor="contained-button-file">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ mb: 2 }}
                   >
-                    <ContentCopyIcon />
+                    Select File
+                  </Button>
+                </label>
+                
+                {selectedFile && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2">Selected File:</Typography>
+                    <Typography variant="body2">{selectedFile.name}</Typography>
+                    <Typography variant="caption" component="div" sx={{ wordBreak: 'break-all' }}>
+                      Original Hash: {fileHash ? `${fileHash.substring(0, 20)}...` : 'Calculating...'}
+                    </Typography>
+                    <Typography variant="caption" component="div" color="success.main" sx={{ wordBreak: 'break-all' }}>
+                      Encrypted Hash: {encryptedFileHash ? `${encryptedFileHash.substring(0, 20)}...` : 'Encrypting...'}
+                    </Typography>
+                    <Alert severity="success" sx={{ mt: 2 }}>
+                      Document encrypted successfully with the provided access code!
+                    </Alert>
+                  </Box>
+                )}
+              </Box>
+              
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  sx={{ mt: 1, mr: 1 }}
+                  disabled={!selectedFile || !fileHash || !encryptedFileHash}
+                >
+                  Continue
+                </Button>
+                <Button
+                  onClick={handleBack}
+                  sx={{ mt: 1, mr: 1 }}
+                >
+                  Back
+                </Button>
+              </Box>
+            </StepContent>
+          </Step>
+          
+          {/* Step 3: Review & Create */}
+          <Step>
+            <StepLabel>Review & Create</StepLabel>
+            <StepContent>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Contract Details
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Title</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {title}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Description</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {description || 'No description provided'}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Recipient</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {recipient}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Access Code</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {showAccessCode ? accessCode : '•'.repeat(accessCode.length)}
+                    <IconButton size="small" onClick={toggleShowAccessCode} sx={{ ml: 1 }}>
+                      {showAccessCode ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" color="text.secondary">Document</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {selectedFile?.name}
+                  </Typography>
+                </CardContent>
+              </Card>
+              
+              <Alert severity="warning" sx={{ mt: 3, mb: 3 }}>
+                Important: Make sure to securely share the access code with the recipient. Without it, the document cannot be accessed or verified.
+              </Alert>
+              
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleCreateContract}
+                  sx={{ mt: 1, mr: 1 }}
+                  startIcon={<SendIcon />}
+                  disabled={creating}
+                >
+                  {creating ? (
+                    <>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Contract'
+                  )}
+                </Button>
+                <Button
+                  onClick={handleBack}
+                  sx={{ mt: 1, mr: 1 }}
+                  disabled={creating}
+                >
+                  Back
+                </Button>
+              </Box>
+            </StepContent>
+          </Step>
+          
+          {/* Step 4: Success */}
+          <Step>
+            <StepLabel>Contract Created</StepLabel>
+            <StepContent>
+              <Box sx={{ textAlign: 'center', py: 3 }}>
+                <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 2 }} />
+                <Typography variant="h5" gutterBottom color="success.main">
+                  Contract Created Successfully!
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  Your private contract has been created. Share the contract address and access code securely with {recipient}.
+                </Typography>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Contract Address:
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 3, wordBreak: 'break-all' }}>
+                  {createdContractAddress}
+                </Typography>
+                
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Access Code:
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', bgcolor: '#f5f5f5', p: 1, borderRadius: 1 }}>
+                    {showAccessCode ? accessCode : '•'.repeat(accessCode.length)}
+                  </Typography>
+                  <IconButton size="small" onClick={toggleShowAccessCode} sx={{ ml: 1 }}>
+                    {showAccessCode ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </Box>
-              </Grid>
-            </Grid>
-          )}
-
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-            {activeStep > 0 && (
-              <Button onClick={handleBack} sx={{ mr: 1 }}>
-                Back
-              </Button>
-            )}
-
-            {activeStep < steps.length - 1 ? (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleNext}
-                disabled={
-                  (activeStep === 0 && (!title || !startDate || (enableExpiration && !endDate))) ||
-                  (activeStep === 1 && (!recipientName || !recipientEmail)) ||
-                  (activeStep === 3 && (!jsonFile || !softCopyFile))
-                }
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-              >
-                Create Contract
-              </Button>
-            )}
-          </Box>
-        </form>
-      </Paper>
+                
+                <Box sx={{ mt: 3 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleViewContract}
+                    sx={{ mr: 2 }}
+                  >
+                    View Contract
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handleBackToList}
+                  >
+                    Back to List
+                  </Button>
+                </Box>
+              </Box>
+            </StepContent>
+          </Step>
+        </Stepper>
+      </Box>
     </div>
   );
 }
