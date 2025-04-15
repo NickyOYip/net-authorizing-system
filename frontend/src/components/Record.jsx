@@ -13,6 +13,7 @@ function Record ({address}) {
     //add your logic here 
 
     if (loading) {
+        
         return (
             <div className='card' style={{alignItems:"center",justifyContent:"center"}}>
                 <div  className='row' style={{alignItems:"center",padding:"30px"}}>

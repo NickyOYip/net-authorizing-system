@@ -1,13 +1,14 @@
 import React, { useEffect, useContext, useState } from 'react';
 import { DataContext } from '../store/dataStore';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import Activate from './PopUp.jsx';
 
 export function MyCert(props) {
 
     const { data } = useContext(DataContext);
     const { refetchUserProfile } = useUserProfile();
-    
+
     //Dont delete
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -17,6 +18,7 @@ export function MyCert(props) {
     //contractOwner === currentUser  => button appear 
     //contractUser === currentUser  => button disappear 
     const [isOwner, setIsOwner] = useState(true);
+
 
     useEffect(() => {
         const loadUserProfile = async () => {
@@ -79,31 +81,34 @@ export function MyCert(props) {
 
     //dummy for contract address
     const contractAddress = "78907fndlks9fnejl543f5434";
-    
+
 
     //handle view button 
     //redirect to View + pass contract address
     const viewContract = () => {
         navigate('/view', {
-          state: {
-            address: { contractAddress },
-          },
-          replace: true // Optional: prevents adding to history
+            state: {
+                address: { contractAddress },
+            },
+            replace: true // Optional: prevents adding to history
         });
-      };
+    };
 
     //handle Edit button 
-     //redirect to Update + pass contract address
-    const handleEdit=()=> {
+    //redirect to Update + pass contract address
+    const handleEdit = () => {
         navigate('/update', {
             state: {
-              address: { contractAddress },
+                address: { contractAddress },
             }
-          }
+        }
         )
     }
-    
 
+    //for popup activation 
+    const [isOpen, setIsOpen] = useState(false);
+    //for testing 
+    const contractType = 'broadcast';
     return (
         <div className="card-body px-0 pb-2">
             <div className="table-responsive p-0">
@@ -135,6 +140,12 @@ export function MyCert(props) {
                                 Add New Version
                             </th>
 
+                           
+                            <th className="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">
+                                Activate
+                            </th>
+                            
+                            
 
                         </tr>
                     </thead>
@@ -184,7 +195,7 @@ export function MyCert(props) {
 
                                 <td style={{ textAlign: "center", alignContent: "center" }}
                                     //or pass contract address
-                                   onClick={viewContract}>
+                                    onClick={viewContract}>
                                     <span className="badge badge-sm bg-gradient-dark" >
                                         View
                                     </span>
@@ -192,8 +203,8 @@ export function MyCert(props) {
                                 {/* contractOwner == currentUser  => button appear */}
                                 {isOwner ? (
                                     <td style={{ justifyContent: "center" }}>
-                                        <span className="badge badge-sm bg-gradient-dark" 
-                                              onClick={handleEdit}>
+                                        <span className="badge badge-sm bg-gradient-dark"
+                                            onClick={handleEdit}>
                                             Edit
                                         </span>
                                     </td>
@@ -205,13 +216,28 @@ export function MyCert(props) {
                                     </td>
                                 )}
 
-
+                                {/**pass address to Activate page */}
+                                <td style={{ justifyContent: "center" }}>
+                                    {cert.state == "Inactive" ? (
+                                        <span className="badge badge-sm bg-gradient-dark"
+                                            onClick={()=>{setIsOpen(true)}}>
+                                            Activate Now!
+                                        </span>
+                                    ) : (
+                                        <p>Active Contract</p>
+                                    )}
+                                </td>
                             </tr>))
                         }
                     </tbody>
                 </table>
+                <Activate
+                    isOpen={isOpen}
+                    onClose={() => setIsOpen(false)}
+                    contractAddress = {"hfdslihf89484hfr849rh9wf4j0frj30x09e30"} // input contract address variable here 
+                />
             </div>
-        </div>
+        </div >
     )
 
 }

@@ -7,10 +7,11 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import { generateActivationCode, calculateHash, deployCertificate, addCertificateToUser } from '../services/certificateService';
 import CreateCert from '../pages/Create';
 
-function Update({type,address}) {
+function Update({ type, address }) {
     const certType = type.type;
     const { data } = useContext(DataContext);
     const { refetchUserProfile } = useUserProfile();
+
     const [formData, setFormData] = useState({
         certificateTitle: '',
         startDate: '',
@@ -18,17 +19,18 @@ function Update({type,address}) {
         jsonFile: null,
         documentFile: null
     });
+    
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
 
     const handleDateChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
-          ...prev,
-          [name]: type === 'checkbox' ? checked : value
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
         }));
-      };
-    
+    };
+
 
     /**
      * @notice Handles file input changes and calculates document hash
@@ -59,9 +61,6 @@ function Update({type,address}) {
 
             const activeCode = generateActivationCode();
             console.log('Generated activation code:', activeCode);
-
-            const jsonHash = await calculateHash(formData.jsonFile);
-            console.log('Calculated JSON hash:', jsonHash);
 
             const certificateData = {
                 ...formData,
