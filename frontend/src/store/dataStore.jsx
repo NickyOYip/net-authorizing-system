@@ -66,6 +66,70 @@ const DataProvider = ({ children }) => {
     },
     
     // Add other global state variables here
+
+    exampleUserProfile1 : new UserProfile({
+      owner: "0x1234567890abcdef1234567890abcdef12345678",
+      certificatesList: [
+        {
+          owner: "0xabcdefabcdefabcdefabcdefabcdefabcdef",
+          userAddress: "0x1234567890abcdef1234567890abcdef12345678",
+          data: "EncryptedData123",
+          documentHash: "abc123hash",
+          jsonHash: "json123hash",
+          certificateName: "Blockchain Developer",
+          orgName: "Ethereum Academy",
+          activeCode: "ACT123456",
+          activeTime: 1712000000, // Future timestamp
+          disableTime: 1722000000, // Further in the future
+          deployTime: 1700000000, // Past timestamp
+          state: "Active",
+          history: [
+            { event: "CertificateIssued", timestamp: 1700000000, details: "Certificate issued by Ethereum Academy" },
+            { event: "CertificateActivated", timestamp: 1712000000, details: "User activated the certificate" }
+          ]
+        },
+        {
+          owner: "0xabcdefabcdefabcdefabcdefabcdefabcdef",
+          userAddress: "0x1234567890abcdef1234567890abcdef12345678",
+          data: "EncryptedData456",
+          documentHash: "def456hash",
+          jsonHash: "json456hash",
+          certificateName: "Smart Contract Auditor",
+          orgName: "Blockchain Security Institute",
+          activeCode: "ACT654321",
+          activeTime: 1720000000,
+          disableTime: 1730000000,
+          deployTime: 1705000000,
+          state: "Inactive",
+          history: [
+            { event: "CertificateIssued", timestamp: 1705000000, details: "Certificate issued by Blockchain Security Institute" }
+          ]
+        }
+      ],
+      certifiedCertificates: [
+        {
+          owner: "0xabcdefabcdefabcdefabcdefabcdefabcdef",
+          userAddress: "0x1234567890abcdef1234567890abcdef12345678",
+          data: "EncryptedData123",
+          documentHash: "abc123hash",
+          jsonHash: "json123hash",
+          certificateName: "Blockchain Developer",
+          orgName: "Ethereum Academy",
+          activeCode: "ACT123456",
+          activeTime: 1712000000,
+          disableTime: 1722000000,
+          deployTime: 1700000000,
+          state: "Active",
+          history: [
+            { event: "CertificateActivated", timestamp: 1712000000, details: "User activated the certificate" }
+          ]
+        }
+      ],
+      history: [
+        { event: "UserRegistered", timestamp: 1699000000, details: "User registered on the platform" },
+        { event: "CertificateIssued", timestamp: 1700000000, details: "First certificate issued" }
+      ]
+    })
     
   });
 
