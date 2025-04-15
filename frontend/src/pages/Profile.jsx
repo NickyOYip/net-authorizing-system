@@ -26,7 +26,7 @@ const Profile = () => {
   const { refetchUserProfile } = useUserProfile();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const address = '0x385847c71ae992d004cbef79e9ca02b9c9674172';
   return (
     <div className="g-sidenav-show bg-gray-100">
       <Sidebar />
@@ -53,17 +53,18 @@ const Profile = () => {
               <div className="col-auto my-auto">
                 <div className="h-100">
 
-                  <h5 className="mb-1">Address: {/** User address */} </h5>
+                  <h4 className="mb-1">Current Address : {address} {/** User address */} </h4>
                   <p className="mb-0 font-weight-normal text-sm"></p>
                 </div>
               </div>
-
-              <h6>Number of contracts owned by user</h6>
+              <div className="card" style={{border:"none",boxShadow:"none",paddingTop:"30px"}}>
+              <h5 style={{textAlign:"left"}}>My contracts ({"num of contract"})</h5> {/** shows user's contracts where contract user = current User */}
               <div className="">
                 {/*show all contract that match contract address 
                   * should change to pass array, not tag
                   */}{MyCert('Active')}
                   
+              </div>
               </div>
             </div>
           </div>
