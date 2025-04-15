@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
 
-// ABI needed, please help to fill in the acutal ABI
-const CONTRACT_ABI = [
-  'function currentVersion() view returns (uint256)',
-  'function subContracts(uint256) view returns (address)',
-  'function title() view returns (string)',
-  'function jsonHash() view returns (bytes32)',
-  'function softCopyHash() view returns (bytes32)',
-  'function storageLink() view returns (string)',
-  'function startDate() view returns (uint256)',
-  'function endDate() view returns (uint256)'
+// ABI for BroadcastContract
+const BROADCAST_CONTRACT_ABI = [
+  "function currentVersion() view returns (uint256)",
+  "function subContracts(uint256) view returns (address)"
+];
+
+// ABI for BroadcastSubContract
+const BROADCAST_SUB_CONTRACT_ABI = [
+  "function title() view returns (string)",
+  "function jsonHash() view returns (bytes32)",
+  "function softCopyHash() view returns (bytes32)",
+  "function storageLink() view returns (string)",
+  "function startDate() view returns (uint256)",
+  "function endDate() view returns (uint256)"
 ];
 
 const CertificateViewPage = () => {
@@ -20,20 +24,23 @@ const CertificateViewPage = () => {
 
   const handleFetch = async () => {
     if (!ethers.utils.isAddress(address)) {
-      setError('Invalid address');
+      setError('Invalid contract address');
       return;
     }
+
     setError('');
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = provider.getSigner();
 
-      const mainContract = new ethers.Contract(address, CONTRACT_ABI, signer);
+      // Load main contract
+      const mainContract = new ethers.Contract(address, BROADCAST_CONTRACT_ABI, signer);
       const currentVersion = await mainContract.currentVersion();
       const subContractAddr = await mainContract.subContracts(currentVersion);
 
-      const subContract = new ethers.Contract(subContractAddr, CONTRACT_ABI, signer);
+      // Load sub-contract
+      const subContract = new ethers.Contract(subContractAddr, BROADCAST_SUB_CONTRACT_ABI, signer);
       const title = await subContract.title();
       const jsonHash = await subContract.jsonHash();
       const softCopyHash = await subContract.softCopyHash();
@@ -50,31 +57,46 @@ const CertificateViewPage = () => {
         endDate: new Date(endDate.toNumber() * 1000).toLocaleString()
       });
     } catch (err) {
-      setError('Error fetching data');
+      setError('Error fetching certificate data');
       console.error(err);
     }
   };
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-xl font-bold mb-4">Certificate Viewer</h1>
+      <h1 className="text-2xl font-bold mb-4">Certificate Viewer</h1>
       <input
-        className="border px-2 py-1 w-full mb-2"
+        className="border border-gray-400 px-3 py-2 w-full mb-2 rounded"
         type="text"
         value={address}
         onChange={(e) => setAddress(e.target.value)}
         placeholder="Enter contract address"
       />
-      <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleFetch}>
+      <button
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
+        onClick={handleFetch}
+      >
         Fetch Certificate
       </button>
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+
+      {error && <p className="text-red-500 mt-4">{error}</p>}
+
       {data && (
-        <div className="mt-4 bg-gray-100 p-4 rounded">
+        <div className="mt-6 bg-gray-100 p-4 rounded shadow">
           <p><strong>Title:</strong> {data.title}</p>
           <p><strong>JSON Hash:</strong> {data.jsonHash}</p>
           <p><strong>Soft Copy Hash:</strong> {data.softCopyHash}</p>
-          <p><strong>Storage Link:</strong> <a href={`https://arweave.net/${data.storageLink}`} target="_blank" rel="noopener noreferrer">{data.storageLink}</a></p>
+          <p>
+            <strong>Storage Link:</strong>{" "}
+            <a
+              href={`https://arweave.net/${data.storageLink}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              {data.storageLink}
+            </a>
+          </p>
           <p><strong>Start Date:</strong> {data.startDate}</p>
           <p><strong>End Date:</strong> {data.endDate}</p>
         </div>
