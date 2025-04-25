@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/all.css';
 import { 
   Box, 
   Typography, 
@@ -15,6 +16,7 @@ import WifiIcon from '@mui/icons-material/Wifi';
 import PublicIcon from '@mui/icons-material/Public';
 import LockIcon from '@mui/icons-material/Lock';
 import VerifiedIcon from '@mui/icons-material/Verified';
+import "../styles/all.css"
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -84,7 +86,7 @@ const Dashboard = () => {
       </Paper>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{marginBottom:"15px" }}>
           <StatCard 
             icon={<WifiIcon fontSize="large" />}
             title="Broadcast Contracts"
@@ -92,7 +94,7 @@ const Dashboard = () => {
             color="#4e73df"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{marginBottom:"15px" }}>
           <StatCard 
             icon={<PublicIcon fontSize="large" />}
             title="Public Contracts"
@@ -100,7 +102,7 @@ const Dashboard = () => {
             color="#1cc88a"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{marginBottom:"15px" }}>
           <StatCard 
             icon={<LockIcon fontSize="large" />}
             title="Private Contracts"
@@ -108,7 +110,7 @@ const Dashboard = () => {
             color="#36b9cc"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{marginBottom:"15px" }}>
           <StatCard 
             icon={<VerifiedIcon fontSize="large" />}
             title="Documents Verified"
@@ -129,7 +131,7 @@ const Dashboard = () => {
           variant="contained" 
           component={Link} 
           to="/broadcast/create"
-          sx={{ minWidth: 200 }}
+          style={{ minWidth: 200,background:"#4e73df",marginBottom:"10px" }}
         >
           NEW BROADCAST CONTRACT
         </Button>
@@ -137,7 +139,7 @@ const Dashboard = () => {
           variant="contained" 
           component={Link} 
           to="/public/create"
-          sx={{ minWidth: 200 }}
+          style={{ minWidth: 200,background:"#1cc88a",marginBottom:"10px" }}
         >
           NEW PUBLIC CONTRACT
         </Button>
@@ -145,7 +147,7 @@ const Dashboard = () => {
           variant="contained" 
           component={Link} 
           to="/private/create"
-          sx={{ minWidth: 200 }}
+          style={{ minWidth: 200,background:"#36b9cc" ,marginBottom:"10px"}}
         >
           NEW PRIVATE CONTRACT
         </Button>
@@ -153,7 +155,7 @@ const Dashboard = () => {
           variant="contained" 
           component={Link} 
           to="/verify"
-          sx={{ minWidth: 200 }}
+          style={{ minWidth: 200,background:"#f6c23e",marginBottom:"10px"}}
         >
           VERIFY DOCUMENT
         </Button>

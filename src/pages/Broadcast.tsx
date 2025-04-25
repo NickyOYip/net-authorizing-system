@@ -14,16 +14,13 @@ import {
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
+import ShowContracts from '../components/ShowContracts.jsx';
 
 export default function BroadcastContracts() {
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Net Authorizing System
-      </Typography>
-      
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5">
+       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
           Broadcast Contracts
         </Typography>
         <Button 
@@ -46,28 +43,7 @@ export default function BroadcastContracts() {
         Please connect your wallet to view and manage your broadcast contracts.
       </Alert>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Contract ID</TableCell>
-              <TableCell>Title</TableCell>
-              <TableCell>Owner</TableCell>
-              <TableCell>Created Date</TableCell>
-              <TableCell>Active Version</TableCell>
-              <TableCell>Total Version</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={7} align="center">
-                Connect your wallet to view contracts.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <ShowContracts type = {'broadcast'}/>
     </Box>
   );
 }
