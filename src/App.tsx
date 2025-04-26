@@ -7,6 +7,7 @@ import Verify from './pages/Verify'
 import Layout from './components/Layout'
 import PublicView from './pages/PublicView'
 import PublicActivate from './pages/PublicActivate'
+import NewContract from './pages/NewContract.jsx'
 
 export default function App() {
   return (
@@ -15,9 +16,12 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/broadcast" element={<Broadcast />} />
         <Route path="/public" element={<Public />} />
-        <Route path="/public/view/:id" element={<PublicView />} />
-        <Route path="/public/activate/:id" element={<PublicActivate />} />
+        <Route path="/view/:id" element={<PublicView />} />
+        <Route path="/activate/:id" element={<PublicActivate />} />
         <Route path="/private" element={<Private />} />
+        <Route path="/private/create" element={<NewContract contractType = {'private'}/>} />
+        <Route path="/public/create" element={<NewContract contractType = {'public'}/>} />
+        <Route path="/broadcast/create" element={<NewContract contractType = {'broadcast'}/>} />
         <Route path="/verify" element={<Verify />} />
       </Routes>
     </Layout>
