@@ -63,7 +63,7 @@ export default function PublicContractsPage() {
           component={Link}
           to="/public/create"
           startIcon={<AddIcon />} // Now this works
-          sx={{ minWidth: 200 }}
+          sx={{ minWidth: 200,background:"#1cc88a",color:"black"}}
         >
           Create New Contract
         </Button>

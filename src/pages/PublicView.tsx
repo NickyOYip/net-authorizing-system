@@ -19,7 +19,8 @@ import {
   IconButton,
   Grid
 } from '@mui/material';
-import { Link, useParams } from 'react-router-dom';
+
+import { Link, useParams, useNavigate} from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadIcon from '@mui/icons-material/Download';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -30,7 +31,7 @@ import LockIcon from '@mui/icons-material/Lock';
 
 export default function PublicContractViewPage() {
   const { id } = useParams();
-  
+  const navigate = useNavigate();
   // Mock data - replace with your actual data fetching
   const [contract, setContract] = useState({
     id: id || '0xabc',
@@ -84,8 +85,7 @@ export default function PublicContractViewPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Button 
-        component={Link} 
-        to="/public" 
+        onClick={() => navigate(-1)}
         startIcon={<ArrowBackIcon />}
         sx={{ mb: 2 }}
       >

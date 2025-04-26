@@ -18,7 +18,7 @@ export default function PrivateContracts() {
           startIcon={<AddIcon />}
           component={Link}
           to="/private/create"
-          sx={{ minWidth: 200 }}
+          sx={{ minWidth: 200,background:"#36b9cc",color:"black"}}
         >
           Create New Contract
         </Button>

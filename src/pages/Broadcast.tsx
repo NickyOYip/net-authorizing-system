@@ -25,11 +25,10 @@ export default function BroadcastContracts() {
         </Typography>
         <Button 
           variant="contained" 
-          color="primary"
           startIcon={<AddIcon />}
           component={Link}
           to="/broadcast/create"
-          sx={{ minWidth: 200 }}
+          sx={{ minWidth: 200,background:"rgb(78, 115, 223)" ,color:"black"}}
         >
           Create New Contract
         </Button>

@@ -14,19 +14,23 @@ import {
   TextField,
 
 } from '@mui/material';
-import { Link, useParams } from 'react-router-dom';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 
 export default function PublicActivate() {
   const { id } = useParams(); // Get contract ID from URL
-  const [contractType, setContractType] = useState('public'); // should get from contract address 
+  const [contractType, setContractType] = useState('private'); // should get from contract address 
   const [activeStep, setActiveStep] = useState(0);
   const [address, setAddress] = useState('');
   const [activationCode, setactivationCode] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedJson, setSelectedJson] = useState(null);
   const [fileHash, setFileHash] = useState('');
+  const [jsonHash, setJsonHash] = useState('');
   const [error, setError] = useState(null);
-  const [activated, setActivated] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [activated, setActivated] = useState(null);
+  const navigate = useNavigate();
 
   const handleNext = () => {
     if (activeStep === 0) {
@@ -73,7 +77,7 @@ export default function PublicActivate() {
       const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
+      console.log("FileHash: "+hashHex)
       setFileHash(hashHex);
     } catch (err) {
       console.error("Error calculating file hash:", err);
@@ -95,24 +99,61 @@ export default function PublicActivate() {
       const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      console.log("JsonHash: "+hashHex)
 
-      setFileHash(hashHex);
+      setJsonHash(hashHex);
     } catch (err) {
       console.error("Error calculating json hash:", err);
       setError("Failed to process the JSON file. Please try again.");
     }
 
   };
+  //fake hash 
+  const metaHash = "0510023a4953f2ee3f36a789812cd2b03cf01c241a24ff25fdfb7207584746e7";
+  const docHash = "72d57b40b79b75a4dff4aa939098c42a6ded03d77bf21b11e3b0b03564008299";
+  const activeCode = "8978398r7389";
 
   //activate logic
   const handleActivate = () => {
-    
+    if (address != id) {
+      setActivated(false);
+      setErrorMessage("Wrong contract address!")
+      return;
+    }//id is from the url the contract address
+
+    if (activationCode != activeCode) {
+      setActivated(false);
+      setErrorMessage("Wrong Activation Code!")
+      return;
+    }
+
+    if (jsonHash != metaHash) {
+      setActivated(false);
+      setErrorMessage("Wrong METADATA File!")
+      return;
+    }
+
+    if (fileHash != docHash) {
+      setActivated(false);
+      setErrorMessage("Wrong Document Soft Copy!")
+      return;
+    }
     setActivated(true);
+    return;
   }
 
 
   return (
     <Box sx={{ p: 3 }}>
+
+      <Button
+        onClick={() => navigate(-1)}
+        startIcon={<ArrowBackIcon />}
+        sx={{ mb: 2 }}
+      >
+        RETURN TO CONTRACTS
+      </Button>
+
       <Typography variant="h4" gutterBottom>
         Activate Contract
       </Typography>
@@ -124,9 +165,15 @@ export default function PublicActivate() {
         </Paper>
       )}
 
-      {activated && (
+      {activated == true && (
         <Alert severity="success" sx={{ mb: 2, backgroundColor: "#3cb043 !important" }}>
           Successfully activated !
+        </Alert>
+      )}
+
+      {activated == false && (
+        <Alert severity="warning" sx={{ mb: 2, backgroundColor: "#900d09 !important" }}>
+          Activation failed ! {errorMessage}
         </Alert>
       )}
 
@@ -184,57 +231,58 @@ export default function PublicActivate() {
                     <Typography variant="body2" paragraph>
                       Upload the document and metadata file of the corresponding contract.
                     </Typography>
+                    <div className="row" style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        accept="*/*"
+                        style={{ display: 'none' }}
+                        id="json"
+                        type="file"
+                        onChange={handleJsonChange}
+                      />
 
-                    <input
-                      accept="*/*"
-                      style={{ display: 'none' }}
-                      id="json"
-                      type="file"
-                      onChange={handleJsonChange}
-                    />
+                      <label htmlFor="json">
+                        <Button
+                          variant="outlined"
+                          component="span"
+                          sx={{ mb: 2, marginRight: "10px" }}
+                        >
+                          Select metadata
+                        </Button>
+                      </label>
 
-                    <label htmlFor="json">
-                      <Button
-                        variant="outlined"
-                        component="span"
-                        sx={{ mb: 2 }}
-                      >
-                        Select metadata
-                      </Button>
-                    </label>
+                      {selectedJson && (
+                        <Box sx={{ mt: 2, paddingBottom: "35px" }}>
+                          <Typography variant="subtitle2">Selected File:</Typography>
+                          <Typography variant="body2">{selectedJson.name}</Typography>
+                        </Box>
+                      )}
+                    </div>
+                    <div className="row" style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        accept="*/*"
+                        style={{ display: 'none' }}
+                        id="contained-button-file"
+                        type="file"
+                        onChange={handleFileChange}
+                      />
 
-                    {selectedJson && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2">Selected File:</Typography>
-                        <Typography variant="body2">{selectedJson.name}</Typography>
-                      </Box>
-                    )}
+                      <label htmlFor="contained-button-file">
+                        <Button
+                          variant="outlined"
+                          component="span"
+                          sx={{ mb: 2, marginRight: "10px" }}
+                        >
+                          Select File
+                        </Button>
+                      </label>
 
-                    <input
-                      accept="*/*"
-                      style={{ display: 'none' }}
-                      id="contained-button-file"
-                      type="file"
-                      onChange={handleFileChange}
-                    />
-
-                    <label htmlFor="contained-button-file">
-                      <Button
-                        variant="outlined"
-                        component="span"
-                        sx={{ mb: 2 }}
-                      >
-                        Select File
-                      </Button>
-                    </label>
-
-                    {selectedFile && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2">Selected File:</Typography>
-                        <Typography variant="body2">{selectedFile.name}</Typography>
-                      </Box>
-                    )}
-
+                      {selectedFile && (
+                        <Box sx={{ mt: 2, paddingBottom: "35px" }}>
+                          <Typography variant="subtitle2">Selected File:</Typography>
+                          <Typography variant="body2">{selectedFile.name}</Typography>
+                        </Box>
+                      )}
+                    </div>
                   </Box>
 
                 </Grid>
@@ -260,14 +308,7 @@ export default function PublicActivate() {
 
 
 
-      <Button
-        variant="contained"
-        component={Link}
-        to="/public"
-        sx={{ mt: 2 }}
-      >
-        RETURN TO CONTRACTS
-      </Button>
+
     </Box>
 
   );
