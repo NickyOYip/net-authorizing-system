@@ -1,4 +1,4 @@
-import React,{useState}from 'react';
+import React, { useState } from 'react';
 import '../styles/all.css';
 import {
   Box,
@@ -12,13 +12,15 @@ import {
   TableHead,
   TableRow,
   Alert,
-  Chip
+  Chip,
+  Typography
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import {InputAdornment} from '@mui/material';
+import { InputAdornment } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
+
 
 export default function ShowContracts({ type }) {
 
@@ -58,28 +60,49 @@ export default function ShowContracts({ type }) {
 
   const [data] = useState(docs);
   const [searchTerm, setSearchTerm] = useState('');
-
+ //for search function 
   const contracts = data.filter((row) =>
+    
+    
     Object.values(row).some(
       (value) =>
         value &&
-        value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+        value.toString().trim().toLowerCase().includes(searchTerm.toLowerCase())
+
     )
   );
 
   return (
     <>
+      <Box>
+        {type == 'public' && (
+          <Typography variant="h4" sx={{borderLeft:"solid 10px #1cc88a",padding:"10px"}} gutterBottom>
+            My Public Contracts:
+          </Typography>
+        )}
+        {type == 'broadcast' && (
+           <Typography variant="h4"  sx={{borderLeft:"solid 10px #4e73df",padding:"10px"}} gutterBottom>
+            All Broadcast Contracts:
+          </Typography>
+        )}
+        {type == 'private' && (
+           <Typography variant="h4" sx={{borderLeft:"solid 10px #36b9cc",padding:"10px"}}gutterBottom>
+            My Private Contracts:
+          </Typography>
+        )}
+      </Box>
+
       <TextField
         fullWidth
         variant="outlined"
         placeholder="Search..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 2}}
+        sx={{ mb: 2 }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{color:"white !important"}} />
+              <SearchIcon sx={{ color: "white !important" }} />
             </InputAdornment>
           ),
         }}

@@ -13,6 +13,8 @@ import WifiTetheringErrorIcon from '@mui/icons-material/WifiTetheringError';
 import { Typography, Box,useMediaQuery } from '@mui/material';
 import Sidebar from './Sidebar.jsx'
 import "../styles/Navbar.css";
+//add wallet icon to check irys (blockchain project)=> popup page for chekcing 
+//popup 1. provider 2. address 3. 
 
 export default function LabelBottomNavigation() {
     const [value, setValue] = React.useState('recents');
@@ -35,42 +37,6 @@ export default function LabelBottomNavigation() {
                 Net Authorizing System
             </Typography>
             <Box>
-                <BottomNavigationAction
-                    component={RouterLink}
-                    to="/"
-                    label="Dashboard"
-                    sx={{ color: "white" }}
-                    icon={<DashboardIcon className='icons' />}
-                />
-                <BottomNavigationAction
-                    component={RouterLink}
-                    to="/broadcast"
-                    label="Broadcast"
-                    sx={{ color: "white" }}
-                    icon={<PodcastsIcon sx={{ height: '30px' }} className='icons' />}
-                />
-                <BottomNavigationAction
-                    component={RouterLink}
-                    to="/public"
-                    label="Public"
-                    sx={{ color: "white" }}
-                    icon={<PublicIcon sx={{ height: '30px' }} className='icons' />}
-                />
-                <BottomNavigationAction
-                    component={RouterLink}
-                    to="/private"
-                    label="Private"
-                    sx={{ color: "white" }}
-                    icon={<LockIcon sx={{ height: '30px' }} className='icons' />}
-                />
-                
-                <BottomNavigationAction
-                    component={RouterLink}
-                    to="/verify"
-                    label="Verify"
-                    sx={{ color: "white" }}
-                    icon={<VerifiedUserIcon sx={{ height: '30px' }} className='icons' />}
-                />
 
                 <Button
                 //you can add the button here and logics 

@@ -18,6 +18,9 @@ import LockIcon from '@mui/icons-material/Lock';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import NoteAddIcon from '@mui/icons-material/NoteAdd';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import NewReleasesIcon from '@mui/icons-material/NewReleases';
 
 export default function Sidebar() {
     const [open, setOpen] = React.useState(false);
@@ -49,32 +52,22 @@ export default function Sidebar() {
                 </ListItem>
                 <ListItem className='ListItem'
                     component={RouterLink}
-                    to="/broadcast">
+                    to="/create">
                     <ListItemButton className='ListItemButton'>
                         <ListItemIcon>
-                            <PodcastsIcon className='List' />
+                            <NoteAddIcon className='List' />
                         </ListItemIcon>
-                        <ListItemText primary='Broadcast Contracts' className='List' />
+                        <ListItemText primary=' Create New Contracts' className='List' />
                     </ListItemButton>
                 </ListItem>
                 <ListItem className='ListItem'
                     component={RouterLink}
-                    to="/public">
+                    to="/activate">
                     <ListItemButton className='ListItemButton'>
                         <ListItemIcon>
-                            <PublicIcon className='List' />
+                            <NewReleasesIcon className='List' />
                         </ListItemIcon>
-                        <ListItemText primary='Public Contracts' className='List' />
-                    </ListItemButton>
-                </ListItem>
-                <ListItem className='ListItem'
-                    component={RouterLink}
-                    to="/private">
-                    <ListItemButton className='ListItemButton'>
-                        <ListItemIcon>
-                            <LockIcon className='List' />
-                        </ListItemIcon>
-                        <ListItemText primary='Private Contracts' className='List' />
+                        <ListItemText primary='Activate Contracts' className='List' />
                     </ListItemButton>
                 </ListItem>
                 <ListItem className='ListItem'
