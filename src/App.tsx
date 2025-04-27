@@ -8,6 +8,8 @@ import Layout from './components/Layout'
 import PublicView from './pages/PublicView'
 import PublicActivate from './pages/PublicActivate'
 import NewContract from './pages/NewContract.jsx'
+import Activate from './pages/PublicActivate'
+import CreateContract from './components/Create'
 
 export default function App() {
   return (
@@ -19,10 +21,12 @@ export default function App() {
         <Route path="/view/:id" element={<PublicView />} />
         <Route path="/activate/:id" element={<PublicActivate />} />
         <Route path="/private" element={<Private />} />
-        <Route path="/private/create" element={<NewContract contractType = {'private'}/>} />
-        <Route path="/public/create" element={<NewContract contractType = {'public'}/>} />
-        <Route path="/broadcast/create" element={<NewContract contractType = {'broadcast'}/>} />
+        <Route path="/private/create" element={<CreateContract/>} />
+        <Route path="/public/create" element={<CreateContract/>} />
+        <Route path="/broadcast/create" element={<CreateContract/>} />
+        <Route path="/create" element={<CreateContract/>} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/activate" element={<Activate />} />
       </Routes>
     </Layout>
   )
