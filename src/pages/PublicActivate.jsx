@@ -18,8 +18,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 export default function PublicActivate() {
-  const { id } = useParams(); // Get contract ID from URL
-  const [contractType, setContractType] = useState('private'); // should get from contract address 
+  // Get contract ID from URL or set afte checked if contract address is valid
+  const { id } = useParams();
+  // type should get from contract address 
+  const [contractType, setContractType] = useState('private');
   const [activeStep, setActiveStep] = useState(0);
   const [address, setAddress] = useState('');
   const [activationCode, setactivationCode] = useState('');
@@ -32,10 +34,16 @@ export default function PublicActivate() {
   const [activated, setActivated] = useState(null);
   const navigate = useNavigate();
 
+  const steps = ['Contract Address', 'Activation Code'];
+
   const handleNext = () => {
     if (activeStep === 0) {
       if (!address.trim()) {
         setError("Please enter a contract address");
+        return;
+      }
+      if (!contractType.trim()) {
+        setError("Please enter a valid contract address");
         return;
       }
 
@@ -77,7 +85,7 @@ export default function PublicActivate() {
       const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      console.log("FileHash: "+hashHex)
+      console.log("FileHash: " + hashHex)
       setFileHash(hashHex);
     } catch (err) {
       console.error("Error calculating file hash:", err);
@@ -99,7 +107,7 @@ export default function PublicActivate() {
       const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      console.log("JsonHash: "+hashHex)
+      console.log("JsonHash: " + hashHex)
 
       setJsonHash(hashHex);
     } catch (err) {
@@ -115,32 +123,46 @@ export default function PublicActivate() {
 
   //activate logic
   const handleActivate = () => {
-    if (address != id) {
+    if (address != id) {//id is from dashboard page ** if enter this page using sidebar, id is null
       setActivated(false);
-      setErrorMessage("Wrong contract address!")
+      setErrorMessage("Invalid contract address.")
       return;
     }//id is from the url the contract address
 
     if (activationCode != activeCode) {
       setActivated(false);
-      setErrorMessage("Wrong Activation Code!")
+      setErrorMessage("Invalid Activation Code.")
       return;
     }
 
     if (jsonHash != metaHash) {
       setActivated(false);
-      setErrorMessage("Wrong METADATA File!")
+      setErrorMessage("Invalid METADATA File.")
       return;
     }
 
     if (fileHash != docHash) {
       setActivated(false);
-      setErrorMessage("Wrong Document Soft Copy!")
+      setErrorMessage("Invalid Document Soft Copy.")
       return;
     }
     setActivated(true);
     return;
   }
+
+  const handleReset = () => {
+    setActiveStep(0);
+    setContractType('');
+    setAddress('');
+    setactivationCode('');
+    setSelectedFile(null);
+    setSelectedJson(null);
+    setFileHash('');
+    setJsonHash('');
+    setError(null);
+    setErrorMessage('');
+    setActivated(null);
+  };
 
 
   return (
@@ -151,7 +173,7 @@ export default function PublicActivate() {
         startIcon={<ArrowBackIcon />}
         sx={{ mb: 2 }}
       >
-        RETURN TO CONTRACTS
+        Back
       </Button>
 
       <Typography variant="h4" gutterBottom>
@@ -167,23 +189,27 @@ export default function PublicActivate() {
 
       {activated == true && (
         <Alert severity="success" sx={{ mb: 2, backgroundColor: "#3cb043 !important" }}>
-          Successfully activated !
+          Successfully activated
         </Alert>
       )}
 
       {activated == false && (
         <Alert severity="warning" sx={{ mb: 2, backgroundColor: "#900d09 !important" }}>
-          Activation failed ! {errorMessage}
+          Activation Failed. {errorMessage}
         </Alert>
       )}
 
-      {/*{activated == true && ()}*/}
+      <Box>
+        <Stepper activeStep={activeStep} sx={{ mb: 4, width: "50vw" }}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
 
-      <Stepper activeStep={activeStep} orientation="vertical" sx={{ background: "#404040", padding: "20px", borderRadius: "5px" }}>
-        <Step> {/** input address  */}
-          <StepLabel>Contract Address</StepLabel>
-
-          <StepContent>
+        {activeStep === 0 && (
+          <Paper sx={{ background: "#242424" }}>
             <Grid item xs={12}>
               <TextField
                 required
@@ -204,12 +230,11 @@ export default function PublicActivate() {
                 Continue
               </Button>
             </Box>
-          </StepContent>
-        </Step>
+          </Paper>
+        )}
 
-        <Step >{/** input code  */}
-          <StepLabel>Activation Code </StepLabel>
-          <StepContent>
+        {activeStep === 1 && (
+          <Paper sx={{ background: "#242424" }}>
             <Grid item xs={12}>
               <TextField
                 required
@@ -224,11 +249,9 @@ export default function PublicActivate() {
 
             {contractType == 'private' && (
               <>
-                <Divider />
-                <Grid>
-
+                <Grid sx={{ paddingTop: "20px" }}>
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="body2" paragraph>
+                    <Typography variant="body1" paragraph>
                       Upload the document and metadata file of the corresponding contract.
                     </Typography>
                     <div className="row" style={{ display: "flex", alignItems: "center" }}>
@@ -242,7 +265,7 @@ export default function PublicActivate() {
 
                       <label htmlFor="json">
                         <Button
-                          variant="outlined"
+                          variant="contained"
                           component="span"
                           sx={{ mb: 2, marginRight: "10px" }}
                         >
@@ -268,7 +291,7 @@ export default function PublicActivate() {
 
                       <label htmlFor="contained-button-file">
                         <Button
-                          variant="outlined"
+                          variant="contained"
                           component="span"
                           sx={{ mb: 2, marginRight: "10px" }}
                         >
@@ -288,27 +311,38 @@ export default function PublicActivate() {
                 </Grid>
               </>
             )}
+            <Box sx={{ width: "100%", webkitBoxPack: "", justifyContent: "space-between !important" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleActivate}
+                style={{ mt: 3 }}
+              >
+                Activate Contract
+              </Button>
 
-            <Button
-              //variant="contained"
-              //component={Link}
-              //to=""
-              onClick={handleActivate}
-              sx={{ mt: 2 }}
-            >
-              Activate Contract !
-            </Button>
+              {activated == true ? (
+                <Button
+                  variant="outlined"
+                  style={{ mb: 2, marginLeft: "30px" }}
+                  onClick={handleReset}
+                >
+                  Activate another contract
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  style={{ mb: 2, marginLeft: "30px" }}
+                  onClick={handleBack}
+                >
+                  Back to previous step
+                </Button>
+              )}
+            </Box>
+          </Paper>
+        )}
 
-          </StepContent>
-        </Step>
-
-
-      </Stepper>
-
-
-
-
-
+      </Box>
     </Box>
 
   );

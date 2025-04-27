@@ -20,6 +20,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import CircularProgress from '@mui/material/CircularProgress';
 
+//skip step 2 , merge with step 1 with private contract 
+//add back to all steppers 
+
 export default function VerifyDocument() {
   const [activeStep, setActiveStep] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -28,15 +31,44 @@ export default function VerifyDocument() {
   const [contractAddress, setContractAddress] = useState('');
   const [fileHash, setFileHash] = useState('');
   const [jsonHash, setJsonHash] = useState('');
+
   const [verificationResult, setVerificationResult] = useState<null | {
     verified: boolean;
     message: string;
   }>(null);
 
   const [isVerifying, setIsVerifying] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
-  const steps = ['Enter Contract Information', 'Select Document', 'Verify Document'];
+  const steps = ['Enter Contract Information', 'Verify Document'];
+
+  const handleNext = () => {
+    if (activeStep === 0) {
+      if (!contractAddress.trim()) {
+        setError("Please enter a contract address");
+        return;
+      }
+      if (contractType == '') {
+        setError("Enter a valid contract!");
+        return;
+      }
+      if (contractType == 'private') {
+
+        if (!selectedFile || !fileHash) {
+          setError("Please select a file !");
+          return;
+        }
+
+        if (!selectedJson || !jsonHash) {
+          setError("Please select a metadata file !");
+          return;
+        }
+      }
+
+    }
+    setActiveStep((prevStep) => prevStep + 1);
+    setError(null);
+  };
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -113,11 +145,13 @@ export default function VerifyDocument() {
       });
       setIsVerifying(false);
     }, 1500);
+
   };
 
   const handleReset = () => {
     setActiveStep(0);
     setSelectedFile(null);
+    setSelectedJson(null);
     setContractType('');
     setContractAddress('');
     setVerificationResult(null);
@@ -131,10 +165,10 @@ export default function VerifyDocument() {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-      Verify Document
+        Verify Document
       </Typography>
 
-     
+
       <Typography variant="body1" paragraph>
         Verify the authenticity of documents stored on the blockchain. Provide the contract address to check if it matches the stored hash.
       </Typography>
@@ -159,38 +193,6 @@ export default function VerifyDocument() {
         {/* Step 1: Input contract address */}
         {activeStep === 0 && (
           <Box sx={{ py: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Select Contract Type:
-            </Typography>
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={4}>
-                <Button
-                  fullWidth
-                  variant={contractType === 'broadcast' ? 'contained' : 'outlined'}
-                  onClick={() => handleContractTypeSelect('broadcast')}
-                >
-                  BROADCAST CONTRACT
-                </Button>
-              </Grid>
-              <Grid item xs={4}>
-                <Button
-                  fullWidth
-                  variant={contractType === 'public' ? 'contained' : 'outlined'}
-                  onClick={() => handleContractTypeSelect('public')}
-                >
-                  PUBLIC CONTRACT
-                </Button>
-              </Grid>
-              <Grid item xs={4}>
-                <Button
-                  fullWidth
-                  variant={contractType === 'private' ? 'contained' : 'outlined'}
-                  onClick={() => handleContractTypeSelect('private')}
-                >
-                  PRIVATE CONTRACT
-                </Button>
-              </Grid>
-            </Grid>
 
             <TextField
               fullWidth
@@ -198,7 +200,10 @@ export default function VerifyDocument() {
               variant="outlined"
               color="primary"
               value={contractAddress}
-              onChange={(e) => setContractAddress(e.target.value)}
+              onChange={(e) => {
+                setContractAddress(e.target.value);
+                setContractType(e.target.value); //delete this line when can fetch the contract type
+              }}
               placeholder="Enter the contract address (0x...)"
               helperText="Enter the contract address of the contract to verify"
               sx={{
@@ -212,28 +217,12 @@ export default function VerifyDocument() {
                 }
               }}
             />
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => setActiveStep(1)}
-                sx={{ mt: 3 }}
-                disabled={contractAddress == ''}
-              >
-                CONTINUE
-              </Button>
-            </Box>
-          </Box>
-        )}
-
-        {/* Step 2: Enter Contract Information */}
-
-        {activeStep === 1 && (
-
-          <Box sx={{ textAlign: 'center', py: 3 }}>
             {contractType == 'private' && (
               <>
+                <Typography sx={{marginBottom:"10px"}}>
+                  This is a Private Contract. Please provide us  with the following data for verification.
+                </Typography>
+
                 <input
                   accept="*/*"
                   style={{ display: 'none' }}
@@ -241,7 +230,7 @@ export default function VerifyDocument() {
                   type="file"
                   onChange={handleFileChange}
                 />
-                <label htmlFor="verify-document-upload">
+                <label htmlFor="verify-document-upload">s
                   <Button
                     variant="contained"
                     component="span"
@@ -274,55 +263,39 @@ export default function VerifyDocument() {
                   </Button>
                 </label>
                 {selectedFile && (
-                   <Typography variant="body2" sx={{ mt: 1, margin: "15px" }}>
-                   Selected files: {selectedFile.name}
-                 </Typography>
+                  <Typography variant="body2" sx={{ mt: 1, margin: "15px" }}>
+                    Selected File: {selectedFile.name}
+                  </Typography>
                 )}
                 {selectedJson && (
                   <>
                     <Typography variant="body2" sx={{ mt: 1, margin: "15px" }}>
-                      Selected file: {selectedJson.name}
+                      Selected Metadata File : {selectedJson.name}
                     </Typography>
                     <Button sx={{ mt: 1, margin: "15px" }} onClick={handleReset}>
                       START OVER
                     </Button>
-                    <Button
-                      variant="contained"
-                      onClick={handleProceedToVerification}
-                      disabled={!contractType || !contractAddress}
-                    >
-                      PROCEED TO VERIFICATION
-                    </Button>
-
                   </>
                 )}
               </>
             )}
 
-            {contractType != 'private' && (
-              <>
-                <Typography variant="body1" sx={{ mt: 1, margin: "15px" }}>
-                  Broadcast / Public contracts do not need to upload any document.
-                </Typography>
-
-                <Button sx={{ mt: 1, margin: "15px" }} onClick={handleReset}>
-                  Back
-                </Button>
-
-                <Button
-                  variant="contained"
-                  onClick={handleProceedToVerification}
-                  disabled={!contractType || !contractAddress}
-                >
-                  PROCEED TO VERIFICATION
-                </Button>
-              </>
-            )}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleNext}
+                sx={{ mt: 3 }}
+                disabled={contractAddress == '' || contractType == ''}
+              >
+                CONTINUE
+              </Button>
+            </Box>
           </Box>
         )}
 
-        {/* Step 3: Verify Document */}
-        {activeStep === 2 && (
+        {/* Step 2: Verify Document */}
+        {activeStep === 1 && (
           <Box sx={{ py: 2 }}>
             <Typography variant="h6" gutterBottom>
               Document Information:
