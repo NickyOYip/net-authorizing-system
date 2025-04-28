@@ -168,14 +168,6 @@ export default function PublicActivate() {
   return (
     <Box sx={{ p: 3 }}>
 
-      <Button
-        onClick={() => navigate(-1)}
-        startIcon={<ArrowBackIcon />}
-        sx={{ mb: 2 }}
-      >
-        Back
-      </Button>
-
       <Typography variant="h4" gutterBottom>
         Activate Contract
       </Typography>
@@ -199,8 +191,8 @@ export default function PublicActivate() {
         </Alert>
       )}
 
-      <Box>
-        <Stepper activeStep={activeStep} sx={{ mb: 4, width: "50vw" }}>
+      <Paper sx={{ background: "#242424",paddingTop:"30px"}}>
+        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
           {steps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -209,7 +201,7 @@ export default function PublicActivate() {
         </Stepper>
 
         {activeStep === 0 && (
-          <Paper sx={{ background: "#242424" }}>
+          <Box>
             <Grid item xs={12}>
               <TextField
                 required
@@ -230,11 +222,11 @@ export default function PublicActivate() {
                 Continue
               </Button>
             </Box>
-          </Paper>
+          </Box>
         )}
 
         {activeStep === 1 && (
-          <Paper sx={{ background: "#242424" }}>
+          <Box sx={{ background: "#242424" }}>
             <Grid item xs={12}>
               <TextField
                 required
@@ -252,34 +244,9 @@ export default function PublicActivate() {
                 <Grid sx={{ paddingTop: "20px" }}>
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body1" paragraph>
-                      Upload the document and metadata file of the corresponding contract.
+                      Upload the document of the corresponding contract.
                     </Typography>
-                    <div className="row" style={{ display: "flex", alignItems: "center" }}>
-                      <input
-                        accept="*/*"
-                        style={{ display: 'none' }}
-                        id="json"
-                        type="file"
-                        onChange={handleJsonChange}
-                      />
 
-                      <label htmlFor="json">
-                        <Button
-                          variant="contained"
-                          component="span"
-                          sx={{ mb: 2, marginRight: "10px" }}
-                        >
-                          Select metadata
-                        </Button>
-                      </label>
-
-                      {selectedJson && (
-                        <Box sx={{ mt: 2, paddingBottom: "35px" }}>
-                          <Typography variant="subtitle2">Selected File:</Typography>
-                          <Typography variant="body2">{selectedJson.name}</Typography>
-                        </Box>
-                      )}
-                    </div>
                     <div className="row" style={{ display: "flex", alignItems: "center" }}>
                       <input
                         accept="*/*"
@@ -291,7 +258,7 @@ export default function PublicActivate() {
 
                       <label htmlFor="contained-button-file">
                         <Button
-                          variant="contained"
+                          variant="outlined"
                           component="span"
                           sx={{ mb: 2, marginRight: "10px" }}
                         >
@@ -306,6 +273,38 @@ export default function PublicActivate() {
                         </Box>
                       )}
                     </div>
+
+                    <Typography variant="body1" paragraph>
+                      Upload the metadata file of the corresponding contract.
+                    </Typography>
+
+                    <div className="row" style={{ display: "flex", alignItems: "center" }}>
+                      <input
+                        accept="*/*"
+                        style={{ display: 'none' }}
+                        id="json"
+                        type="file"
+                        onChange={handleJsonChange}
+                      />
+
+                      <label htmlFor="json">
+                        <Button
+                          variant="outlined"
+                          component="span"
+                          sx={{ mb: 2, marginRight: "10px" }}
+                        >
+                          Select metadata
+                        </Button>
+                      </label>
+
+                      {selectedJson && (
+                        <Box sx={{ mt: 2, paddingBottom: "35px" }}>
+                          <Typography variant="subtitle2">Selected File:</Typography>
+                          <Typography variant="body2">{selectedJson.name}</Typography>
+                        </Box>
+                      )}
+                    </div>
+                   
                   </Box>
 
                 </Grid>
@@ -339,10 +338,19 @@ export default function PublicActivate() {
                 </Button>
               )}
             </Box>
-          </Paper>
+          </Box>
         )}
 
-      </Box>
+      </Paper>
+
+      <Button
+        onClick={() => navigate(-1)}
+        startIcon={<ArrowBackIcon />}
+        sx={{ mb: 2,mt:2}}
+      >
+        Back
+      </Button>
+
     </Box>
 
   );
