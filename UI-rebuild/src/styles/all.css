@@ -1,0 +1,52 @@
+:root{
+    background-color:black;
+}
+.MuiPaper-root{
+    padding:15px;
+    background:#242424 !important;
+    color : white !important;
+   
+}
+
+.Card{
+    color: #f48cff;
+    font-weight: normal;
+}
+
+.css-19qva10-MuiTypography-root {
+    color: white !important;
+}
+
+.css-1ygcj2i-MuiTableCell-root{
+    color: white !important;
+}
+.css-1yhpg23-MuiTableCell-root {
+    color: white !important;
+}
+.css-1hv8oq8-MuiStepLabel-label {
+    color: white !important;
+}
+
+.css-1t8l2tu-MuiInputBase-input-MuiOutlinedInput-input {
+    color: white !important;
+}
+
+.css-19kzrtu {
+    color: white !important;
+}
+
+.css-1ex1afd-MuiTableCell-root {
+    color: white !important;
+}
+
+.css-1o9s3wi-MuiInputBase-input-MuiOutlinedInput-input {
+    color: white !important;
+    padding:5px;
+  
+}
+.css-1wc848c-MuiFormHelperText-root {
+    color: white !important;
+}
+.css-14s5rfu-MuiFormLabel-root-MuiInputLabel-root{
+    color: white !important;
+}
