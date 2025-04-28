@@ -1,52 +1,29 @@
-import * as React from 'react';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import BroadcastIcon from '@mui/icons-material/Podcasts';
-import PublicIcon from '@mui/icons-material/Public';
-import PrivateIcon from '@mui/icons-material/Lock';
-import VerifiedIcon from '@mui/icons-material/VerifiedUser';
-import { Outlet } from 'react-router';
-import { ReactRouterAppProvider } from '@toolpad/core/react-router';
-import type { Navigation } from '@toolpad/core/AppProvider';
-
-const NAVIGATION: Navigation = [
-  {
-    kind: 'header',
-    title: 'Verification System',
-  },
-  {
-    title: 'Dashboard',
-    icon: <DashboardIcon />,
-  },
-  {
-    segment: 'broadcast',
-    title: 'Broadcast Contracts',
-    icon: <BroadcastIcon />,
-  },
-  {
-    segment: 'public',
-    title: 'Public Contracts',
-    icon: <PublicIcon />,
-  },
-  {
-    segment: 'private',
-    title: 'Private Contracts',
-    icon: <PrivateIcon />,
-  },
-  {
-    segment: 'verify',
-    title: 'Verify Document',
-    icon: <VerifiedIcon />,
-  },
-];
-
-const BRANDING = {
-  title: 'Net Authorizing System',
-};
+import { Routes, Route } from 'react-router-dom'
+import Home from './pages/Home'
+import Broadcast from './pages/Broadcast'
+import Public from './pages/Public'
+import Private from './pages/Private'
+import Verify from './pages/Verify'
+import Layout from './components/Layout'
+import PublicView from './pages/PublicView'
+import PublicActivate from './pages/PublicActivate'
+import Activate from './pages/PublicActivate'
+import CreateContract from './components/Create'
 
 export default function App() {
   return (
-    <ReactRouterAppProvider navigation={NAVIGATION} branding={BRANDING}>
-      <Outlet />
-    </ReactRouterAppProvider>
-  );
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/broadcast" element={<Broadcast />} />
+        <Route path="/public" element={<Public />} />
+        <Route path="/view/:id" element={<PublicView />} />
+        <Route path="/activate/:id" element={<PublicActivate />} />
+        <Route path="/private" element={<Private />} />
+        <Route path="/create" element={<CreateContract/>} />
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/activate" element={<Activate />} />
+      </Routes>
+    </Layout>
+  )
 }
