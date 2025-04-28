@@ -20,9 +20,6 @@ export default function App() {
         <Route path="/view/:id" element={<PublicView />} />
         <Route path="/activate/:id" element={<PublicActivate />} />
         <Route path="/private" element={<Private />} />
-        <Route path="/private/create" element={<CreateContract/>} />
-        <Route path="/public/create" element={<CreateContract/>} />
-        <Route path="/broadcast/create" element={<CreateContract/>} />
         <Route path="/create" element={<CreateContract/>} />
         <Route path="/verify" element={<Verify />} />
         <Route path="/activate" element={<Activate />} />
