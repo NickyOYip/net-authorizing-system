@@ -7,7 +7,6 @@ import Verify from './pages/Verify'
 import Layout from './components/Layout'
 import PublicView from './pages/PublicView'
 import PublicActivate from './pages/PublicActivate'
-import NewContract from './pages/NewContract.jsx'
 import Activate from './pages/PublicActivate'
 import CreateContract from './components/Create'
 
