@@ -35,7 +35,6 @@ export const CreateContract = () => {
   const [creating, setCreating] = useState(false);
   const [createdContractAddress, setCreatedContractAddress] = useState('');
   const [error, setError] = useState(null);
-  const [recipient, setRecipient] = useState('');
   const [type, setType] = useState('');
   //for contract creation step 4 
 
@@ -71,12 +70,6 @@ export const CreateContract = () => {
       if (type == '') {
         setError("Please choose contract type !");
         return;
-      }
-      if (type != 'broadcast') {
-        if (!recipient.trim() || !isValidEmail(recipient)) {
-          setError("Please enter a valid recipient email");
-          return;
-        }
       }
     } else if (activeStep === 1) {
       if (!selectedFile || !fileHash) {
@@ -171,11 +164,7 @@ export const CreateContract = () => {
     setCreating(false);
   }
 
-  //for non-broadcast contracts 
-  const isValidEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
+  
 
   const handleSubmit = () => {
     try {
@@ -223,11 +212,10 @@ export const CreateContract = () => {
       </Box>
 
       <Box style={{
-        backgroundColor: "#404040",
+        backgroundColor: "#242424",
         borderRadius: "5px",
         padding: "20px",
-        width: "80vw",
-        justifySelf: "center"
+        
       }}>
         <Box sx={{ maxWidth: "80vw", mx: 'auto' }}>
           <div>
@@ -299,24 +287,6 @@ export const CreateContract = () => {
                   />
                 </Grid>
 
-                {type == 'private' || type == 'public' && (
-                  <Grid item xs={12}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Recipient Email"
-                      value={recipient}
-                      onChange={handleRecipientChange}
-                      helperText="Enter the email of the person who will activate this contract"
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                      }}
-                      error={recipient.trim() !== '' && !isValidEmail(recipient)}
-                    />
-                  </Grid>
-                )}
-
               </Grid>
 
               <Box sx={{ mb: 2, mt: 2 }}>
@@ -328,7 +298,7 @@ export const CreateContract = () => {
                   Continue
                 </Button>
                 <Button
-                  variant="contained"
+                  variant="outlined"
 
                   sx={{ mt: 1, mr: 1 }}
                 >
@@ -343,7 +313,7 @@ export const CreateContract = () => {
           {activeStep === 1 && (
             <Box>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" >
+                <Typography variant="body1" sx={{ mb: 2 }}>
                   Upload the document to be verified by the contract.
                 </Typography>
 
@@ -378,7 +348,7 @@ export const CreateContract = () => {
               </Box>
 
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" paragraph>
+                <Typography variant="body1" paragraph >
                   Upload the metadata file of the contract.
                 </Typography>
 
