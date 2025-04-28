@@ -1,6 +1,17 @@
 :root{
     background-color:black;
 }
+
+/* Force all text to white inside the app */
+body, #root, .MuiPaper-root, .MuiTypography-root, .MuiTableCell-root, .MuiInputBase-input, .MuiFormLabel-root, .MuiFormHelperText-root {
+    color: white !important;
+}
+
+/* Optionally, make all links white too */
+a, a:visited {
+    color: white !important;
+} 
+
 .MuiPaper-root{
     padding:15px;
     background:#242424 !important;
@@ -49,4 +60,18 @@
 }
 .css-14s5rfu-MuiFormLabel-root-MuiInputLabel-root{
     color: white !important;
+}
+
+/* Force all MUI Stepper labels to be white */
+.MuiStepLabel-label {
+    color: white !important;
+    opacity: 1 !important;
+}
+
+/* For MUI v5+ sometimes uses data attributes for inactive steps */
+.MuiStepLabel-label.Mui-completed,
+.MuiStepLabel-label.Mui-active,
+.MuiStepLabel-label {
+    color: white !important;
+    opacity: 1 !important;
 }
