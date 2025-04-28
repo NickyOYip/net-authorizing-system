@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import {useNavigate } from 'react-router-dom';
 import '../styles/all.css'
 import {
   Box,
@@ -19,6 +20,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import CircularProgress from '@mui/material/CircularProgress';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 //skip step 2 , merge with step 1 with private contract 
 //add back to all steppers 
@@ -31,6 +33,7 @@ export default function VerifyDocument() {
   const [contractAddress, setContractAddress] = useState('');
   const [fileHash, setFileHash] = useState('');
   const [jsonHash, setJsonHash] = useState('');
+  const navigate = useNavigate();
 
   const [verificationResult, setVerificationResult] = useState<null | {
     verified: boolean;
@@ -196,7 +199,7 @@ export default function VerifyDocument() {
 
             <TextField
               fullWidth
-              label="Contract Address"
+              label="Contract Address*"
               variant="outlined"
               color="primary"
               value={contractAddress}
@@ -208,9 +211,6 @@ export default function VerifyDocument() {
               helperText="Enter the contract address of the contract to verify"
               sx={{
                 mb: 3, color: "white !important", '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'white',
-                  },
                   '& .MuiInputLabel-root': {
                     color: 'white',
                   },
@@ -230,15 +230,15 @@ export default function VerifyDocument() {
                   type="file"
                   onChange={handleFileChange}
                 />
-                <label htmlFor="verify-document-upload">s
+                <label htmlFor="verify-document-upload">
                   <Button
-                    variant="contained"
+                    variant="outlined"
                     component="span"
                     startIcon={<CloudUploadIcon />}
                     sx={{ mb: 2 }}
                     size="large"
                   >
-                    SELECT DOCUMENT TO VERIFY
+                    SELECT DOCUMENT
                   </Button>
                 </label>
 
@@ -253,13 +253,13 @@ export default function VerifyDocument() {
                 <label htmlFor="jsonfile">
                   <Button
 
-                    variant="contained"
+                    variant="outlined"
                     component="span"
                     startIcon={<CloudUploadIcon />}
                     sx={{ mb: 2, ml: "10px" }}
                     size="large"
                   >
-                    SELECT METADATA FILE TO VERIFY
+                    SELECT METADATA FILE
                   </Button>
                 </label>
                 {selectedFile && (
@@ -286,7 +286,7 @@ export default function VerifyDocument() {
                 color="primary"
                 onClick={handleNext}
                 sx={{ mt: 3 }}
-                disabled={contractAddress == '' || contractType == ''}
+                //disabled={contractAddress == '' || contractType == ''}
               >
                 CONTINUE
               </Button>
@@ -389,6 +389,13 @@ export default function VerifyDocument() {
           </Box>
         )}
       </Paper>
+      <Button
+        onClick={() => navigate(-1)}
+        startIcon={<ArrowBackIcon />}
+        sx={{ mb: 2,mt:2}}
+      >
+        Back
+      </Button>
     </Box>
   );
 }
