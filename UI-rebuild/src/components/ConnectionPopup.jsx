@@ -18,16 +18,18 @@ import {
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { mockEthBalance, mockIrysBalance, mockProvider } from '../mockHelpers';
 
 const ConnectionPopup = ({ open, onClose, isConnected, connectionDetails, mockConnected = false }) => {
 
+  // MOCK DATA: always set isConnected to true for demo
   isConnected = true //should be set by your logic or passed by navbar 
   const effectiveIsConnected = mockConnected ? true : isConnected;
 
-  // fake data
-  const [ethBalance, setEthBalance] = useState("1.2345");
-  const [irysBalance, setIrysBalance] = useState("5678");
-  const [provider, setProvider] = useState("MetaMask");
+  // Use mock data from helper
+  const [ethBalance, setEthBalance] = useState(mockEthBalance);
+  const [irysBalance, setIrysBalance] = useState(mockIrysBalance);
+  const [provider, setProvider] = useState(mockProvider);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

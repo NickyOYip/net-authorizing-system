@@ -32,6 +32,8 @@ export default function PrivateContracts() {
       <Alert severity="info" sx={{ mb: 3 }}>
         Please connect your wallet to view and manage your private contracts.
       </Alert>
+      {/* MOCK DATA: contracts shown in ShowContracts are hardcoded */}
+      {/* ShowContracts uses mockContracts from mockHelpers.js */}
       <ShowContracts />
     </Box>
   );

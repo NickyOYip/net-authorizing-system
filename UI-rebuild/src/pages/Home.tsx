@@ -18,6 +18,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import LockIcon from '@mui/icons-material/Lock';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import "../styles/all.css"
+import { mockStats } from '../mockHelpers';
 //dashboard => tab style 
 //delete quick action
 //
@@ -69,12 +70,9 @@ const StatCard = ({ icon, title, value, color }: StatCardProps) => {
 const Dashboard = () => {
 
   const navigate = useNavigate();
-  const stats = {
-    broadcast: 0,
-    public: 0,
-    private: 0,
-    verified: 0
-  };
+  // Use mockStats from helper
+  const stats = mockStats;
+  // MOCK DATA: connected is hardcoded
   const [connected,setConnected] = useState(false);
   const [type, setType] = useState('broadcast');
 

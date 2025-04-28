@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { mockMetaHash, mockDocHash, mockActiveCode, mockActivate } from '../mockHelpers';
 
 export default function PublicActivate() {
   // Get contract ID from URL or set afte checked if contract address is valid
@@ -116,38 +117,18 @@ export default function PublicActivate() {
     }
 
   };
-  //fake hash 
-  const metaHash = "0510023a4953f2ee3f36a789812cd2b03cf01c241a24ff25fdfb7207584746e7";
-  const docHash = "72d57b40b79b75a4dff4aa939098c42a6ded03d77bf21b11e3b0b03564008299";
-  const activeCode = "8978398r7389";
+  // Use mock data from helper
+  const metaHash = mockMetaHash;
+  const docHash = mockDocHash;
+  const activeCode = mockActiveCode;
 
-  //activate logic
+  // Use mockActivate from helper
   const handleActivate = () => {
-    if (address != id) {//id is from dashboard page ** if enter this page using sidebar, id is null
-      setActivated(false);
-      setErrorMessage("Invalid contract address.")
-      return;
-    }//id is from the url the contract address
-
-    if (activationCode != activeCode) {
-      setActivated(false);
-      setErrorMessage("Invalid Activation Code.")
-      return;
-    }
-
-    if (jsonHash != metaHash) {
-      setActivated(false);
-      setErrorMessage("Invalid METADATA File.")
-      return;
-    }
-
-    if (fileHash != docHash) {
-      setActivated(false);
-      setErrorMessage("Invalid Document Soft Copy.")
-      return;
-    }
-    setActivated(true);
-    return;
+    mockActivate(
+      { address, id, activationCode, jsonHash, fileHash },
+      setActivated,
+      setErrorMessage
+    );
   }
 
   const handleReset = () => {

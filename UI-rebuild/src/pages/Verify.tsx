@@ -21,6 +21,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import CircularProgress from '@mui/material/CircularProgress';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { mockVerify } from '../mockHelpers';
 
 //skip step 2 , merge with step 1 with private contract 
 //add back to all steppers 
@@ -136,19 +137,8 @@ export default function VerifyDocument() {
   const handleVerify = () => {
     setIsVerifying(true);
     setError('');
-
-    // Simulate verification process
-    setTimeout(() => {
-      const isVerified = Math.random() > 0.5; // Random success/failure for demo
-      setVerificationResult({
-        verified: isVerified,
-        message: isVerified
-          ? 'Document verified successfully!'
-          : 'Document verification failed'
-      });
-      setIsVerifying(false);
-    }, 1500);
-
+    // Use mockVerify from helper
+    mockVerify(setVerificationResult, setIsVerifying);
   };
 
   const handleReset = () => {

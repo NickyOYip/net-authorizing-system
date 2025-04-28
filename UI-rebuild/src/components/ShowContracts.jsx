@@ -20,6 +20,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { InputAdornment } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
+import { mockContracts } from '../mockHelpers';
 
 
 export default function ShowContracts({ type }) {
@@ -27,36 +28,8 @@ export default function ShowContracts({ type }) {
   //types are private/broadcast/public, then you can know what type of contract to display
   //or you can pass the list of contracts into this jsx
 
-  //fake contracts 
-  const docs = [
-    {
-      id: '0xabc',
-      title: 'Employment Certificate',
-      recipient: 'john.doe@example.com',
-      owner: '0x123...def',
-      created: '2025-04-05',
-      status: 'Pending Activation',
-      activeVersion: '-'
-    },
-    {
-      id: '0xdef',
-      title: 'Course Completion Certificate',
-      recipient: 'jane.smith@example.com',
-      owner: '0x123...def',
-      created: '2025-04-08',
-      status: 'Active',
-      activeVersion: '1'
-    },
-    {
-      id: '0xghi',
-      title: 'Property Lease Document',
-      recipient: 'tenant@example.com',
-      owner: '0xabc...def',
-      created: '2025-04-10',
-      status: 'Pending Activation',
-      activeVersion: '-'
-    }
-  ];
+  // Use mockContracts from helper
+  const docs = mockContracts;
 
   const [data] = useState(docs);
   const [searchTerm, setSearchTerm] = useState('');

@@ -28,38 +28,13 @@ import HistoryIcon from '@mui/icons-material/History';
 import PublicIcon from '@mui/icons-material/Public';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import LockIcon from '@mui/icons-material/Lock';
+import { mockContractDetail, mockDownload } from '../mockHelpers';
 
 export default function PublicContractViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  // Mock data - replace with your actual data fetching
-  const [contract, setContract] = useState({
-    id: id || '0xabc',
-    title: 'Employment Certificate',
-    description: 'Official employment certificate issued to employee',
-    owner: '0x123...def',
-    recipient: 'john.doe@example.com',
-    created: '2025-04-05',
-    status: 'Active',
-    type: 'public', // Added contract type
-    versions: [
-      {
-        version: 1,
-        hash: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
-        timestamp: '2025-04-05 14:30:22',
-        size: '2.4 MB',
-        fileType: 'PDF'
-      },
-      {
-        version: 2,
-        hash: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
-        timestamp: '2025-04-10 09:15:43',
-        size: '2.5 MB',
-        fileType: 'PDF'
-      }
-    ],
-    currentVersion: 2
-  });
+  // Use mockContractDetail from helper
+  const [contract, setContract] = useState(mockContractDetail(id));
 
   // Sort versions in descending order
   const sortedVersions = [...contract.versions].sort((a, b) => b.version - a.version);
@@ -77,10 +52,8 @@ export default function PublicContractViewPage() {
     }
   };
 
-  const handleDownload = (versionHash: string) => {
-    console.log(`Downloading version: ${versionHash}`);
-    alert(`Downloading file version: ${versionHash}`);
-  };
+  // Use mockDownload from helper
+  const handleDownload = mockDownload;
 
   return (
     <Box sx={{ p: 3 }}>

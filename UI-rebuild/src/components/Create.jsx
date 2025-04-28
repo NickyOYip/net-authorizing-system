@@ -533,7 +533,8 @@ export const CreateContract = () => {
                         paddingLeft: '10px', 
                         marginBottom: "10px", 
                         borderRadius: "10px"
-                      }}>2. Uploaded
+                      }}>
+                        2. Uploaded
                       </Typography>)
                   )}
 
