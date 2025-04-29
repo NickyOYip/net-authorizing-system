@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import Button from '@mui/material/Button';
@@ -13,13 +13,22 @@ import WifiTetheringErrorIcon from '@mui/icons-material/WifiTetheringError';
 import { Typography, Box, useMediaQuery } from '@mui/material';
 import Sidebar from './Sidebar.jsx';
 import ConnectionPopup from './ConnectionPopup.jsx';
+import { WalletContext } from '../provider/walletProvider';
+import { DataContext } from '../provider/dataProvider';
 import "../styles/Navbar.css";
 
 export default function LabelBottomNavigation() {
     const [value, setValue] = useState('recents');
-    const [isConnected, setIsConnected] = useState(true);//should be set by your logic 
     const [popupOpen, setPopupOpen] = useState(false);
     const isWideScreen = useMediaQuery('(min-width:900px)');
+
+    // Sync connection status from context
+    const { data } = useContext(DataContext);
+    const [isConnected, setIsConnected] = useState(false);
+
+    useEffect(() => {
+        setIsConnected(!!data.ethProvider);
+    }, [data.ethProvider]);
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
@@ -66,8 +75,6 @@ export default function LabelBottomNavigation() {
             <ConnectionPopup 
                 open={popupOpen}
                 onClose={() => setPopupOpen(false)}
-                isConnected={isConnected}
-                connectionDetails={connectionDetails}
             />
         </>
     );

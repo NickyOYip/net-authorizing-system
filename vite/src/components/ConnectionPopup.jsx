@@ -8,15 +8,17 @@ import {
   Typography,
   Box,
   Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Grid
+  Grid,
+  CircularProgress,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import LinkOffIcon from '@mui/icons-material/LinkOff';
 import { WalletContext } from '../provider/walletProvider';
 import { DataContext } from '../provider/dataProvider';
+import { fundAccount, withdrawAccount } from '../hooks/irysHook/irysAction';
 
 const ConnectionPopup = ({ open, onClose }) => {
   const { walletStatus, irysStatus, connectWallet } = useContext(WalletContext);
@@ -30,55 +32,97 @@ const ConnectionPopup = ({ open, onClose }) => {
   // Irys info
   const [irysBalance, setIrysBalance] = useState('N/A');
 
-  useEffect(() => {
-    const fetchWalletInfo = async () => {
-      if (data.ethProvider) {
-        try {
-          const signer = await data.ethProvider.getSigner();
-          const addr = await signer.getAddress();
-          setAddress(addr);
-          // Provider name (MetaMask, etc)
-          setProviderName(window.ethereum?.isMetaMask ? 'MetaMask' : 'Injected');
-          // Network
-          const networkObj = await data.ethProvider.getNetwork();
-          setNetwork(networkObj.name || networkObj.chainId);
-          // Balance
-          const balance = await data.ethProvider.getBalance(addr);
-          setEthBalance(Number(balance) / 1e18 + ' ETH');
-        } catch {
-          setAddress(null);
-          setProviderName('N/A');
-          setNetwork('N/A');
-          setEthBalance('N/A');
-        }
-      } else {
+  // Loading and feedback state
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Helper to refresh wallet balance
+  const refreshWalletInfo = async () => {
+    if (data.ethProvider) {
+      try {
+        const signer = await data.ethProvider.getSigner();
+        const addr = await signer.getAddress();
+        setAddress(addr);
+        setProviderName(window.ethereum?.isMetaMask ? 'MetaMask' : 'Injected');
+        const networkObj = await data.ethProvider.getNetwork();
+        setNetwork(networkObj.name || networkObj.chainId);
+        const balance = await data.ethProvider.getBalance(addr);
+        setEthBalance(Number(balance) / 1e18 + ' ETH');
+      } catch {
         setAddress(null);
         setProviderName('N/A');
         setNetwork('N/A');
         setEthBalance('N/A');
       }
-    };
-    fetchWalletInfo();
+    } else {
+      setAddress(null);
+      setProviderName('N/A');
+      setNetwork('N/A');
+      setEthBalance('N/A');
+    }
+  };
+
+  // Helper to refresh irys balance
+  const refreshIrysBalance = async () => {
+    if (data.irysUploader && address) {
+      try {
+        const bal = await data.irysUploader.getBalance();
+        setIrysBalance(Number(bal) / 1e18 + ' ETH');
+      } catch {
+        setIrysBalance('N/A');
+      }
+    } else {
+      setIrysBalance('N/A');
+    }
+  };
+
+  useEffect(() => {
+    refreshWalletInfo();
+    // eslint-disable-next-line
   }, [data.ethProvider]);
 
   useEffect(() => {
-    const fetchIrysBalance = async () => {
-      if (data.irysUploader && address) {
-        try {
-          // Assume irysUploader has a getBalance method
-          const bal = await data.irysUploader.getBalance();
-          setIrysBalance(Number(bal) / 1e18 + ' ETH');
-        } catch {
-          setIrysBalance('N/A');
-        }
-      } else {
-        setIrysBalance('N/A');
-      }
-    };
-    fetchIrysBalance();
+    refreshIrysBalance();
+    // eslint-disable-next-line
   }, [data.irysUploader, address]);
 
   const isConnected = !!address;
+
+  // Handler for fund
+  const handleFund = async () => {
+    setLoading(true);
+    try {
+      if (data.irysUploader) {
+        await fundAccount(data.irysUploader, "0.01");
+        setSnackbar({ open: true, message: "Funded 0.01 ETH to Irys wallet!", severity: "success" });
+        await refreshIrysBalance();
+        await refreshWalletInfo();
+      } else {
+        setSnackbar({ open: true, message: "Irys uploader not connected.", severity: "error" });
+      }
+    } catch (e) {
+      setSnackbar({ open: true, message: "Failed to fund Irys wallet: " + (e?.message || e), severity: "error" });
+    }
+    setLoading(false);
+  };
+
+  // Handler for withdraw
+  const handleWithdraw = async () => {
+    setLoading(true);
+    try {
+      if (data.irysUploader) {
+        await withdrawAccount(data.irysUploader);
+        setSnackbar({ open: true, message: "Withdrawn from Irys wallet!", severity: "success" });
+        await refreshIrysBalance();
+        await refreshWalletInfo();
+      } else {
+        setSnackbar({ open: true, message: "Irys uploader not connected.", severity: "error" });
+      }
+    } catch (e) {
+      setSnackbar({ open: true, message: "Failed to withdraw from Irys: " + (e?.message || e), severity: "error" });
+    }
+    setLoading(false);
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -88,74 +132,91 @@ const ConnectionPopup = ({ open, onClose }) => {
       </DialogTitle>
 
       <DialogContent>
-        {isConnected ? (
-          <>
-            <Typography variant="h6" sx={{ mb: 1 }}>Wallet Status</Typography>
-            <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, mb: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2">Status</Typography>
-                  <Typography variant="body2" sx={{ color: 'green', fontWeight: 600 }}>
-                    Connected
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2">Provider</Typography>
-                  <Typography variant="body2" sx={{ color: providerName !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
-                    {providerName}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2">Network</Typography>
-                  <Typography variant="body2" sx={{ color: network !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
-                    {network}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2">Balance</Typography>
-                  <Typography variant="body2" sx={{ color: ethBalance !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
-                    {ethBalance}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Box>
-            <Typography variant="h6" sx={{ mb: 1 }}>Irys Status</Typography>
-            <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, mb: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2">Status</Typography>
-                  <Typography variant="body2" sx={{ color: 'green', fontWeight: 600 }}>
-                    Connected
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2">Balance</Typography>
-                  <Typography variant="body2" sx={{ color: irysBalance !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
-                    {irysBalance}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Box>
-            <Divider sx={{ my: 2 }} />
-          </>
-        ) : (
-          // not connected popup
-          <List>
-            {["Provider", "Address", "Network", "ETH Balance", "Irys Status", "IRYS Balance"].map((item, index) => (
-              <ListItem key={index}>
-                <ListItemText
-                  primary={item + ":"}
-                  secondary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', color: "white" }}>
-                      <CancelIcon color="error" sx={{ mr: 1 }} />
-                      N/A
-                    </Box>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
-        )}
+        {/* Always show the same layout, just change values/colors */}
+        <Typography variant="h6" sx={{ mb: 1 }}>Wallet Status</Typography>
+        <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, mb: 2 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Status</Typography>
+              <Typography variant="body2" sx={{ color: isConnected ? 'green' : 'red', fontWeight: 600 }}>
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Provider</Typography>
+              <Typography variant="body2" sx={{ color: isConnected && providerName !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
+                {isConnected ? providerName : 'N/A'}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Network</Typography>
+              <Typography variant="body2" sx={{ color: isConnected && network !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
+                {isConnected ? network : 'N/A'}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Balance</Typography>
+              <Typography variant="body2" sx={{ color: isConnected && ethBalance !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
+                {isConnected ? ethBalance : 'N/A'}
+              </Typography>
+            </Grid>
+          </Grid>
+        </Box>
+        <Typography variant="h6" sx={{ mb: 1 }}>Irys Status</Typography>
+        <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, mb: 2 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Status</Typography>
+              <Typography variant="body2" sx={{ color: isConnected ? 'green' : 'red', fontWeight: 600 }}>
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Balance</Typography>
+              <Typography variant="body2" sx={{ color: isConnected && irysBalance !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
+                {isConnected ? irysBalance : 'N/A'}
+              </Typography>
+            </Grid>
+          </Grid>
+          {/* Fund and Withdraw Buttons */}
+          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              onClick={handleFund}
+              disabled={loading || !isConnected}
+              startIcon={loading && isConnected ? <CircularProgress size={16} /> : <PowerSettingsNewIcon />}
+            >
+              Fund 0.01 ETH to Irys wallet
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              color="secondary"
+              onClick={handleWithdraw}
+              disabled={loading || !isConnected}
+              startIcon={loading && isConnected ? <CircularProgress size={16} /> : <PowerSettingsNewIcon />}
+            >
+              Withdraw from Irys wallet
+            </Button>
+          </Box>
+        </Box>
+        <Divider sx={{ my: 2 }} />
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
@@ -164,7 +225,10 @@ const ConnectionPopup = ({ open, onClose }) => {
             variant="contained"
             color="primary"
             onClick={connectWallet}
+            disabled={loading}
+            startIcon={<LinkOffIcon />}
           >
+            {loading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
             Connect Wallet
           </Button>
         )}
