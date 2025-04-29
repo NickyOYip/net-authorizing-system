@@ -37,6 +37,19 @@ export const fundAccount = async (irysUploader: WebUploader, amount: string) => 
   }
 };
 
+export const withdrawAccount = async (irysUploader: WebUploader) => {
+  try {
+    const tx = await irysUploader.withdrawAll();
+    return tx;
+  } catch (e) {
+    console.log("Error withdrawing funds ", e);
+  }
+};
+
+
+
+
+
 /**
  * Upload a file or data to Irys
  * @param irysUploader - The WebUploader instance

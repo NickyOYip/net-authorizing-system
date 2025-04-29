@@ -8,10 +8,11 @@ import { DataContext } from "./dataProvider";
 export const WalletContext = createContext();
 
 function WalletProvider({children}) {
-  const { data, updateData } = useContext(DataContext);
+  // Fix: Provide fallback if DataContext is not available
+  const dataContext = useContext(DataContext) || {};
+  const { data = {}, updateData = () => {} } = dataContext;
   const [walletStatus, setWalletStatus] = useState("Not connected");
   const [irysStatus, setIrysStatus] = useState("Not connected");
-
 
   const connectWallet = async () => {
     console.log("start connect to ETH wallet");
@@ -45,7 +46,6 @@ function WalletProvider({children}) {
     }
   };
 
-
   return (
     <WalletContext.Provider value={{ walletStatus, irysStatus, connectWallet }}>
       {children}
@@ -53,4 +53,5 @@ function WalletProvider({children}) {
   );
 }
 
+export { WalletProvider };
 export default WalletProvider;

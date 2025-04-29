@@ -1,5 +1,4 @@
 import { createContext, useState } from 'react';
-import { UserProfile } from './dataModel';
 /**
  * @title DataContext
  * @notice Provides a context for the data store
@@ -17,7 +16,7 @@ const DataProvider = ({ children }) => {
     irysUploader: null, // Irys uploader instance
 
     //network setting
-    masterFactoryAddress: '0x562531026275B63cd926ee558c6613A61Cda6aFa',
+    masterFactoryAddress: '0xD67f3c606B64353FB351d3397501bC555AF51B28',
     broadcastFactory:{// ftech from master factory
       version: null,
       address: null,
@@ -54,4 +53,5 @@ const DataProvider = ({ children }) => {
   );
 };
 
+export { DataProvider };
 export default DataProvider;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,112 +7,141 @@ import {
   Button,
   Typography,
   Box,
-  Chip,
   Divider,
   List,
   ListItem,
   ListItemText,
-  Avatar,
   Grid
 } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { mockEthBalance, mockIrysBalance, mockProvider } from '../mockHelpers';
+import { WalletContext } from '../provider/walletProvider';
+import { DataContext } from '../provider/dataProvider';
 
-const ConnectionPopup = ({ open, onClose, isConnected, connectionDetails, mockConnected = false }) => {
+const ConnectionPopup = ({ open, onClose }) => {
+  const { walletStatus, irysStatus, connectWallet } = useContext(WalletContext);
+  const { data } = useContext(DataContext);
 
-  // MOCK DATA: always set isConnected to true for demo
-  isConnected = true //should be set by your logic or passed by navbar 
-  const effectiveIsConnected = mockConnected ? true : isConnected;
+  // Wallet info
+  const [address, setAddress] = useState(null);
+  const [providerName, setProviderName] = useState('N/A');
+  const [network, setNetwork] = useState('N/A');
+  const [ethBalance, setEthBalance] = useState('N/A');
+  // Irys info
+  const [irysBalance, setIrysBalance] = useState('N/A');
 
-  // Use mock data from helper
-  const [ethBalance, setEthBalance] = useState(mockEthBalance);
-  const [irysBalance, setIrysBalance] = useState(mockIrysBalance);
-  const [provider, setProvider] = useState(mockProvider);
+  useEffect(() => {
+    const fetchWalletInfo = async () => {
+      if (data.ethProvider) {
+        try {
+          const signer = await data.ethProvider.getSigner();
+          const addr = await signer.getAddress();
+          setAddress(addr);
+          // Provider name (MetaMask, etc)
+          setProviderName(window.ethereum?.isMetaMask ? 'MetaMask' : 'Injected');
+          // Network
+          const networkObj = await data.ethProvider.getNetwork();
+          setNetwork(networkObj.name || networkObj.chainId);
+          // Balance
+          const balance = await data.ethProvider.getBalance(addr);
+          setEthBalance(Number(balance) / 1e18 + ' ETH');
+        } catch {
+          setAddress(null);
+          setProviderName('N/A');
+          setNetwork('N/A');
+          setEthBalance('N/A');
+        }
+      } else {
+        setAddress(null);
+        setProviderName('N/A');
+        setNetwork('N/A');
+        setEthBalance('N/A');
+      }
+    };
+    fetchWalletInfo();
+  }, [data.ethProvider]);
+
+  useEffect(() => {
+    const fetchIrysBalance = async () => {
+      if (data.irysUploader && address) {
+        try {
+          // Assume irysUploader has a getBalance method
+          const bal = await data.irysUploader.getBalance();
+          setIrysBalance(Number(bal) / 1e18 + ' ETH');
+        } catch {
+          setIrysBalance('N/A');
+        }
+      } else {
+        setIrysBalance('N/A');
+      }
+    };
+    fetchIrysBalance();
+  }, [data.irysUploader, address]);
+
+  const isConnected = !!address;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
         <AccountCircleIcon sx={{ mr: 1, fontSize: 30 }} />
-        {effectiveIsConnected ? connectionDetails.address : 'Connection Status'}
+        Connection Status
       </DialogTitle>
 
       <DialogContent>
-        {effectiveIsConnected ? (
+        {isConnected ? (
           <>
-            {/** 
-            <Box sx={{ mb: 2 }}>
-              <Chip
-                label="PRO"
-                color="primary"
-                size="small"
-                sx={{ mr: 1 }}
-              />
-            </Box>
-            */}
-            {/* Portfolio + Profile */}
-            <Box sx={{ display: "flex", p: 2, border: '1px solid #ccc', borderRadius: 2, justifyContent: "space-between", marginBottom: "10px" }}>
-              <Typography variant="subtitle2">Provider </Typography>
-              <Typography variant="body2" color="success.main">
-                {provider}
-              </Typography>
-            </Box>
-
-            
-              <Grid container spacing={2} sx={{ mt: 2 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>Wallet Status</Typography>
+            <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, mb: 2 }}>
+              <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, textAlign: 'center' }}>
-                    <Typography variant="subtitle2">Wallet Status</Typography>
-                    <Typography variant="body2" color="success.main">
-                      Connected
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={6}>
-                  <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, textAlign: 'center' }}>
-                    <Typography variant="subtitle2">ETH Balance</Typography>
-                    <Typography variant="body2" color="success.main">
-                      {ethBalance} ETH</Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            
-
-
-            {/* Irys Status + Balances */}
-            <Grid container spacing={2} sx={{ mt: 2 }}>
-              <Grid item xs={6}>
-                <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, textAlign: 'center' }}>
-                  <Typography variant="subtitle2">Irys Status</Typography>
-                  <Typography variant="body2" color="success.main">
-                    {connectionDetails.irysStatus || "Connected"}
+                  <Typography variant="subtitle2">Status</Typography>
+                  <Typography variant="body2" sx={{ color: 'green', fontWeight: 600 }}>
+                    Connected
                   </Typography>
-                </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2">Provider</Typography>
+                  <Typography variant="body2" sx={{ color: providerName !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
+                    {providerName}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2">Network</Typography>
+                  <Typography variant="body2" sx={{ color: network !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
+                    {network}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2">Balance</Typography>
+                  <Typography variant="body2" sx={{ color: ethBalance !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
+                    {ethBalance}
+                  </Typography>
+                </Grid>
               </Grid>
-
-              <Grid item xs={6}>
-                <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, textAlign: 'center' }}>
-                  <Typography variant="subtitle2">IRYS Balance</Typography>
-                  <Typography variant="body2" color="success.main">
-                    {irysBalance} ETH</Typography>
-                </Box>
-              </Grid>
-            </Grid>
-
-            <Divider sx={{ my: 2 }} />
-
-            {/* Buy Crypto / Swap */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button variant="contained" size="small">Fund[ 0.01 ETH to IRYS wallet]</Button>
-              <Button variant="outlined" size="small">Withdraw from Irys wallet</Button>
             </Box>
+            <Typography variant="h6" sx={{ mb: 1 }}>Irys Status</Typography>
+            <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2, mb: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2">Status</Typography>
+                  <Typography variant="body2" sx={{ color: 'green', fontWeight: 600 }}>
+                    Connected
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="subtitle2">Balance</Typography>
+                  <Typography variant="body2" sx={{ color: irysBalance !== 'N/A' ? 'green' : 'inherit', fontWeight: 600 }}>
+                    {irysBalance}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Box>
+            <Divider sx={{ my: 2 }} />
           </>
         ) : (
           // not connected popup
           <List>
-            {["Provider", "Address", "Network", "Irys Status", "ETH Balance", "IRYS Balance"].map((item, index) => (
+            {["Provider", "Address", "Network", "ETH Balance", "Irys Status", "IRYS Balance"].map((item, index) => (
               <ListItem key={index}>
                 <ListItemText
                   primary={item + ":"}
@@ -128,16 +157,13 @@ const ConnectionPopup = ({ open, onClose, isConnected, connectionDetails, mockCo
           </List>
         )}
       </DialogContent>
-
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
-        {!effectiveIsConnected && (
+        {!isConnected && (
           <Button
             variant="contained"
             color="primary"
-            onClick={() => {
-              console.log('Connect wallet clicked');
-            }}
+            onClick={connectWallet}
           >
             Connect Wallet
           </Button>
