@@ -8,7 +8,7 @@ import Layout from './components/Layout'
 import PublicView from './pages/PublicView'
 import PublicActivate from './pages/PublicActivate'
 import Activate from './pages/PublicActivate'
-import CreateContract from './components/Create'
+import CreateContract from './pages/Create'
 
 export default function App() {
   return (
