@@ -1,4 +1,4 @@
-import { useState, useContext, createContext } from "react";
+import { useState, useContext, createContext, useEffect } from "react";
 import { ethers } from "ethers";
 import { WebUploader } from "@irys/web-upload";
 import { WebEthereum } from "@irys/web-upload-ethereum";
@@ -13,6 +13,68 @@ function WalletProvider({children}) {
   const { data = {}, updateData = () => {} } = dataContext;
   const [walletStatus, setWalletStatus] = useState("Not connected");
   const [irysStatus, setIrysStatus] = useState("Not connected");
+
+  // Function to fetch factory information from master contract
+  const fetchFactoryInfo = async (provider) => {
+    try {
+      if (!provider || !data.masterFactoryAddress) {
+        console.warn("Provider or factory address not available");
+        return;
+      }
+
+      const { ethers } = await import('ethers');
+      
+      // Master Factory ABI (minimal required for this operation)
+      const masterFactoryABI = [
+        "function getCurrentVer() view returns (address, address, address)",
+        "function broadcastFactoryCurrentVer() view returns (uint256)",
+        "function publicFactoryCurrentVer() view returns (uint256)",
+        "function privateFactoryCurrentVer() view returns (uint256)"
+      ];
+      
+      const masterFactory = new ethers.Contract(
+        data.masterFactoryAddress,
+        masterFactoryABI,
+        provider
+      );
+      
+      // Get current factory addresses
+      const [broadcastFactoryAddr, publicFactoryAddr, privateFactoryAddr] = 
+        await masterFactory.getCurrentVer();
+      
+      // Get current version numbers
+      const [broadcastVersion, publicVersion, privateVersion] = await Promise.all([
+        masterFactory.broadcastFactoryCurrentVer(),
+        masterFactory.publicFactoryCurrentVer(),
+        masterFactory.privateFactoryCurrentVer()
+      ]);
+      
+      console.log("Factory information fetched:", {
+        broadcast: { version: Number(broadcastVersion), address: broadcastFactoryAddr },
+        public: { version: Number(publicVersion), address: publicFactoryAddr },
+        private: { version: Number(privateVersion), address: privateFactoryAddr }
+      });
+      
+      // Update global state with factory information
+      updateData({
+        broadcastFactory: {
+          version: Number(broadcastVersion),
+          address: broadcastFactoryAddr,
+        },
+        publicFactory: {
+          version: Number(publicVersion),
+          address: publicFactoryAddr,
+        },
+        privateFactory: {
+          version: Number(privateVersion),
+          address: privateFactoryAddr,
+        }
+      });
+      
+    } catch (error) {
+      console.error("Error fetching factory information:", error);
+    }
+  };
 
   const connectWallet = async () => {
     console.log("start connect to ETH wallet");
@@ -34,6 +96,10 @@ function WalletProvider({children}) {
       // update context with provider 
       updateData({ ethProvider: provider });
       console.log("ETH provider updated in context:", provider);
+      
+      // Fetch factory information after wallet connection
+      await fetchFactoryInfo(provider);
+      
       // connect to Irys
       const irysUploader = await WebUploader(WebEthereum).withAdapter(EthersV6Adapter(provider)).withRpc("https://testnet-explorer.irys.xyz/").devnet();
       setIrysStatus(`Connected to Irys: ${irysUploader.address}`);
@@ -46,8 +112,20 @@ function WalletProvider({children}) {
     }
   };
 
+  // Auto-fetch factory info when provider changes
+  useEffect(() => {
+    if (data.ethProvider) {
+      fetchFactoryInfo(data.ethProvider);
+    }
+  }, [data.ethProvider, data.masterFactoryAddress]);
+
   return (
-    <WalletContext.Provider value={{ walletStatus, irysStatus, connectWallet }}>
+    <WalletContext.Provider value={{ 
+      walletStatus, 
+      irysStatus, 
+      connectWallet,
+      fetchFactoryInfo
+    }}>
       {children}
     </WalletContext.Provider>
   );
