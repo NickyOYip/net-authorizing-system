@@ -19,8 +19,6 @@ This document describes the folder and file structure of the project, with a sho
 
 - **ConnectionPopup.jsx**  
   Modal dialog for wallet connection, status, balances, and Irys actions.
-- **Create.jsx**  
-  Multi-step form for creating new contracts (broadcast/public/private).
 - **DashboardCard.jsx**  
   Card UI for dashboard stats and quick actions.
 - **DownloadButton.jsx**  
@@ -89,14 +87,10 @@ This document describes the folder and file structure of the project, with a sho
 
 ## pages/
 
-- **Broadcast.tsx**  
-  Page for listing and creating broadcast contracts.
+- **Create.jsx**  
+  Multi-step form for creating new contracts (broadcast/public/private).
 - **Home.tsx**  
   Dashboard page showing contract stats and quick links.
-- **Private.tsx**  
-  Page for listing and creating private contracts.
-- **Public.tsx**  
-  Page for listing and creating public contracts.
 - **PublicActivate.jsx**  
   Activation page for public/private contracts (recipient enters activation code, uploads files if private).
 - **PublicView.tsx**  
@@ -142,15 +136,6 @@ This document describes the folder and file structure of the project, with a sho
   Styles for the navigation bar.
 - **Sidebar.css**  
   Styles for the sidebar.
-
----
-
-## devNotes/
-
-- **ContractDesign.md**  
-  Smart contract design and state tables.
-- **UserFlow.md**  
-  User and system flow documentation for contract creation, activation, and verification.
 
 ---
 
