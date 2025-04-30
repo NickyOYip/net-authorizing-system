@@ -31,7 +31,7 @@ interface PublicSubContractReturn extends BaseHookReturn {
   ) => Promise<StatusUpdatedEvent>;
   
   setUser: (
-    subContractAddress: string, 
+    subContractAddress: string,
     userAddress: string
   ) => Promise<void>;
   
@@ -178,7 +178,7 @@ export function usePublicSubContract(): PublicSubContractReturn {
   }, [data.ethProvider]);
   
   /**
-   * Set the user address (owner or parent only)
+   * Set the user address for this contract
    */
   const setUser = useCallback(async (
     subContractAddress: string,
@@ -191,10 +191,6 @@ export function usePublicSubContract(): PublicSubContractReturn {
         throw new Error('Provider not available');
       }
       
-      if (!ethers.isAddress(userAddress)) {
-        throw new Error('Invalid user address');
-      }
-      
       const { getPublicSubContract } = createContractFactories(data.ethProvider);
       const subContract = getPublicSubContract(subContractAddress);
       const signer = await data.ethProvider.getSigner();
@@ -202,7 +198,7 @@ export function usePublicSubContract(): PublicSubContractReturn {
       const tx = await subContract.connect(signer).setUser(userAddress);
       await waitForTransaction(tx);
     } catch (err) {
-      console.error('Error setting user address:', err);
+      console.error('Error setting user:', err);
       setError(`Failed to set user: ${(err as Error).message}`);
       throw err;
     } finally {

@@ -111,6 +111,7 @@ export function usePublicFactory(): PublicFactoryReturn {
         params.title,
         params.activationCode
       );
+      
       const receipt = await waitForTransaction(tx);
       
       const event = findEventInLogs<NewContractOwnedEvent>(

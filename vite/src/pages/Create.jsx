@@ -1,12 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import StepContent from '@mui/material/StepContent';
-import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -16,17 +14,27 @@ import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import EmailIcon from '@mui/icons-material/Email';
 import { useNavigate } from 'react-router-dom';
 import DownloadButton from '../components/DownloadButton';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
-
+import Tooltip from '@mui/material/Tooltip';
+import { DataContext } from '../provider/dataProvider';
+import { createService } from '../services/createService';
+import { 
+  useBroadcastFactory, 
+  usePublicFactory, 
+  usePrivateFactory,
+  useBroadcastContract, 
+  usePublicContract, 
+  usePrivateContract,
+  useMasterFactory
+} from '../hooks/contractHook';
 
 export const CreateContract = () => {
   const navigate = useNavigate();
+  const { data } = useContext(DataContext);
   const [activeStep, setActiveStep] = useState(0);
-  const [skipped, setSkipped] = useState(new Set());
   const [title, setTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedJson, setSelectedJson] = useState(null);
@@ -34,32 +42,106 @@ export const CreateContract = () => {
   const [jsonHash, setJsonHash] = useState('');
   const [creating, setCreating] = useState(false);
   const [createdContractAddress, setCreatedContractAddress] = useState('');
+  const [createdSubContractAddress, setCreatedSubContractAddress] = useState('');
   const [error, setError] = useState(null);
   const [type, setType] = useState('');
-  //for contract creation step 4 
+  const [activationCode, setActivationCode] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [factoryAddresses, setFactoryAddresses] = useState({
+    broadcastFactory: '',
+    publicFactory: '',
+    privateFactory: ''
+  });
+  const [factoriesLoaded, setFactoriesLoaded] = useState(false);
 
+  // For contract creation progress
   const [progressStep, setProgressStep] = useState({
-
     estimating: null,
     uploading: null,
     creating: null,
     success: null,
-
   });
 
-  const steps = ['Contract Information', 'Select Document', 'Review & Create', 'Contract Creation'];
+  // Hook instances for contract creation
+  const broadcastFactoryHook = useBroadcastFactory();
+  const publicFactoryHook = usePublicFactory();
+  const privateFactoryHook = usePrivateFactory();
+  const broadcastContractHook = useBroadcastContract();
+  const publicContractHook = usePublicContract();
+  const privateContractHook = usePrivateContract();
+  
+  // Get master factory hook
+  const { getCurrentFactories, isLoading: loadingFactories } = useMasterFactory();
 
-  //:) add choose types of contracts to create form 
-  //:) add step 2 and 3 to step 1
-  //:)no description
-  //:) add download file to check the file in step 4 
-  //:)add tooltips to types of contract buttons
-  // last step need add loading animation and file like the blockchain project 
+  // Use factory addresses from context if available, or fetch them if not
+  useEffect(() => {
+    const setupFactoryAddresses = async () => {
+      console.log("Setting up factory addresses...");
+      console.log("Data context:", data);
+      
+      // First check if factory addresses are available in the data context
+      if (data && 
+          data.broadcastFactory && 
+          data.publicFactory && 
+          data.privateFactory) {
+        
+        console.log("Using factory addresses from context.");
+        setFactoryAddresses({
+          broadcastFactory: data.broadcastFactory.address,
+          publicFactory: data.publicFactory.address,
+          privateFactory: data.privateFactory.address
+        });
+        
+        setFactoriesLoaded(true);
+        setError(null);
+        return;
+      } 
+      
+      // If not available in context, try to fetch them
+      console.log("Factory addresses not found in context, fetching...");
+      try {
+        const addresses = await getCurrentFactories();
+        console.log("Factory addresses fetched:", addresses);
+        
+        if (addresses && 
+            addresses.broadcastFactory && 
+            addresses.publicFactory && 
+            addresses.privateFactory) {
+          
+          setFactoryAddresses({
+            broadcastFactory: addresses.broadcastFactory,
+            publicFactory: addresses.publicFactory,
+            privateFactory: addresses.privateFactory
+          });
+          
+          setFactoriesLoaded(true);
+          setError(null);
+        } else {
+          console.warn("Some factory addresses are missing", addresses);
+          setError("Some factory addresses are missing. Please check your wallet connection.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch factory addresses:", err);
+        setError("Failed to fetch factory addresses. Please check your connection and try again.");
+      }
+    };
+
+    setupFactoryAddresses();
+  }, [data, getCurrentFactories]);
+
+  // Add another effect to log data changes for debugging
+  useEffect(() => {
+    console.log("DataContext updated:", data);
+    if (data && data.factoryAddress) {
+      console.log("Master factory address available:", data.factoryAddress);
+    }
+  }, [data]);
+
+  const steps = ['Contract Information', 'Select Document', 'Review & Create', 'Contract Creation'];
 
   const handletypeSelect = (type) => {
     setType(type);
   }
-
 
   const handleNext = () => {
     if (activeStep === 0) {
@@ -67,17 +149,23 @@ export const CreateContract = () => {
         setError("Please enter a contract title");
         return;
       }
-      if (type == '') {
-        setError("Please choose contract type !");
+      if (type === '') {
+        setError("Please choose contract type!");
+        return;
+      }
+      
+      // Check for activation code if public or private contract
+      if ((type === 'public' || type === 'private') && !activationCode.trim()) {
+        setError("Please enter an activation code");
         return;
       }
     } else if (activeStep === 1) {
       if (!selectedFile || !fileHash) {
-        setError("Please select a file !");
+        setError("Please select a file!");
         return;
       }
       if (!selectedJson || !jsonHash) {
-        setError("Please select a metadata file !");
+        setError("Please select a metadata file!");
         return;
       }
     }
@@ -85,7 +173,7 @@ export const CreateContract = () => {
     setError(null);
   };
 
-  // reset create 
+  // Reset create process
   const handleReset = () => {
     setActiveStep(0);
     setFileHash('');
@@ -95,8 +183,17 @@ export const CreateContract = () => {
     setTitle('');
     setCreating(false);
     setRecipient('');
+    setActivationCode('');
     setError('');
     setType('');
+    setCreatedContractAddress('');
+    setCreatedSubContractAddress('');
+    setProgressStep({
+      estimating: null,
+      uploading: null,
+      creating: null,
+      success: null,
+    });
   };
 
   // Handle back step in form
@@ -154,60 +251,161 @@ export const CreateContract = () => {
     setTitle(e.target.value);
   };
 
+  const handleActivationCodeChange = (e) => {
+    setActivationCode(e.target.value);
+  };
 
   //Handle recipient of private/public contracts 
   const handleRecipientChange = (e) => {
     setRecipient(e.target.value);
   };
 
-  const handleCreate = () => {
-    setCreating(false);
-  }
-
-  
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     try {
-      setActiveStep((prevStep) => prevStep + 1);
+      // Move to the final step
+      setActiveStep(3);
+      setCreating(true);
+      
+      // First check if factories are loaded
+      if (!factoriesLoaded) {
+        // One last attempt to get factory addresses from context
+        if (data && 
+            data.broadcastFactory && 
+            data.publicFactory && 
+            data.privateFactory) {
+              
+          setFactoryAddresses({
+            broadcastFactory: data.broadcastFactory.address,
+            publicFactory: data.publicFactory.address,
+            privateFactory: data.privateFactory.address
+          });
+          setFactoriesLoaded(true);
+        } else {
+          throw new Error('Factory addresses not loaded. Please check your wallet connection and try again.');
+        }
+      }
+      
+      // Get corresponding factory address based on contract type
+      let factoryAddress = '';
+      switch (type) {
+        case 'broadcast':
+          factoryAddress = factoryAddresses.broadcastFactory;
+          break;
+        case 'public':
+          factoryAddress = factoryAddresses.publicFactory;
+          break;
+        case 'private':
+          factoryAddress = factoryAddresses.privateFactory;
+          break;
+        default:
+          throw new Error('Invalid contract type');
+      }
+      
+      // Log the factory address for debugging
+      console.log(`Using ${type} factory address:`, factoryAddress);
+      
+      if (!factoryAddress) {
+        throw new Error(`Factory address for ${type} contract not available. Please check your wallet connection.`);
+      }
 
-      setProgressStep(prev => ({
-        ...prev,
-        estimating: true
-      }));
+      // Prepare contract helpers based on contract type
+      let contractHelpers;
+      
+      if (type === 'broadcast') {
+        contractHelpers = {
+          createBroadcastContract: broadcastFactoryHook.createBroadcastContract,
+          addNewBroadcastSubContract: broadcastContractHook.addNewBroadcastSubContract
+        };
+      } else if (type === 'public') {
+        contractHelpers = {
+          createPublicContract: publicFactoryHook.createPublicContract,
+          addNewPublicSubContract: publicContractHook.addNewPublicSubContract
+        };
+      } else if (type === 'private') {
+        contractHelpers = {
+          createPrivateContract: privateFactoryHook.createPrivateContract,
+          addNewPrivateSubContract: privateContractHook.addNewPrivateSubContract
+        };
+      }
 
-      //some estimating logic ...
-      setProgressStep(prev => ({
-        ...prev,
-        estimating: false, //false means done
-        uploading: true
-      }));
+      // Prepare common parameters
+      const commonParams = {
+        title,
+        documentFile: selectedFile,
+        jsonFile: selectedJson,
+        factoryAddress,
+        progressCallback: setProgressStep,
+        contractHelpers, // Pass the contract helpers
+        irysUploader: data.irysUploader // Pass the Irys instance from context
+      };
 
-      //some uploading logic ...
-      setProgressStep(prev => ({
-        ...prev,
-        uploading: false,
-        creating: true
-      }));
+      let result;
+      
+      // Call appropriate service method based on contract type
+      if (type === 'broadcast') {
+        result = await createService.createBroadcastContract(commonParams);
+      } else if (type === 'public') {
+        result = await createService.createPublicContract({
+          ...commonParams,
+          activationCode
+        });
+      } else if (type === 'private') {
+        result = await createService.createPrivateContract({
+          ...commonParams,
+          activationCode
+        });
+      } else {
+        throw new Error('Invalid contract type');
+      }
+      
+      if (result.success) {
+        // Log detailed information about the created contract
+        console.log(`=== Contract Creation Successful ===`);
+        console.log(`Contract Type: ${type}`);
+        console.log(`Title: ${title}`);
+        console.log(`Main Contract Address: ${result.contractAddress}`);
+        console.log(`Sub-Contract Address: ${result.subContractAddress}`);
+        console.log(`Transaction Hash: ${result.transactionHash}`);
+        console.log(`View Contract URL: /contracts/${result.contractAddress}`);
+        console.log(`===============================`);
 
-      //some creating logic ...
-      setProgressStep(prev => ({
-        ...prev,
-        //creating: false,
-        //success: true
-      }));
+        setCreatedContractAddress(result.contractAddress);
+        setCreatedSubContractAddress(result.subContractAddress);
+        setProgressStep(prev => ({...prev, success: true}));
 
-      return;
+        // Log available routes
+        const viewRoute = `/contracts/${result.contractAddress}`;
+        console.log(`To view this contract, navigate to: ${viewRoute}`);
+        
+        // Check if route exists (basic validation)
+        if (!result.contractAddress || result.contractAddress === '0x0000000000000000000000000000000000000000') {
+          console.warn("Warning: Contract address appears invalid. Route navigation may fail.");
+        }
+      } else {
+        console.error("Contract creation failed:", result.errorMessage);
+        setError(result.errorMessage || 'Contract creation failed');
+        setProgressStep(prev => ({...prev, success: false}));
+      }
+
+      setCreating(false);
     } catch (e) {
-      setError(e);
-      return;
+      console.error('Contract creation error:', e);
+      setError(e.message || 'An unexpected error occurred');
+      setProgressStep({
+        estimating: false,
+        uploading: false,
+        creating: false,
+        success: false
+      });
+      setCreating(false);
     }
-  }
+  };
 
   return (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Create New {type} Contract
+          Create New {type.charAt(0).toUpperCase() + type.slice(1)} Contract
         </Typography>
       </Box>
 
@@ -219,15 +417,29 @@ export const CreateContract = () => {
       }}>
         <Box sx={{ maxWidth: "80vw", mx: 'auto' }}>
           <div>
-            {/*Title */}
-
             {error && (
               <Alert severity="error" sx={{ mb: 3 }}>
                 {error}
               </Alert>
             )}
-
+            {/* Show wallet status */}
+            {!data?.ethProvider && (
+              <Alert severity="warning" sx={{ mb: 3 }}>
+                Please connect your wallet to continue.
+              </Alert>
+            )}
+            {loadingFactories && !error && !factoriesLoaded && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Loading factory contracts...
+              </Alert>
+            )}
+            {factoriesLoaded && (
+              <Alert severity="success" sx={{ mb: 3 }}>
+                Factory contracts loaded successfully.
+              </Alert>
+            )}
           </div>
+
           <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
             {steps.map((label) => (
               <Step key={label}>
@@ -274,6 +486,7 @@ export const CreateContract = () => {
                   </Tooltip>
                 </Grid>
               </Grid>
+
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <TextField
@@ -287,6 +500,32 @@ export const CreateContract = () => {
                   />
                 </Grid>
 
+                {(type === 'public' || type === 'private') && (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        required
+                        fullWidth
+                        label="Activation Code"
+                        type="password"
+                        value={activationCode}
+                        onChange={handleActivationCodeChange}
+                        helperText="This code will be needed to activate the contract"
+                        variant="outlined"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Recipient Address (Optional)"
+                        value={recipient}
+                        onChange={handleRecipientChange}
+                        helperText="Ethereum address of the intended recipient"
+                        variant="outlined"
+                      />
+                    </Grid>
+                  </>
+                )}
               </Grid>
 
               <Box sx={{ mb: 2, mt: 2 }}>
@@ -299,7 +538,7 @@ export const CreateContract = () => {
                 </Button>
                 <Button
                   variant="outlined"
-
+                  onClick={() => navigate(-1)}
                   sx={{ mt: 1, mr: 1 }}
                 >
                   Cancel
@@ -309,7 +548,6 @@ export const CreateContract = () => {
           )}
 
           {/* Step 2: Document Upload */}
-
           {activeStep === 1 && (
             <Box>
               <Box sx={{ mb: 3 }}>
@@ -376,12 +614,11 @@ export const CreateContract = () => {
                     <Typography variant="subtitle2">Selected File:</Typography>
                     <Typography variant="body2">{selectedJson.name}</Typography>
                     <Typography variant="caption" component="div" sx={{ wordBreak: 'break-all' }}>
-                      Hash: {fileHash ? `${fileHash.substring(0, 20)}...${fileHash.substring(fileHash.length - 10)}` : 'Calculating...'}
+                      Hash: {jsonHash ? `${jsonHash.substring(0, 20)}...${jsonHash.substring(jsonHash.length - 10)}` : 'Calculating...'}
                     </Typography>
                   </Box>
                 )}
               </Box>
-
 
               <Box sx={{ mb: 2 }}>
                 <Button
@@ -418,12 +655,26 @@ export const CreateContract = () => {
                     {title}
                   </Typography>
 
-                  {type != 'broadcast' && (
+                  <Typography variant="subtitle2" color="text.secondary">Contract Type</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </Typography>
+
+                  {(type === 'public' || type === 'private') && (
                     <>
-                      <Typography variant="subtitle2" color="text.secondary">Recipient</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">Activation Code</Typography>
                       <Typography variant="body1" sx={{ mb: 2 }}>
-                        {recipient}
+                        {activationCode ? '••••••••' : 'Not set'}
                       </Typography>
+
+                      {recipient && (
+                        <>
+                          <Typography variant="subtitle2" color="text.secondary">Recipient</Typography>
+                          <Typography variant="body1" sx={{ mb: 2 }}>
+                            {recipient}
+                          </Typography>
+                        </>
+                      )}
                     </>
                   )}
 
@@ -440,22 +691,38 @@ export const CreateContract = () => {
                     <DownloadButton file={selectedFile} />
                     <DownloadButton file={selectedJson} />
                   </Box>
-
                 </CardContent>
               </Card>
-              {/** need to be changed for different types of contract */}
-              <Alert severity="info" sx={{ mt: 3, mb: 3 }}>
-                Once created, this broadcast contract will be publicly accessible to everyone on the blockchain. The document itself will not be stored on the blockchain, only its cryptographic hash.
-              </Alert>
+
+              {/* Contract type specific info */}
+              {type === 'broadcast' && (
+                <Alert severity="info" sx={{ mt: 3, mb: 3 }}>
+                  This broadcast contract will be publicly accessible to everyone on the blockchain. 
+                  The document itself will be stored on decentralized storage, with its hash recorded on the blockchain.
+                </Alert>
+              )}
+
+              {type === 'public' && (
+                <Alert severity="info" sx={{ mt: 3, mb: 3 }}>
+                  This public contract requires activation with the code you provided. 
+                  The document will be stored on decentralized storage, but only accessible after activation.
+                </Alert>
+              )}
+
+              {type === 'private' && (
+                <Alert severity="info" sx={{ mt: 3, mb: 3 }}>
+                  This private contract requires activation with the code you provided. 
+                  Only document hashes are stored on-chain. The actual files will need to be shared securely with the recipient.
+                </Alert>
+              )}
 
               <Box sx={{ mb: 2 }}>
                 <Button
                   variant="contained"
-                  //idk how to handle
                   onClick={handleSubmit}
                   sx={{ mt: 1, mr: 1 }}
                   startIcon={<SendIcon />}
-                  disabled={creating}
+                  disabled={creating || loadingFactories || !factoriesLoaded}
                 >
                   {creating ? (
                     <>
@@ -463,7 +730,7 @@ export const CreateContract = () => {
                       Creating...
                     </>
                   ) : (
-                    'Created Contract'
+                    'Create Contract'
                   )}
                 </Button>
                 <Button
@@ -474,26 +741,31 @@ export const CreateContract = () => {
                   Back
                 </Button>
               </Box>
+
+              {/* Add warning if factories not loaded */}
+              {!factoriesLoaded && !loadingFactories && (
+                <Alert severity="warning" sx={{ mt: 2 }}>
+                  Factory contracts not loaded. Please connect your wallet and refresh the page.
+                </Alert>
+              )}
             </Box>
           )}
 
-          {/* Step 4: Success */}
+          {/* Step 4: Contract Creation Progress/Success */}
           {activeStep === 3 && (
-
             <Box>
-              <Paper style={{ border: "solid 1px #1976d2", width: "500px", justifySelf: "center" }}>
-                
+              <Paper style={{ border: "solid 1px #1976d2", maxWidth: "500px", margin: "0 auto" }}>
                 <div style={{
                   background: "#121212 !important",
                   borderRadius: "10px",
-                  mb: 4,
-                }} >
-                  <Typography variant='h5' sx={{ margin: "10px" }}>
+                  padding: "20px"
+                }}>
+                  <Typography variant='h5' sx={{ marginBottom: "20px" }}>
                     Creating Contract
                   </Typography>
 
-                  {progressStep.estimating != null && (
-                    progressStep.estimating == true ? (
+                  {progressStep.estimating !== null && (
+                    progressStep.estimating === true ? (
                       <Typography color="#1976d2" variant="h6"
                         style={{
                           background: "#1976d250",
@@ -515,97 +787,125 @@ export const CreateContract = () => {
                       </Typography>)
                   )}
 
-                  {progressStep.uploading != null && (
-                    progressStep.uploading == true ? (
+                  {progressStep.uploading !== null && (
+                    progressStep.uploading === true ? (
                       <Typography color="#1976d2" variant="h6"
-                      style={{
-                        background: "#1976d250",
-                        padding: '8px',
-                        marginBottom: "10px", 
-                        borderRadius: "10px"
-                      }}>
+                        style={{
+                          background: "#1976d250",
+                          padding: '8px',
+                          marginBottom: "10px", 
+                          borderRadius: "10px"
+                        }}>
                         2. Uploading <LinearProgress sx={{ height: "3px" }} />
                       </Typography>
                     ) : (
                       <Typography color="green" variant="h6" 
-                      style={{
-                        background: "#2e7d3250",
-                        paddingLeft: '10px', 
-                        marginBottom: "10px", 
-                        borderRadius: "10px"
-                      }}>
+                        style={{
+                          background: "#2e7d3250",
+                          paddingLeft: '10px', 
+                          marginBottom: "10px", 
+                          borderRadius: "10px"
+                        }}>
                         2. Uploaded
                       </Typography>)
                   )}
 
-                  {progressStep.creating != null && (
-                    progressStep.creating == true ? (
+                  {progressStep.creating !== null && (
+                    progressStep.creating === true ? (
                       <Typography color="#1976d2" variant="h6"
-                      style={{
-                        background: "#1976d250",
-                        padding: '8px',
-                        marginBottom: "10px", 
-                        borderRadius: "10px"
-                      }}>
+                        style={{
+                          background: "#1976d250",
+                          padding: '8px',
+                          marginBottom: "10px", 
+                          borderRadius: "10px"
+                        }}>
                         3. Creating <LinearProgress sx={{ height: "3px" }} />
                       </Typography>
                     ) : (
                       <Typography color="green" variant="h6" 
-                      style={{
-                        background: "#2e7d3250",
-                        paddingLeft: '10px', 
-                        marginBottom: "10px", 
-                        borderRadius: "10px"
-                      }}>
-                      3. Created
+                        style={{
+                          background: "#2e7d3250",
+                          paddingLeft: '10px', 
+                          marginBottom: "10px", 
+                          borderRadius: "10px"
+                        }}>
+                        3. Created
                       </Typography>)
                   )}
-
                 </div>
               </Paper>
 
-              {/**  Successfully updated  */}
-              {progressStep.success != null && progressStep.success == true && (
-
+              {/* Success message */}
+              {progressStep.success === true && (
                 <Box sx={{ textAlign: 'center', py: 3 }}>
                   <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 2 }} />
                   <Typography variant="h5" gutterBottom color="success.main">
                     Contract Created Successfully!
                   </Typography>
 
-                  <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
                     Contract Address:
                   </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, wordBreak: 'break-all' }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ mb: 2, wordBreak: 'break-all', fontFamily: 'monospace' }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdContractAddress);
+                      alert("Contract address copied to clipboard!");
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
                     {createdContractAddress}
                   </Typography>
-                  {type == 'broadcast' && (
-                    <Typography variant="body1" >
+                  
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    Sub-Contract Address:
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ mb: 3, wordBreak: 'break-all', fontFamily: 'monospace' }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdSubContractAddress);
+                      alert("Sub-contract address copied to clipboard!");
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {createdSubContractAddress}
+                  </Typography>
+
+                  {type === 'broadcast' && (
+                    <Typography variant="body1">
                       Your broadcast contract has been created and is now publicly verifiable.
                     </Typography>
                   )}
-                  {type == 'public' && (
-                    <Typography variant="body1" >
-                      Your public contract has been created. Share the contract address with {recipient} to activate it.
+                  
+                  {type === 'public' && (
+                    <Typography variant="body1">
+                      Your public contract has been created. Share the contract address and activation code with 
+                      {recipient ? ` ${recipient}` : ' the recipient'} to activate it.
                     </Typography>
                   )}
-                  {type == 'private' && (
-                    <Typography variant="body1" >
-                      Your private contract has been created. Share the contract address, metadata and document file with {recipient} to activate it.
+                  
+                  {type === 'private' && (
+                    <Typography variant="body1">
+                      Your private contract has been created. Share the contract address, activation code, and files with 
+                      {recipient ? ` ${recipient}` : ' the recipient'} to activate it.
                     </Typography>
                   )}
 
                   <Box sx={{ mt: 3 }}>
-                    {/*
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    //onClick={handleViewContract}
-                    sx={{ mr: 2 }}
-                  >
-                    View Contract
-                  </Button>
-                  */}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => {
+                        const route = `/contracts/${createdContractAddress}`;
+                        console.log(`Navigating to: ${route}`);
+                        navigate(route);
+                      }}
+                      sx={{ mr: 2 }}
+                    >
+                      View Contract
+                    </Button>
                     <Button
                       variant="outlined"
                       onClick={handleReset}
@@ -613,14 +913,36 @@ export const CreateContract = () => {
                       Create another contract
                     </Button>
                   </Box>
+                  
+                  <Typography variant="caption" sx={{ display: 'block', mt: 2, color: 'text.secondary' }}>
+                    Click on addresses to copy them to clipboard
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Error message */}
+              {progressStep.success === false && (
+                <Box sx={{ textAlign: 'center', py: 3 }}>
+                  <Typography variant="h5" gutterBottom color="error">
+                    Contract Creation Failed
+                  </Typography>
+                  
+                  <Typography variant="body1" sx={{ mb: 3 }}>
+                    {error || 'There was an error creating your contract. Please try again.'}
+                  </Typography>
+                  
+                  <Button
+                    variant="contained"
+                    onClick={handleReset}
+                  >
+                    Try Again
+                  </Button>
                 </Box>
               )}
             </Box>
-
           )}
-
-        </Box >
-      </Box >
+        </Box>
+      </Box>
     </>
   );
 }
