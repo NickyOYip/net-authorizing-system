@@ -86,6 +86,12 @@ describe("PrivateSubContract", function () {
         privateSubContract.updateStatus(2)
       ).to.be.revertedWith("Invalid status");
     });
+    
+    it("Should emit StatusUpdated event when status is updated", async function () {
+      await expect(privateSubContract.updateStatus(1))
+        .to.emit(privateSubContract, "StatusUpdated")
+        .withArgs(ethers.anyValue, 1);
+    });
   });
 
   describe("User and Data Management", function () {
@@ -115,6 +121,17 @@ describe("PrivateSubContract", function () {
       await expect(
         privateSubContract.connect(owner).updateDataLinks("link1", "link2")
       ).to.be.revertedWith("Only user can perform this action");
+    });
+    
+    it("Should emit DataLinksUpdated event when data links are updated", async function () {
+      await privateSubContract.connect(addr1).setUser(user.address);
+      
+      const jsonLink = "ar://encrypted-json-txid";
+      const softCopyLink = "ar://encrypted-softcopy-txid";
+      
+      await expect(privateSubContract.connect(user).updateDataLinks(jsonLink, softCopyLink))
+        .to.emit(privateSubContract, "DataLinksUpdated")
+        .withArgs(ethers.anyValue, user.address);
     });
   });
 

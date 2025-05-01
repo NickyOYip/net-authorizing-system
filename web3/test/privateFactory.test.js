@@ -49,6 +49,20 @@ describe("PrivateFactory Contract", function () {
       expect(await newContract.owner()).to.equal(owner.address);
       expect(await newContract.title()).to.equal(title);
     });
+
+    it("Should emit NewPrivateContractOwned event when creating contract", async function () {
+      const title = "Event Test Certificate";
+      const activationCode = "secret123";
+      
+      await expect(privateFactory.createPrivateContract(title, activationCode))
+        .to.emit(privateFactory, "NewPrivateContractOwned")
+        .withArgs(
+          ethers.anyValue,
+          ethers.anyValue,
+          owner.address,
+          title
+        );
+    });
   });
 
   describe("Contract Retrieval", function () {

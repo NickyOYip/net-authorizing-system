@@ -87,6 +87,12 @@ describe("PublicSubContract", function () {
         publicSubContract.updateStatus(2)
       ).to.be.revertedWith("Invalid status");
     });
+
+    it("Should emit StatusUpdated event when status is updated", async function () {
+      await expect(publicSubContract.updateStatus(1))
+        .to.emit(publicSubContract, "StatusUpdated")
+        .withArgs(ethers.anyValue, 1);
+    });
   });
 
   describe("User Management", function () {

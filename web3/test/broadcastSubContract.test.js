@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { logEvent } = require("./utils/eventLogger");
 
 describe("BroadcastSubContract", function () {
   let BroadcastSubContract;
@@ -80,6 +81,28 @@ describe("BroadcastSubContract", function () {
       await expect(
         broadcastSubContract.updateStatus(2)
       ).to.be.revertedWith("Invalid status");
+    });
+
+    it("Should emit StatusUpdated event when status is updated", async function () {
+      const tx = await broadcastSubContract.updateStatus(1);
+      const receipt = await tx.wait();
+      
+      // Log the event details for debugging
+      await logEvent(receipt, "StatusUpdated");
+      
+      // Check for raw logs instead of parsed events
+      expect(receipt.logs.length).to.be.at.least(1);
+      
+      // Check that the log is our event (based on the event signature)
+      const eventTopic = ethers.id("StatusUpdated(address,uint8)");
+      expect(receipt.logs[0].topics[0]).to.equal(eventTopic);
+      
+      // First indexed param is subContractAddr
+      expect(receipt.logs[0].topics[1]).to.include(broadcastSubContract.address.toLowerCase().substring(2));
+      
+      // Status value would be in the data portion
+      const decodedData = ethers.AbiCoder.defaultAbiCoder().decode(['uint8'], receipt.logs[0].data);
+      expect(decodedData[0]).to.equal(1); // Status.Disabled = 1
     });
   });
 

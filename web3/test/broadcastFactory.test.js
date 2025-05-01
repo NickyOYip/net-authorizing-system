@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { logEvent } = require("./utils/eventLogger");
 
 describe("BroadcastFactory Contract", function () {
   let BroadcastFactory;
@@ -47,6 +48,33 @@ describe("BroadcastFactory Contract", function () {
       
       expect(await newContract.owner()).to.equal(owner.address);
       expect(await newContract.title()).to.equal(title);
+    });
+    
+    it("Should emit NewBroadcastContractOwned event when creating contract", async function () {
+      const title = "Event Test Certificate";
+      
+      const tx = await broadcastFactory.createBroadcastContract(title);
+      const receipt = await tx.wait();
+      
+      // Log the event details for debugging
+      await logEvent(receipt, "NewBroadcastContractOwned");
+      
+      // Check for raw logs instead of parsed events
+      expect(receipt.logs.length).to.be.at.least(1);
+      
+      // Check that the first log is our event (based on the event signature)
+      const eventTopic = ethers.id("NewBroadcastContractOwned(address,address,address,string)");
+      expect(receipt.logs[0].topics[0]).to.equal(eventTopic);
+      
+      // Check that the indexed parameters match expected values
+      // First indexed param is factoryAddr
+      expect(receipt.logs[0].topics[1]).to.include(broadcastFactory.address.toLowerCase().substring(2));
+      
+      // Third indexed param is owner address
+      expect(receipt.logs[0].topics[3]).to.include(owner.address.toLowerCase().substring(2));
+      
+      // The title is not indexed and would be in the data portion, but it's a string
+      // which makes it more complex to decode and test here.
     });
   });
 

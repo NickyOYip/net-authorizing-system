@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { logEvent } = require("./utils/eventLogger");
 
 describe("MasterFactory Contract", function () {
   let MasterFactory;
@@ -76,6 +77,125 @@ describe("MasterFactory Contract", function () {
       await masterFactory.updatePrivateFactoryVer(1);
       const currentVer = await masterFactory.privateFactoryCurrentVer();
       expect(currentVer).to.equal(1);
+    });
+    
+    it("Should emit NewVerContractPushed event when adding broadcast factory version", async function () {
+      console.log("Starting test for NewVerContractPushed event...");
+      
+      const tx = await masterFactory.addBroadcastFactoryVer(addr1.address);
+      console.log("Transaction hash:", tx.hash);
+      
+      const receipt = await tx.wait();
+      console.log("Transaction mined. Receipt status:", receipt.status);
+      
+      // Log all events in the receipt
+      await logEvent(receipt, "NewVerContractPushed");
+      
+      // Let's check the raw receipt for events
+      console.log("Raw events count:", receipt.events ? receipt.events.length : 0);
+      
+      if (receipt.events && receipt.events.length > 0) {
+        // For anonymous events, check if it contains the expected data
+        receipt.events.forEach((evt, idx) => {
+          console.log(`Event #${idx}: ${evt.event || 'Anonymous'}`);
+          if (evt.topics) {
+            console.log(`  Topics: ${evt.topics.length}`);
+            evt.topics.forEach((topic, i) => {
+              console.log(`    Topic ${i}: ${topic}`);
+            });
+          }
+          if (evt.data) {
+            console.log(`  Data: ${evt.data}`);
+          }
+        });
+      }
+      
+      // Check if the event exists at all
+      const hasNewVerEvent = receipt.events && receipt.events.some(e => 
+        e.event === "NewVerContractPushed"
+      );
+      
+      expect(hasNewVerEvent).to.be.true;
+      
+      if (hasNewVerEvent) {
+        const eventData = receipt.events.find(e => e.event === "NewVerContractPushed");
+        
+        // Check individual arguments
+        expect(eventData.args[0]).to.equal("BroadcastFactory"); // Factory name
+        expect(eventData.args[1]).to.equal(0); // Version number
+        // Skip arg[2] which is the contract address that varies
+        expect(eventData.args[3]).to.equal(addr1.address); // Factory address
+        expect(eventData.args[4]).to.equal(owner.address); // Owner address
+      }
+    });
+    
+    it("Should emit NewVerContractPushed event when adding public factory version", async function () {
+      const tx = await masterFactory.addPublicFactoryVer(addr1.address);
+      const receipt = await tx.wait();
+      await logEvent(receipt, "NewVerContractPushed");
+      const newVerEvent = receipt.events.find(e => e.event === "NewVerContractPushed");
+      expect(newVerEvent).to.not.be.undefined;
+      expect(newVerEvent.args[0]).to.equal("PublicFactory"); // Factory name
+      expect(newVerEvent.args[1]).to.equal(0); // Version number
+      expect(newVerEvent.args[3]).to.equal(addr1.address); // Factory address
+      expect(newVerEvent.args[4]).to.equal(owner.address); // Owner address
+    });
+    
+    it("Should emit NewVerContractPushed event when adding private factory version", async function () {
+      const tx = await masterFactory.addPrivateFactoryVer(addr1.address);
+      const receipt = await tx.wait();
+      await logEvent(receipt, "NewVerContractPushed");
+      const newVerEvent = receipt.events.find(e => e.event === "NewVerContractPushed");
+      expect(newVerEvent).to.not.be.undefined;
+      expect(newVerEvent.args[0]).to.equal("PrivateFactory"); // Factory name
+      expect(newVerEvent.args[1]).to.equal(0); // Version number
+      expect(newVerEvent.args[3]).to.equal(addr1.address); // Factory address
+      expect(newVerEvent.args[4]).to.equal(owner.address); // Owner address
+    });
+    
+    it("Should emit UsingVer event when updating broadcast factory version", async function () {
+      await masterFactory.addBroadcastFactoryVer(addr1.address);
+      await masterFactory.addBroadcastFactoryVer(addr2.address);
+      
+      await expect(masterFactory.updateBroadcastFactoryVer(1))
+        .to.emit(masterFactory, "UsingVer")
+        .withArgs(
+          "BroadcastFactory", 
+          1, 
+          ethers.anyValue, 
+          addr2.address, 
+          owner.address
+        );
+    });
+    
+    it("Should emit UsingVer event when updating public factory version", async function () {
+      await masterFactory.addPublicFactoryVer(addr1.address);
+      await masterFactory.addPublicFactoryVer(addr2.address);
+      
+      await expect(masterFactory.updatePublicFactoryVer(1))
+        .to.emit(masterFactory, "UsingVer")
+        .withArgs(
+          "PublicFactory", 
+          1, 
+          ethers.anyValue, 
+          addr2.address, 
+          owner.address
+        );
+    });
+    
+    it("Should emit UsingVer event when updating private factory version", async function () {
+      await masterFactory.addPrivateFactoryVer(addr1.address);
+      await masterFactory.addPrivateFactoryVer(addr2.address);
+      
+      await expect(masterFactory.updatePrivateFactoryVer(1))
+        .to.emit(masterFactory, "UsingVer")
+        .withArgs(
+          "PrivateFactory", 
+          1, 
+          ethers.anyValue, 
+          addr2.address, 
+          owner.address
+        );
     });
   });
 

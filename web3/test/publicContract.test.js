@@ -98,6 +98,25 @@ describe("PublicContract", function () {
         )
       ).to.be.revertedWith("Only owner can perform this action");
     });
+    
+    it("Should emit NewPublicSubContractOwned event when creating sub-contract", async function () {
+      await expect(
+        publicContract.addNewPublicSubContract(
+          jsonHash,
+          softCopyHash,
+          storageLink,
+          startDate,
+          endDate
+        )
+      ).to.emit(publicContract, "NewPublicSubContractOwned")
+        .withArgs(
+          ethers.anyValue,
+          ethers.anyValue,
+          owner.address,
+          startDate,
+          endDate
+        );
+    });
   });
 
   describe("Contract Activation", function () {
@@ -143,6 +162,17 @@ describe("PublicContract", function () {
       await expect(
         publicContract.connect(addr2).activate(activationCode)
       ).to.be.revertedWith("Contract already activated");
+    });
+    
+    it("Should emit PublicContractActivated event when activated", async function () {
+      await expect(publicContract.connect(addr1).activate(activationCode))
+        .to.emit(publicContract, "PublicContractActivated")
+        .withArgs(
+          ethers.anyValue,
+          owner.address,
+          addr1.address,
+          title
+        );
     });
   });
 

@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { logEvent } = require("./utils/eventLogger");
 
 describe("BroadcastContract", function () {
   let BroadcastContract;
@@ -91,6 +92,42 @@ describe("BroadcastContract", function () {
           endDate
         )
       ).to.be.revertedWith("Only owner can perform this action");
+    });
+    
+    it("Should emit NewBroadcastSubContractOwned event when creating sub-contract", async function () {
+      const tx = await broadcastContract.addNewBroadcastSubContract(
+        jsonHash,
+        softCopyHash,
+        storageLink,
+        startDate,
+        endDate
+      );
+      const receipt = await tx.wait();
+      
+      // Log the event details for debugging
+      await logEvent(receipt, "NewBroadcastSubContractOwned");
+      
+      // Check for raw logs instead of parsed events
+      expect(receipt.logs.length).to.be.at.least(1);
+      
+      // Check that the first log is our event (based on the event signature)
+      const eventTopic = ethers.id("NewBroadcastSubContractOwned(address,address,address,uint256,uint256)");
+      expect(receipt.logs[0].topics[0]).to.equal(eventTopic);
+      
+      // Check that the indexed parameters match expected values
+      // First indexed param is broadcastContractAddr
+      expect(receipt.logs[0].topics[1]).to.include(broadcastContract.address.toLowerCase().substring(2));
+      
+      // Third indexed param is owner address
+      expect(receipt.logs[0].topics[3]).to.include(owner.address.toLowerCase().substring(2));
+      
+      // Check start date and end date in the data portion
+      const decodedData = ethers.AbiCoder.defaultAbiCoder().decode(
+        ['uint256', 'uint256'],
+        receipt.logs[0].data
+      );
+      expect(decodedData[0]).to.equal(BigInt(startDate));
+      expect(decodedData[1]).to.equal(BigInt(endDate));
     });
   });
 
