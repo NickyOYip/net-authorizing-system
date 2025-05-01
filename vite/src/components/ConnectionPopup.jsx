@@ -19,16 +19,26 @@ import LinkOffIcon from '@mui/icons-material/LinkOff';
 import { WalletContext } from '../provider/walletProvider';
 
 const ConnectionPopup = ({ open, onClose }) => {
+  // Get wallet context with fallbacks for each value
+  const walletContext = useContext(WalletContext);
+  
+  // Destructure with default values to prevent errors
   const { 
-    connectWallet, 
-    walletInfo, 
-    irysBalance,
-    loading, 
-    snackbar,
-    closeSnackbar,
-    fundAccount,
-    withdrawAccount
-  } = useContext(WalletContext);
+    connectWallet = async () => {}, 
+    walletInfo = {
+      isConnected: false,
+      address: null,
+      providerName: 'N/A',
+      network: 'N/A',
+      ethBalance: 'N/A'
+    },
+    irysBalance = 'N/A',
+    loading = false, 
+    snackbar = { open: false, message: '', severity: 'success' },
+    closeSnackbar = () => {},
+    fundAccount = async () => {},
+    withdrawAccount = async () => {}
+  } = walletContext || {};
 
   const { isConnected, address, providerName, network, ethBalance } = walletInfo;
 

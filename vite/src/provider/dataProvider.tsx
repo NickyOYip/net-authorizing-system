@@ -5,18 +5,16 @@ import { createContext, useState } from 'react';
  */
 export const DataContext = createContext();
 
-
-
 const DataProvider = ({ children }) => {
   // Initialize the global state
   const [data, setData] = useState({
-
-    //wallet instance
-    ethProvider: null, // ethers.BrowserProvider instance
-    irysUploader: null, // Irys uploader instance
+    //wallet instances for different networks
+    ethProvider: null,     // Provider for Hoodi network (primary)
+    sepoliaProvider: null, // Provider for Sepolia network (for Irys)
+    irysUploader: null,    // Irys uploader instance (on Sepolia)
 
     //network setting
-    masterFactoryAddress: '0xD67f3c606B64353FB351d3397501bC555AF51B28',
+    masterFactoryAddress: '0xF6463d646190B1178eC5cA532d6649B0A9194E99',
     broadcastFactory:{// ftech from master factory
       version: null,
       address: null,

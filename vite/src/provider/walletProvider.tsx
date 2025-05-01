@@ -5,7 +5,80 @@ import { WebEthereum } from "@irys/web-upload-ethereum";
 import { EthersV6Adapter } from "@irys/web-upload-ethereum-ethers-v6";
 import { DataContext } from "./dataProvider";
 
-export const WalletContext = createContext();
+// Network configuration constants
+const NETWORKS = {
+  SEPOLIA: {
+    chainId: "0xaa36a7", // 11155111 in hex
+    chainName: "Sepolia",
+    rpcUrls: ["https://rpc.sepolia.org"], 
+    nativeCurrency: {
+      name: "Sepolia Ether",
+      symbol: "ETH",
+      decimals: 18
+    },
+    blockExplorerUrls: ["https://sepolia.etherscan.io"]
+  },
+  HOODI: {
+    chainId: "0x88bb0", // 938 in hex
+    chainName: "Hoodi Testnet",
+    rpcUrls: ["https://0xrpc.io/hoodi"], 
+    nativeCurrency: {
+      name: "Hoodi Ether",
+      symbol: "ETH",
+      decimals: 18
+    },
+    blockExplorerUrls: ["https://hoodi.etherscan.io/"]
+  }
+};
+
+// Create context with default values to avoid undefined errors
+export const WalletContext = createContext({
+  walletStatus: "Not connected",
+  irysStatus: "Not connected",
+  connectWallet: async () => {},
+  fetchFactoryInfo: async () => {},
+  walletInfo: {
+    address: null,
+    providerName: 'N/A',
+    network: 'N/A',
+    ethBalance: 'N/A',
+    isConnected: false
+  },
+  irysBalance: 'N/A',
+  loading: false,
+  snackbar: { open: false, message: '', severity: 'success' },
+  closeSnackbar: () => {},
+  fundAccount: async () => {},
+  withdrawAccount: async () => {},
+  refreshWalletInfo: async () => {},
+  refreshIrysBalance: async () => {},
+  currentNetwork: null,
+  switchNetwork: async () => false,
+  NETWORKS: {
+    SEPOLIA: {
+      chainId: "0xaa36a7", // 11155111 in hex
+      chainName: "Sepolia",
+      rpcUrls: ["https://rpc.sepolia.org"], 
+      nativeCurrency: {
+        name: "Sepolia Ether",
+        symbol: "ETH",
+        decimals: 18
+      },
+      blockExplorerUrls: ["https://sepolia.etherscan.io"]
+    },
+    HOODI: {
+      chainId: "0x88bb0", // 938 in hex
+      chainName: "Hoodi Testnet",
+      rpcUrls: ["https://0xrpc.io/hoodi"], 
+      nativeCurrency: {
+        name: "Hoodi Ether",
+        symbol: "ETH",
+        decimals: 18
+      },
+      blockExplorerUrls: ["https://hoodi.etherscan.io/"]
+    }
+  }
+});
 
 function WalletProvider({children}) {
   // Fix: Provide fallback if DataContext is not available
@@ -25,6 +98,37 @@ function WalletProvider({children}) {
   const [irysBalance, setIrysBalance] = useState('N/A');
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [currentNetwork, setCurrentNetwork] = useState(null);
+
+  // Helper function to switch network
+  const switchNetwork = async (networkConfig) => {
+    if (!window.ethereum) return false;
+    
+    try {
+      // Try to switch to the network if it's already added in the wallet
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: networkConfig.chainId }],
+      });
+      return true;
+    } catch (switchError) {
+      // If the network is not added yet, add it to the wallet
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [networkConfig],
+          });
+          return true;
+        } catch (addError) {
+          console.error("Error adding network:", addError);
+          return false;
+        }
+      }
+      console.error("Error switching network:", switchError);
+      return false;
+    }
+  };
 
   // Function to fetch factory information from master contract
   const fetchFactoryInfo = async (provider) => {
@@ -187,7 +291,7 @@ function WalletProvider({children}) {
 
   // Using useCallback to ensure this function's reference doesn't change
   const connectWallet = useCallback(async () => {
-    console.log("start connect to ETH wallet");
+    console.log("Starting multi-network wallet connection process");
 
     if (typeof window.ethereum === 'undefined') {
       console.error("No Ethereum provider found. Please install MetaMask or another wallet.");
@@ -197,32 +301,92 @@ function WalletProvider({children}) {
 
     try {
       setLoading(true);
-      // connect to wallet
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const network = await provider.getNetwork();
-      await provider.send("eth_requestAccounts", []);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-      setWalletStatus(`Connected: ${address}, Network: ${network.name}`);
-      // update context with provider 
-      updateData({ ethProvider: provider });
-      console.log("ETH provider updated in context:", provider);
+
+      // First, request accounts access
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
       
-      // Fetch factory information after wallet connection
-      await fetchFactoryInfo(provider);
+      // Connect to Sepolia first for Irys
+      console.log("Connecting to Sepolia for Irys...");
+      setSnackbar({
+        open: true,
+        message: "Connecting to Sepolia for Irys integration...",
+        severity: "info"
+      });
       
-      // connect to Irys
-      const irysUploader = await WebUploader(WebEthereum).withAdapter(EthersV6Adapter(provider)).withRpc("https://testnet-explorer.irys.xyz/").devnet();
+      // Switch to Sepolia network
+      const switchedToSepolia = await switchNetwork(NETWORKS.SEPOLIA);
+      if (!switchedToSepolia) {
+        throw new Error("Failed to switch to Sepolia network");
+      }
+      
+      // Create Sepolia provider
+      const sepoliaProvider = new ethers.BrowserProvider(window.ethereum);
+      const sepoliaSigner = await sepoliaProvider.getSigner();
+      const address = await sepoliaSigner.getAddress();
+      const sepoliaNetwork = await sepoliaProvider.getNetwork();
+      
+      // Connect to Irys on Sepolia
+      const irysUploader = await WebUploader(WebEthereum)
+        .withAdapter(EthersV6Adapter(sepoliaProvider))
+        .withRpc("https://testnet-explorer.irys.xyz/")
+        .devnet();
+      
       setIrysStatus(`Connected to Irys: ${irysUploader.address}`);
-      // update context with Irys uploader
-      updateData({ irysUploader: irysUploader });
-      console.log("Irys uploader updated in context:", irysUploader);
+      
+      // Store the Sepolia provider and Irys uploader in context
+      updateData({ 
+        sepoliaProvider: sepoliaProvider,
+        irysUploader: irysUploader 
+      });
+      
+      console.log("Successfully connected to Sepolia and Irys");
+      setSnackbar({
+        open: true,
+        message: "Connected to Sepolia for Irys. Switching to Hoodi for contracts...",
+        severity: "info"
+      });
+      
+      // Now switch to Hoodi for contract interactions
+      console.log("Connecting to Hoodi Testnet for contracts...");
+      
+      // Switch to Hoodi network
+      const switchedToHoodi = await switchNetwork(NETWORKS.HOODI);
+      if (!switchedToHoodi) {
+        throw new Error("Failed to switch to Hoodi network");
+      }
+      
+      // Create Hoodi provider
+      const hoodiProvider = new ethers.BrowserProvider(window.ethereum);
+      const hoodiNetwork = await hoodiProvider.getNetwork();
+      
+      setWalletStatus(`Connected: ${address}, Network: ${hoodiNetwork.name || 'Hoodi Testnet'}`);
+      setCurrentNetwork(hoodiNetwork.name || 'Hoodi Testnet');
+      
+      // Store the Hoodi provider in context
+      updateData({ 
+        ethProvider: hoodiProvider 
+      });
+      
+      // Fetch factory information from the Hoodi network
+      await fetchFactoryInfo(hoodiProvider);
+      
+      console.log("Successfully connected to Hoodi and fetched factory data");
+      setSnackbar({
+        open: true,
+        message: "Successfully connected to both networks!",
+        severity: "success"
+      });
+      
+      // Update UI with the current network (Hoodi)
+      await refreshWalletInfo();
+      await refreshIrysBalance();
+
     } catch (error) {
-      console.error("Error connecting to wallet:", error);
-      setWalletStatus("Error connecting to wallet");
+      console.error("Error in multi-network connection process:", error);
+      setWalletStatus("Connection error");
       setSnackbar({ 
         open: true, 
-        message: "Failed to connect wallet: " + (error?.message || error), 
+        message: "Connection failed: " + (error?.message || error), 
         severity: "error" 
       });
     } finally {
@@ -269,11 +433,25 @@ function WalletProvider({children}) {
   }, [connectWallet, updateData, walletInfo.address]);
 
   // Handle chain changes in wallet - just update info silently without notification
-  const handleChainChanged = useCallback(async () => {
-    console.log("Chain changed, silently updating wallet info");
-    // Only update wallet info without showing any notifications
+  const handleChainChanged = useCallback(async (chainId) => {
+    console.log("Chain changed to:", chainId);
+    
+    // Update wallet info for the new chain
     if (data.ethProvider) {
       refreshWalletInfo();
+    }
+    
+    // Determine which network we're on now
+    const newChainIdHex = typeof chainId === 'string' && chainId.startsWith('0x') 
+      ? chainId.toLowerCase() 
+      : '0x' + Number(chainId).toString(16);
+    
+    if (newChainIdHex === NETWORKS.SEPOLIA.chainId.toLowerCase()) {
+      setCurrentNetwork('Sepolia');
+    } else if (newChainIdHex === NETWORKS.HOODI.chainId.toLowerCase()) {
+      setCurrentNetwork('Hoodi Testnet');
+    } else {
+      setCurrentNetwork('Unknown Network');
     }
   }, [data.ethProvider]);
 
@@ -342,7 +520,10 @@ function WalletProvider({children}) {
       fundAccount,
       withdrawAccount,
       refreshWalletInfo,
-      refreshIrysBalance
+      refreshIrysBalance,
+      currentNetwork,
+      switchNetwork,
+      NETWORKS
     }}>
       {children}
     </WalletContext.Provider>
