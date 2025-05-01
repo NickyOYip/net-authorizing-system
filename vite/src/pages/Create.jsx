@@ -9,7 +9,7 @@ import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Card from '@mui/material/Card';
-import { CardContent, Paper } from '@mui/material';
+import { CardContent, Paper, IconButton } from '@mui/material';
 import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
@@ -30,6 +30,8 @@ import {
   usePrivateContract,
   useMasterFactory
 } from '../hooks/contractHook';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 export const CreateContract = () => {
   const navigate = useNavigate();
@@ -46,7 +48,6 @@ export const CreateContract = () => {
   const [error, setError] = useState(null);
   const [type, setType] = useState('');
   const [activationCode, setActivationCode] = useState('');
-  const [recipient, setRecipient] = useState('');
   const [factoryAddresses, setFactoryAddresses] = useState({
     broadcastFactory: '',
     publicFactory: '',
@@ -182,7 +183,6 @@ export const CreateContract = () => {
     setSelectedJson(null);
     setTitle('');
     setCreating(false);
-    setRecipient('');
     setActivationCode('');
     setError('');
     setType('');
@@ -255,9 +255,32 @@ export const CreateContract = () => {
     setActivationCode(e.target.value);
   };
 
-  //Handle recipient of private/public contracts 
-  const handleRecipientChange = (e) => {
-    setRecipient(e.target.value);
+  // Function to generate a random activation code
+  const generateActivationCode = () => {
+    // Generate a random string of 8 characters (letters and numbers)
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < 8; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    setActivationCode(result);
+  };
+
+  // Generate activation code when the type changes to public or private
+  useEffect(() => {
+    if (type === 'public' || type === 'private') {
+      generateActivationCode();
+    } else {
+      setActivationCode('');
+    }
+  }, [type]);
+
+  // Function to copy activation code to clipboard
+  const copyActivationCode = () => {
+    navigator.clipboard.writeText(activationCode);
+    // Optional: add some visual feedback
+    alert("Activation code copied to clipboard!");
   };
 
   const handleSubmit = async () => {
@@ -501,33 +524,40 @@ export const CreateContract = () => {
                 </Grid>
 
                 {(type === 'public' || type === 'private') && (
-                  <>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        required
-                        fullWidth
-                        label="Activation Code"
-                        type="password"
-                        value={activationCode}
-                        onChange={handleActivationCodeChange}
-                        helperText="This code will be needed to activate the contract"
-                        variant="outlined"
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Recipient Address (Optional)"
-                        value={recipient}
-                        onChange={handleRecipientChange}
-                        helperText="Ethereum address of the intended recipient"
-                        variant="outlined"
-                      />
-                    </Grid>
-                  </>
+                  <Grid item xs={12}>
+                    <TextField
+                      required
+                      fullWidth
+                      label="Activation Code"
+                      value={activationCode}
+                      onChange={handleActivationCodeChange}
+                      helperText="This code will be needed to activate the contract"
+                      variant="outlined"
+                      InputProps={{
+                        endAdornment: (
+                          <>
+                            <IconButton 
+                              onClick={generateActivationCode}
+                              size="small"
+                              title="Generate new activation code"
+                            >
+                              <RefreshIcon />
+                            </IconButton>
+                            <IconButton 
+                              onClick={copyActivationCode}
+                              size="small"
+                              title="Copy activation code"
+                            >
+                              <ContentCopyIcon />
+                            </IconButton>
+                          </>
+                        ),
+                      }}
+                    />
+                  </Grid>
                 )}
               </Grid>
-
+              
               <Box sx={{ mb: 2, mt: 2 }}>
                 <Button
                   variant="contained"
@@ -666,15 +696,6 @@ export const CreateContract = () => {
                       <Typography variant="body1" sx={{ mb: 2 }}>
                         {activationCode ? '••••••••' : 'Not set'}
                       </Typography>
-
-                      {recipient && (
-                        <>
-                          <Typography variant="subtitle2" color="text.secondary">Recipient</Typography>
-                          <Typography variant="body1" sx={{ mb: 2 }}>
-                            {recipient}
-                          </Typography>
-                        </>
-                      )}
                     </>
                   )}
 
@@ -881,15 +902,29 @@ export const CreateContract = () => {
                   
                   {type === 'public' && (
                     <Typography variant="body1">
-                      Your public contract has been created. Share the contract address and activation code with 
-                      {recipient ? ` ${recipient}` : ' the recipient'} to activate it.
+                      Your public contract has been created. Share the contract address and activation code 
+                      (<span 
+                        style={{ fontWeight: 'bold', cursor: 'pointer' }} 
+                        onClick={() => {
+                          navigator.clipboard.writeText(activationCode);
+                          alert("Activation code copied to clipboard!");
+                        }}
+                      >{activationCode}</span>) 
+                      with the recipient to activate it.
                     </Typography>
                   )}
                   
                   {type === 'private' && (
                     <Typography variant="body1">
-                      Your private contract has been created. Share the contract address, activation code, and files with 
-                      {recipient ? ` ${recipient}` : ' the recipient'} to activate it.
+                      Your private contract has been created. Share the contract address, activation code 
+                      (<span 
+                        style={{ fontWeight: 'bold', cursor: 'pointer' }} 
+                        onClick={() => {
+                          navigator.clipboard.writeText(activationCode);
+                          alert("Activation code copied to clipboard!");
+                        }}
+                      >{activationCode}</span>), 
+                      and files with the recipient to activate it.
                     </Typography>
                   )}
 
