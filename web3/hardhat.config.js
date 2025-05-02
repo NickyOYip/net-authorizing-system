@@ -5,6 +5,8 @@ require("dotenv").config();
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "";
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
+// Add Hoodi explorer API key (if needed)
+const HOODI_API_KEY = process.env.HOODI_API_KEY || "";
 
 // Remove 0x prefix if present and ensure it's a string
 const cleanPrivateKey = PRIVATE_KEY.startsWith('0x') ? PRIVATE_KEY.slice(2) : PRIVATE_KEY;
@@ -37,9 +39,31 @@ module.exports = {
       accounts: cleanPrivateKey ? [`0x${cleanPrivateKey}`] : [],
       chainId: 11155111,
     },
+    hoodi: {
+      url: "https://0xrpc.io/hoodi",
+      accounts: cleanPrivateKey ? [`0x${cleanPrivateKey}`] : [],
+      chainId: 560048,
+    },
   },
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
+    apiKey: {
+      // Standard networks
+      sepolia: ETHERSCAN_API_KEY,
+      
+      // Custom networks
+      hoodi: ETHERSCAN_API_KEY, // Add your Hoodi explorer API key here if required
+    },
+    customChains: [
+      {
+        network: "hoodi",
+        chainId: 560048,
+        urls: {
+          // Replace these URLs with the actual Hoodi block explorer API endpoints
+          apiURL: "https://api-hoodi.etherscan.io/api", // Replace with actual API URL
+          browserURL: "https://hoodi.etherscan.io/"      // Replace with actual browser URL
+        }
+      }
+    ]
   },
   paths: {
     sources: "./contracts",
