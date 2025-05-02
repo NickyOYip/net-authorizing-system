@@ -1,5 +1,33 @@
-const { ethers, network } = require("hardhat");
+const { ethers, network, run } = require("hardhat");
 const { saveDeployment } = require('./save-deployment');
+
+// Add a delay function to wait before verification
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Add verification function
+async function verifyContract(address, constructorArguments = []) {
+  if (network.name === 'hardhat' || network.name === 'localhost') {
+    console.log('Skipping verification on local network');
+    return;
+  }
+  
+  console.log(`\nVerifying contract at ${address}...`);
+  try {
+    // Wait to give Etherscan time to index the contract
+    console.log('Waiting for 30 seconds before verification...');
+    await delay(30000);
+    
+    await run("verify:verify", {
+      address,
+      constructorArguments
+    });
+    console.log('Contract verified successfully');
+  } catch (error) {
+    console.log('Verification failed:', error.message);
+  }
+}
 
 async function main() {
   console.log(`Deploying contracts to ${network.name}...`);
@@ -13,6 +41,15 @@ async function main() {
   
   // Deploy factories
   const factories = await deployFactories(deployer);
+  
+  // Verify contracts if on a supported network
+  if (network.name !== 'hardhat' && network.name !== 'localhost') {
+    console.log("\nStarting contract verification...");
+    await verifyContract(factories.masterFactory);
+    await verifyContract(factories.broadcastFactory);
+    await verifyContract(factories.publicFactory);
+    await verifyContract(factories.privateFactory);
+  }
   
   // Save all deployment addresses
   saveDeployment(factories, network.name);
