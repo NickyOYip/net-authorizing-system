@@ -4,15 +4,27 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "testnet": "hardhat run scripts/testnet-tests.js --network sepolia",
+    "testnet:deep": "hardhat run scripts/deep-testnet-tests.js --network sepolia",
+    "verify:testnet": "hardhat run scripts/verify-testnet-contracts.js --network sepolia",
+    "testnet:custom": "hardhat run scripts/testnet-tests.js --network",
+    "testnet:test": "hardhat run scripts/testnet-integration-tests.js --network sepolia",
+    "testnet:events": "hardhat run scripts/event-inspector.js --network sepolia",
+    "testnet:view": "hardhat run scripts/view-contract-data.js --network sepolia",
+    "testnet:activate": "hardhat run scripts/activate-contract-test.js --network sepolia",
+    "testnet:inspect": "hardhat run scripts/simple-tx-inspector.js --network sepolia"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-  "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-  "hardhat": "^2.22.0",
-  "ethers": "^6.13.0",
-  "chai": "^4.5.0"
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0",
+    "ethers": "^6.13.0",
+    "chai": "^4.5.0"
+  },
+  "dependencies": {
+    "colors": "^1.4.0"
   }
 }

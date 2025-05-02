@@ -16,7 +16,7 @@ const DataProvider = ({ children }) => {
     irysUploader: null, // Irys uploader instance
 
     //network setting
-    masterFactoryAddress: '0xD67f3c606B64353FB351d3397501bC555AF51B28',
+    masterFactoryAddress: '0xf008D8CFb6AA746DB2b2D46EB97Cf750a8f48Fb2',
     broadcastFactory:{// ftech from master factory
       version: null,
       address: null,

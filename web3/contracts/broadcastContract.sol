@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./broadcastSubContract.sol";
-import "hardhat/console.sol"; // Add console import
 
 contract BroadcastContract {
     // State variables
@@ -43,9 +42,7 @@ contract BroadcastContract {
         uint256 _startDate,
         uint256 _endDate
     ) public onlyOwner returns (address) {
-        console.log("DEBUG: I'm in the function!"); // Debug log without Unicode
-        console.log("Caller address:", msg.sender);
-        console.log("Owner address:", owner);
+ 
         
         // Create new sub-contract
         BroadcastSubContract newSubContract = new BroadcastSubContract(
