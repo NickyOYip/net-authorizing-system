@@ -1,5 +1,5 @@
 const { ethers, network, run } = require("hardhat");
-const { saveDeployment } = require('./save-deployment');
+const { saveDeployment, saveSubContract } = require('./save-deployment');
 
 // Add a delay function to wait before verification
 function delay(ms) {
@@ -35,6 +35,132 @@ async function verifyContract(address, constructorArguments = []) {
   }
 }
 
+// Setup factory event listeners for tracking sub contract deployments
+async function setupFactoryListeners(factories, subContracts) {
+  console.log("\nSetting up event listeners for sub contract deployments...");
+  
+  // Get contract instances
+  const broadcastFactory = await ethers.getContractAt("BroadcastFactory", factories.broadcastFactory);
+  const publicFactory = await ethers.getContractAt("PublicFactory", factories.publicFactory);
+  const privateFactory = await ethers.getContractAt("PrivateFactory", factories.privateFactory);
+  
+  // Listen for BroadcastFactory events
+  broadcastFactory.on("NewBroadcastContractOwned", async (factoryAddr, contractAddr, ownerAddr, title) => {
+    console.log(`New BroadcastContract deployed at ${contractAddr}`);
+    const contract = {
+      type: "BroadcastContract",
+      address: contractAddr,
+      factory: factoryAddr,
+      owner: ownerAddr,
+      title: title,
+      constructorArgs: [ownerAddr, title],
+      deployedAt: new Date().toISOString()
+    };
+    
+    subContracts.push(contract);
+    await saveSubContract(contract, network.name);
+    
+    // Set up listeners for sub contracts
+    const broadcastContract = await ethers.getContractAt("BroadcastContract", contractAddr);
+    
+    broadcastContract.on("NewBroadcastSubContractOwned", async (broadcastContractAddr, subContractAddr, ownerAddr, startDate, endDate) => {
+      console.log(`New BroadcastSubContract deployed at ${subContractAddr}`);
+      const subContract = {
+        type: "BroadcastSubContract",
+        address: subContractAddr,
+        parent: broadcastContractAddr,
+        owner: ownerAddr,
+        constructorArgs: [broadcastContractAddr, ownerAddr, startDate, endDate],
+        deployedAt: new Date().toISOString()
+      };
+      
+      subContracts.push(subContract);
+      await saveSubContract(subContract, network.name);
+      
+      // Verify the sub contract
+      await verifyContract(subContractAddr, subContract.constructorArgs);
+    });
+  });
+  
+  // Listen for PublicFactory events
+  publicFactory.on("NewPublicContractOwned", async (factoryAddr, contractAddr, ownerAddr, title) => {
+    console.log(`New PublicContract deployed at ${contractAddr}`);
+    const contract = {
+      type: "PublicContract",
+      address: contractAddr,
+      factory: factoryAddr,
+      owner: ownerAddr,
+      title: title,
+      constructorArgs: [ownerAddr, title],
+      deployedAt: new Date().toISOString()
+    };
+    
+    subContracts.push(contract);
+    await saveSubContract(contract, network.name);
+    
+    // Set up listeners for sub contracts
+    const publicContract = await ethers.getContractAt("PublicContract", contractAddr);
+    
+    publicContract.on("NewPublicSubContractOwned", async (publicContractAddr, subContractAddr, ownerAddr, startDate, endDate) => {
+      console.log(`New PublicSubContract deployed at ${subContractAddr}`);
+      const subContract = {
+        type: "PublicSubContract",
+        address: subContractAddr,
+        parent: publicContractAddr,
+        owner: ownerAddr,
+        constructorArgs: [publicContractAddr, ownerAddr, startDate, endDate],
+        deployedAt: new Date().toISOString()
+      };
+      
+      subContracts.push(subContract);
+      await saveSubContract(subContract, network.name);
+      
+      // Verify the sub contract
+      await verifyContract(subContractAddr, subContract.constructorArgs);
+    });
+  });
+  
+  // Listen for PrivateFactory events
+  privateFactory.on("NewPrivateContractOwned", async (factoryAddr, contractAddr, ownerAddr, title) => {
+    console.log(`New PrivateContract deployed at ${contractAddr}`);
+    const contract = {
+      type: "PrivateContract",
+      address: contractAddr,
+      factory: factoryAddr,
+      owner: ownerAddr,
+      title: title,
+      constructorArgs: [ownerAddr, title],
+      deployedAt: new Date().toISOString()
+    };
+    
+    subContracts.push(contract);
+    await saveSubContract(contract, network.name);
+    
+    // Set up listeners for sub contracts
+    const privateContract = await ethers.getContractAt("PrivateContract", contractAddr);
+    
+    privateContract.on("NewPrivateSubContractOwned", async (privateContractAddr, subContractAddr, ownerAddr, startDate, endDate) => {
+      console.log(`New PrivateSubContract deployed at ${subContractAddr}`);
+      const subContract = {
+        type: "PrivateSubContract",
+        address: subContractAddr,
+        parent: privateContractAddr,
+        owner: ownerAddr,
+        constructorArgs: [privateContractAddr, ownerAddr, startDate, endDate],
+        deployedAt: new Date().toISOString()
+      };
+      
+      subContracts.push(subContract);
+      await saveSubContract(subContract, network.name);
+      
+      // Verify the sub contract
+      await verifyContract(subContractAddr, subContract.constructorArgs);
+    });
+  });
+  
+  console.log("Factory event listeners set up successfully");
+}
+
 async function main() {
   console.log(`Deploying contracts to ${network.name}...`);
   
@@ -42,11 +168,14 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   console.log(`Deploying contracts with the account: ${deployer.address}`);
   
-  // Skip balance display as it's causing issues
-  // console.log(`Account balance: ${formattedBalance} ETH`);
+  // Track sub contracts
+  const subContracts = [];
   
   // Deploy factories
   const factories = await deployFactories(deployer);
+  
+  // Setup listeners for sub contract deployments
+  await setupFactoryListeners(factories, subContracts);
   
   // Verify contracts if on a supported network
   if (network.name !== 'hardhat' && network.name !== 'localhost') {
@@ -58,9 +187,11 @@ async function main() {
   }
   
   // Save all deployment addresses
+  factories.subContracts = subContracts;
   saveDeployment(factories, network.name);
   
   console.log("\nDeployment completed successfully!");
+  console.log("Event listeners for sub contracts are active. Keep this process running to track and verify sub contracts as they are deployed.");
   return factories;
 }
 
@@ -199,7 +330,9 @@ main()
     console.log(`BroadcastFactory: ${deployedContracts.broadcastFactory}`);
     console.log(`PublicFactory: ${deployedContracts.publicFactory}`);
     console.log(`PrivateFactory: ${deployedContracts.privateFactory}`);
-    process.exit(0);
+    
+    console.log("\nListening for sub contract deployments...");
+    console.log("Press Ctrl+C to stop the script when you're finished deploying contracts");
   })
   .catch((error) => {
     console.error("Error during deployment:", error);

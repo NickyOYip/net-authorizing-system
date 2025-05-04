@@ -3,30 +3,92 @@ const path = require('path');
 
 /**
  * Save deployment addresses to a JSON file
- * @param {Object} addresses - Object containing all deployed contract addresses
- * @param {string} networkName - Name of the network where contracts were deployed
+ * @param {Object} deployedContracts - Object containing deployed contract addresses
+ * @param {string} networkName - The name of the network where contracts are deployed
  */
-function saveDeployment(addresses, networkName = 'unknown') {
-  // Create a timestamped filename
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+function saveDeployment(deployedContracts, networkName) {
+  const deploymentsDir = path.join(__dirname, '../deployments');
   
-  // Create network-specific directory structure
-  const networkDir = path.join(__dirname, '../deployments', networkName);
-  if (!fs.existsSync(networkDir)) {
-    fs.mkdirSync(networkDir, { recursive: true });
+  // Create deployments directory if it doesn't exist
+  if (!fs.existsSync(deploymentsDir)) {
+    fs.mkdirSync(deploymentsDir);
   }
   
-  // Save deployment to timestamped file in the network directory
-  const deploymentFile = path.join(networkDir, `${timestamp}.json`);
-  fs.writeFileSync(deploymentFile, JSON.stringify(addresses, null, 2));
-  console.log(`Deployment addresses saved to: ${deploymentFile}`);
+  // Create network-specific directory if it doesn't exist
+  const networkDir = path.join(deploymentsDir, networkName);
+  if (!fs.existsSync(networkDir)) {
+    fs.mkdirSync(networkDir);
+  }
   
-  // Also save a copy to the latest.json file for easy access
-  const latestFile = path.join(networkDir, 'latest.json');
-  fs.writeFileSync(latestFile, JSON.stringify(addresses, null, 2));
-  console.log(`Latest deployment updated at: ${latestFile}`);
+  // Create latest.json file with deployment info
+  const deployment = {
+    masterFactory: deployedContracts.masterFactory,
+    broadcastFactory: deployedContracts.broadcastFactory,
+    publicFactory: deployedContracts.publicFactory,
+    privateFactory: deployedContracts.privateFactory,
+    deployedBy: deployedContracts.deployedBy,
+    deployedAt: new Date().toISOString(),
+    // Add sub contracts tracking
+    subContracts: deployedContracts.subContracts || []
+  };
+  
+  // Also create a timestamped copy for history
+  const timestamp = new Date().toISOString().replace(/:/g, '-');
+  
+  // Write the files
+  fs.writeFileSync(
+    path.join(networkDir, 'latest.json'),
+    JSON.stringify(deployment, null, 2)
+  );
+  
+  fs.writeFileSync(
+    path.join(networkDir, `deployment-${timestamp}.json`),
+    JSON.stringify(deployment, null, 2)
+  );
+  
+  console.log(`Deployment info saved to ${path.join(networkDir, 'latest.json')}`);
+}
+
+/**
+ * Save sub contract information for verification
+ * @param {Object} subContract - Object containing sub contract info
+ * @param {string} networkName - The name of the network where contracts are deployed 
+ */
+function saveSubContract(subContract, networkName) {
+  const deploymentsDir = path.join(__dirname, '../deployments');
+  const networkDir = path.join(deploymentsDir, networkName);
+  
+  if (!fs.existsSync(networkDir)) {
+    fs.mkdirSync(deploymentsDir, { recursive: true });
+    fs.mkdirSync(networkDir);
+  }
+  
+  // Load existing deployment
+  let deployment;
+  const latestPath = path.join(networkDir, 'latest.json');
+  
+  if (fs.existsSync(latestPath)) {
+    deployment = JSON.parse(fs.readFileSync(latestPath));
+  } else {
+    deployment = {
+      subContracts: []
+    };
+  }
+  
+  // Add new sub contract
+  if (!deployment.subContracts) {
+    deployment.subContracts = [];
+  }
+  
+  deployment.subContracts.push(subContract);
+  
+  // Save updated deployment
+  fs.writeFileSync(latestPath, JSON.stringify(deployment, null, 2));
+  
+  console.log(`Sub contract ${subContract.address} saved to deployment info`);
 }
 
 module.exports = {
-  saveDeployment
+  saveDeployment,
+  saveSubContract
 };
