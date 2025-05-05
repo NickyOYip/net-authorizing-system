@@ -1,148 +1,92 @@
-import { useState, useContext, createContext, useEffect, useCallback } from "react";
+import { useState, useContext, createContext, useEffect } from "react";
 import { ethers } from "ethers";
 import { WebUploader } from "@irys/web-upload";
 import { WebEthereum } from "@irys/web-upload-ethereum";
 import { EthersV6Adapter } from "@irys/web-upload-ethereum-ethers-v6";
 import { DataContext } from "./dataProvider";
 
-// Network and connection constants
+// Debug logging function
+const debug = {
+  log: (...args: any[]) => console.log('[Wallet]', ...args),
+  error: (...args: any[]) => console.error('[Wallet Error]', ...args),
+  warn: (...args: any[]) => console.warn('[Wallet Warning]', ...args),
+  info: (...args: any[]) => console.info('[Wallet Info]', ...args),
+};
+
+// Simplified network configurations
 const NETWORKS = {
   SEPOLIA: {
     chainId: "0xaa36a7",
     chainName: "Sepolia",
-    rpcUrls: ["https://rpc.sepolia.org"], 
-    nativeCurrency: {
-      name: "Sepolia Ether",
-      symbol: "ETH",
-      decimals: 18
-    },
+    rpcUrls: ["https://rpc.sepolia.org"],
     blockExplorerUrls: ["https://sepolia.etherscan.io"]
   },
   HOODI: {
     chainId: "0x88bb0",
     chainName: "Hoodi Testnet",
-    rpcUrls: ["https://0xrpc.io/hoodi"], 
-    nativeCurrency: {
-      name: "Hoodi Ether",
-      symbol: "ETH",
-      decimals: 18
-    },
+    rpcUrls: ["https://0xrpc.io/hoodi"],
     blockExplorerUrls: ["https://hoodi.etherscan.io/"]
   }
 };
 
-const CONNECTION_STATES = {
-  DISCONNECTED: 'DISCONNECTED',
-  CONNECTING_SEPOLIA: 'CONNECTING_SEPOLIA',
-  CONNECTING_HOODI: 'CONNECTING_HOODI',
-  CONNECTED: 'CONNECTED'
-};
-
-const NETWORK_SWITCH_DELAY = 2000;
-const RECONNECT_COOLDOWN = 5000;
-
-// Default wallet info state
 const DEFAULT_WALLET_INFO = {
   address: null,
-  providerName: 'N/A',
   network: 'N/A',
   ethBalance: 'N/A',
+  sepoliaBalance: 'N/A',
   isConnected: false
 };
 
-// Create context with default values
 export const WalletContext = createContext({
-  walletStatus: "Not connected",
-  irysStatus: "Not connected",
   connectWallet: async () => {},
-  fetchFactoryInfo: async () => {},
   walletInfo: DEFAULT_WALLET_INFO,
   irysBalance: 'N/A',
   loading: false,
-  snackbar: { open: false, message: '', severity: 'success' },
-  closeSnackbar: () => {},
-  fundAccount: async () => {},
-  withdrawAccount: async () => {},
-  refreshWalletInfo: async () => {},
-  refreshIrysBalance: async () => {},
-  currentNetwork: null,
-  switchNetwork: async () => false,
-  NETWORKS
+  error: null,
+  fundIrys: async () => {},
+  withdrawIrys: async () => {},
 });
 
 function WalletProvider({children}) {
-  const [isReconnecting, setIsReconnecting] = useState(false);
-  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
-  const [connectionState, setConnectionState] = useState(CONNECTION_STATES.DISCONNECTED);
-  const [lastSuccessfulConnection, setLastSuccessfulConnection] = useState(null);
-  const [lastNetworkSwitch, setLastNetworkSwitch] = useState(null);
-
-  const dataContext = useContext(DataContext) || {};
-  const { data = {}, updateData = () => {} } = dataContext;
-  const [walletStatus, setWalletStatus] = useState("Not connected");
-  const [irysStatus, setIrysStatus] = useState("Not connected");
-  
+  const { data = {}, updateData = () => {} } = useContext(DataContext);
   const [walletInfo, setWalletInfo] = useState(DEFAULT_WALLET_INFO);
   const [irysBalance, setIrysBalance] = useState('N/A');
   const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [currentNetwork, setCurrentNetwork] = useState(null);
-  const [networkInitialized, setNetworkInitialized] = useState(false);
+  const [error, setError] = useState(null);
 
   const switchNetwork = async (networkConfig) => {
-    if (!window.ethereum || isSwitchingNetwork) return false;
-    
-    if (lastNetworkSwitch && Date.now() - lastNetworkSwitch < NETWORK_SWITCH_DELAY) {
-      console.log("Network switch too rapid, waiting...");
-      await new Promise(resolve => setTimeout(resolve, NETWORK_SWITCH_DELAY));
+    if (!window.ethereum) {
+      debug.warn('No ethereum provider found');
+      return false;
     }
     
     try {
-      setIsSwitchingNetwork(true);
-      setLastNetworkSwitch(Date.now());
-      
+      debug.log(`Switching to network: ${networkConfig.chainName}`);
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: networkConfig.chainId }],
       });
-      
-      await new Promise(resolve => setTimeout(resolve, NETWORK_SWITCH_DELAY));
+      debug.info(`Successfully switched to ${networkConfig.chainName}`);
       return true;
-    } catch (switchError) {
-      if (switchError.code === 4902) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [networkConfig],
-          });
-          await new Promise(resolve => setTimeout(resolve, NETWORK_SWITCH_DELAY));
-          return true;
-        } catch (addError) {
-          console.error("Error adding network:", addError);
-          return false;
-        }
-      }
-      console.error("Error switching network:", switchError);
+    } catch (error) {
+      debug.error("Network switch failed:", error);
       return false;
-    } finally {
-      setIsSwitchingNetwork(false);
     }
   };
 
   const fetchFactoryInfo = async (provider) => {
-    try {
-      if (!provider || !data.masterFactoryAddress) {
-        console.warn("Provider or factory address not available");
-        return;
-      }
+    if (!provider || !data.masterFactoryAddress) {
+      debug.warn('Missing provider or master factory address', { 
+        provider: !!provider, 
+        masterFactoryAddress: data.masterFactoryAddress 
+      });
+      return;
+    }
 
-      const { ethers } = await import('ethers');
-      
+    try {
+      debug.log('Fetching factory addresses from master contract');
       const masterFactoryABI = [
         "function getCurrentVer() view returns (address, address, address)",
-        "function broadcastFactoryCurrentVer() view returns (uint256)",
-        "function publicFactoryCurrentVer() view returns (uint256)",
-        "function privateFactoryCurrentVer() view returns (uint256)"
       ];
       
       const masterFactory = new ethers.Contract(
@@ -151,369 +95,211 @@ function WalletProvider({children}) {
         provider
       );
       
-      const [broadcastFactoryAddr, publicFactoryAddr, privateFactoryAddr] = 
-        await masterFactory.getCurrentVer();
-      
-      const [broadcastVersion, publicVersion, privateVersion] = await Promise.all([
-        masterFactory.broadcastFactoryCurrentVer(),
-        masterFactory.publicFactoryCurrentVer(),
-        masterFactory.privateFactoryCurrentVer()
-      ]);
-      
-      console.log("Factory information fetched:", {
-        broadcast: { version: Number(broadcastVersion), address: broadcastFactoryAddr },
-        public: { version: Number(publicVersion), address: publicFactoryAddr },
-        private: { version: Number(privateVersion), address: privateFactoryAddr }
+      const [broadcastAddr, publicAddr, privateAddr] = await masterFactory.getCurrentVer();
+      debug.info('Factory addresses fetched:', {
+        broadcast: broadcastAddr,
+        public: publicAddr,
+        private: privateAddr
       });
       
       updateData({
-        broadcastFactory: {
-          version: Number(broadcastVersion),
-          address: broadcastFactoryAddr,
-        },
-        publicFactory: {
-          version: Number(publicVersion),
-          address: publicFactoryAddr,
-        },
-        privateFactory: {
-          version: Number(privateVersion),
-          address: privateFactoryAddr,
-        }
-      });
-      
-    } catch (error) {
-      console.error("Error fetching factory information:", error);
-    }
-  };
-
-  const refreshWalletInfo = async () => {
-    if (!data.ethProvider) {
-      setWalletInfo(DEFAULT_WALLET_INFO);
-      return;
-    }
-
-    try {
-      const signer = await data.ethProvider.getSigner();
-      const addr = await signer.getAddress();
-      const providerName = window.ethereum?.isMetaMask ? 'MetaMask' : 'Injected';
-      const networkObj = await data.ethProvider.getNetwork();
-      const network = networkObj.name || networkObj.chainId;
-      const balance = await data.ethProvider.getBalance(addr);
-      const ethBalance = Number(balance) / 1e18 + ' ETH';
-      
-      setWalletInfo({
-        address: addr,
-        providerName,
-        network,
-        ethBalance,
-        isConnected: true
+        broadcastFactory: { address: broadcastAddr },
+        publicFactory: { address: publicAddr },
+        privateFactory: { address: privateAddr },
       });
     } catch (error) {
-      console.error("Error refreshing wallet info:", error);
-      setWalletInfo(DEFAULT_WALLET_INFO);
+      debug.error("Factory fetch failed:", error);
     }
   };
 
-  const refreshIrysBalance = async () => {
-    if (data.irysUploader && walletInfo.address) {
-      try {
-        const bal = await data.irysUploader.getBalance();
-        setIrysBalance(Number(bal) / 1e18 + ' ETH');
-      } catch (error) {
-        console.error("Error refreshing Irys balance:", error);
-        setIrysBalance('N/A');
-      }
-    } else {
-      setIrysBalance('N/A');
-    }
-  };
-
-  const fundAccount = async (amount = "0.01") => {
-    setLoading(true);
+  const updateBalances = async (hoodiProvider, sepoliaProvider, address) => {
+    debug.log('Updating balances for address:', address);
     try {
-      if (data.irysUploader) {
-        await data.irysUploader.fund(ethers.parseEther(amount));
-        setSnackbar({ open: true, message: `Funded ${amount} ETH to Irys wallet!`, severity: "success" });
-        await refreshIrysBalance();
-        await refreshWalletInfo();
-      } else {
-        setSnackbar({ open: true, message: "Irys uploader not connected.", severity: "error" });
-      }
-    } catch (e) {
-      setSnackbar({ open: true, message: "Failed to fund Irys wallet: " + (e?.message || e), severity: "error" });
+      // First switch to Hoodi for Hoodi balance
+      await switchNetwork(NETWORKS.HOODI);
+      const hoodiBalance = await hoodiProvider.getBalance(address);
+      debug.info('Hoodi balance:', ethers.formatEther(hoodiBalance));
+
+      // Then switch to Sepolia for Sepolia balance
+      await switchNetwork(NETWORKS.SEPOLIA);
+      const sepoliaBalance = await sepoliaProvider.getBalance(address);
+      debug.info('Sepolia balance:', ethers.formatEther(sepoliaBalance));
+
+      // Switch back to Hoodi as main network
+      await switchNetwork(NETWORKS.HOODI);
+
+      setWalletInfo(prev => ({
+        ...prev,
+        ethBalance: `${ethers.formatEther(hoodiBalance)} ETH`,
+        sepoliaBalance: `${ethers.formatEther(sepoliaBalance)} ETH`
+      }));
+    } catch (error) {
+      debug.error('Error updating balances:', error);
     }
-    setLoading(false);
   };
 
-  const withdrawAccount = async () => {
-    setLoading(true);
+  const connectWallet = async () => {
     try {
-      if (data.irysUploader) {
-        await data.irysUploader.withdraw();
-        setSnackbar({ open: true, message: "Withdrawn from Irys wallet!", severity: "success" });
-        await refreshIrysBalance();
-        await refreshWalletInfo();
-      } else {
-        setSnackbar({ open: true, message: "Irys uploader not connected.", severity: "error" });
-      }
-    } catch (e) {
-      setSnackbar({ open: true, message: "Failed to withdraw from Irys: " + (e?.message || e), severity: "error" });
-    }
-    setLoading(false);
-  };
-
-  const closeSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const resetWalletState = useCallback(() => {
-    setWalletInfo(DEFAULT_WALLET_INFO);
-    setIrysBalance('N/A');
-    setWalletStatus("Not connected");
-    setIrysStatus("Not connected");
-    updateData({ ethProvider: null, sepoliaProvider: null, irysUploader: null });
-    setConnectionState(CONNECTION_STATES.DISCONNECTED);
-  }, [updateData]);
-
-  const connectWallet = useCallback(async () => {
-    if (isReconnecting || connectionState !== CONNECTION_STATES.DISCONNECTED) {
-      console.log("Connection in progress or already connected, skipping...");
-      return;
-    }
-
-    if (lastSuccessfulConnection && Date.now() - lastSuccessfulConnection < RECONNECT_COOLDOWN) {
-      console.log("Too soon to reconnect, waiting for cooldown...");
-      return;
-    }
-
-    try {
-      setIsReconnecting(true);
-      setConnectionState(CONNECTION_STATES.CONNECTING_SEPOLIA);
-      
-      updateData({ 
-        ethProvider: null, 
-        sepoliaProvider: null, 
-        irysUploader: null 
-      });
-
+      debug.log('Starting wallet connection process');
       setLoading(true);
+      setError(null);
 
+      debug.log('Requesting account access');
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       
-      console.log("Connecting to Sepolia for Irys...");
-      setSnackbar({
-        open: true,
-        message: "Connecting to Sepolia for Irys integration...",
-        severity: "info"
-      });
+      debug.log('Switching to Sepolia for Irys');
+      await switchNetwork(NETWORKS.SEPOLIA);
       
-      const switchedToSepolia = await switchNetwork(NETWORKS.SEPOLIA);
-      if (!switchedToSepolia) {
-        throw new Error("Failed to switch to Sepolia network");
-      }
-      
+      debug.log('Setting up Sepolia provider and Irys');
       const sepoliaProvider = new ethers.BrowserProvider(window.ethereum);
-      const sepoliaSigner = await sepoliaProvider.getSigner();
-      const address = await sepoliaSigner.getAddress();
-      const sepoliaNetwork = await sepoliaProvider.getNetwork();
-      
       const irysUploader = await WebUploader(WebEthereum)
         .withAdapter(EthersV6Adapter(sepoliaProvider))
         .withRpc("https://testnet-explorer.irys.xyz/")
         .devnet();
-      
-      setIrysStatus(`Connected to Irys: ${irysUploader.address}`);
-      
-      updateData({ 
-        sepoliaProvider: sepoliaProvider,
-        irysUploader: irysUploader 
-      });
-      
-      console.log("Successfully connected to Sepolia and Irys");
-      setSnackbar({
-        open: true,
-        message: "Connected to Sepolia for Irys. Switching to Hoodi for contracts...",
-        severity: "info"
-      });
-      
-      setConnectionState(CONNECTION_STATES.CONNECTING_HOODI);
-      console.log("Connecting to Hoodi Testnet for contracts...");
-      
-      await new Promise(resolve => setTimeout(resolve, NETWORK_SWITCH_DELAY));
 
-      const switchedToHoodi = await switchNetwork(NETWORKS.HOODI);
-      if (!switchedToHoodi) {
-        throw new Error("Failed to switch to Hoodi network");
-      }
-      
+      debug.log('Switching to Hoodi network');
+      await switchNetwork(NETWORKS.HOODI);
       const hoodiProvider = new ethers.BrowserProvider(window.ethereum);
-      const hoodiNetwork = await hoodiProvider.getNetwork();
       
-      setWalletStatus(`Connected: ${address}, Network: ${hoodiNetwork.name || 'Hoodi Testnet'}`);
-      setCurrentNetwork(hoodiNetwork.name || 'Hoodi Testnet');
-      
+      debug.info('Updating providers in context');
       updateData({ 
-        ethProvider: hoodiProvider 
+        ethProvider: hoodiProvider,
+        sepoliaProvider,
+        irysUploader 
       });
-      
-      await fetchFactoryInfo(hoodiProvider);
-      
-      console.log("Successfully connected to Hoodi and fetched factory data");
-      setSnackbar({
-        open: true,
-        message: "Successfully connected to both networks!",
-        severity: "success"
-      });
-      
-      await refreshWalletInfo();
-      await refreshIrysBalance();
 
-      setConnectionState(CONNECTION_STATES.CONNECTED);
-      setLastSuccessfulConnection(Date.now());
+      debug.log('Getting signer and wallet info');
+      const signer = await hoodiProvider.getSigner();
+      const address = await signer.getAddress();
+      
+      // Update balances with network switching
+      await updateBalances(hoodiProvider, sepoliaProvider, address);
+      
+      setWalletInfo(prev => ({
+        ...prev,
+        address,
+        network: 'Hoodi Testnet',
+        isConnected: true
+      }));
+
+      await fetchFactoryInfo(hoodiProvider);
+      await refreshIrysBalance(irysUploader);
 
     } catch (error) {
-      console.error("Error in multi-network connection process:", error);
-      setWalletStatus("Connection error");
-      setSnackbar({ 
-        open: true, 
-        message: "Connection failed: " + (error?.message || error), 
-        severity: "error" 
-      });
-      setConnectionState(CONNECTION_STATES.DISCONNECTED);
+      debug.error("Connection failed:", error);
+      setError(error.message);
     } finally {
       setLoading(false);
-      setNetworkInitialized(true);
-      setIsReconnecting(false);
     }
-  }, [updateData, fetchFactoryInfo, isReconnecting, connectionState, lastSuccessfulConnection]);
+  };
 
-  const handleAccountsChanged = useCallback(async (accounts) => {
-    if (isReconnecting) return;
-
-    console.log("Accounts changed:", accounts);
-    if (accounts.length === 0) {
-      resetWalletState();
-    } else {
-      const newAddress = accounts[0];
-      if (newAddress?.toLowerCase() !== walletInfo.address?.toLowerCase()) {
-        setSnackbar({
-          open: true,
-          message: "Account changed. Reconnecting...",
-          severity: "info"
-        });
-        await connectWallet();
-      }
-    }
-  }, [connectWallet, resetWalletState, walletInfo.address, isReconnecting]);
-
-  const handleChainChanged = useCallback(async (chainId) => {
-    if (isReconnecting || isSwitchingNetwork) {
-      console.log("Ignoring chain change during connection/switch");
+  const refreshIrysBalance = async (uploader) => {
+    if (!uploader) {
+      debug.warn('No Irys uploader instance available');
       return;
     }
+    try {
+      debug.log('Fetching Irys balance');
+      const balance = await uploader.getBalance();
+      debug.info('Raw Irys balance:', balance.toString());
+      
+      const formattedBalance = ethers.formatUnits(
+        ethers.getBigInt(balance.toString()), 
+        18
+      );
+      debug.info('Formatted Irys balance:', formattedBalance);
+      setIrysBalance(`${formattedBalance} ETH`);
+    } catch (error) {
+      debug.error("Irys balance refresh failed:", error);
+      setIrysBalance('0.00 ETH');
+    }
+  };
 
-    if (lastNetworkSwitch && Date.now() - lastNetworkSwitch < NETWORK_SWITCH_DELAY) {
-      console.log("Ignoring rapid chain change");
+  const fundIrys = async (amount = "0.01") => {
+    if (!data.irysUploader) {
+      debug.warn('No Irys uploader available for funding');
       return;
     }
-
-    console.log("Chain changed to:", chainId);
-    
-    if (!networkInitialized) {
-      if (data.ethProvider) {
-        refreshWalletInfo();
-      }
+    try {
+      debug.log(`Funding Irys with ${amount} ETH`);
+      setLoading(true);
+      setError(null);
       
-      const newChainIdHex = typeof chainId === 'string' && chainId.startsWith('0x') 
-        ? chainId.toLowerCase() 
-        : '0x' + Number(chainId).toString(16);
+      const fundAmount = ethers.parseUnits(amount, 18);
+      debug.info('Funding amount in wei:', fundAmount.toString());
       
-      if (newChainIdHex === NETWORKS.SEPOLIA.chainId.toLowerCase()) {
-        setCurrentNetwork('Sepolia');
-      } else if (newChainIdHex === NETWORKS.HOODI.chainId.toLowerCase()) {
-        setCurrentNetwork('Hoodi Testnet');
-      } else {
-        setCurrentNetwork('Unknown Network');
-      }
+      await data.irysUploader.fund(fundAmount);
+      debug.info('Funding successful');
       
-      setNetworkInitialized(true);
+      await refreshIrysBalance(data.irysUploader);
+    } catch (error) {
+      debug.error("Funding failed:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-  }, [data.ethProvider, networkInitialized, isReconnecting, isSwitchingNetwork, connectionState, lastNetworkSwitch]);
+  };
+
+  const withdrawIrys = async () => {
+    if (!data.irysUploader) {
+      debug.warn('No Irys uploader available for withdrawal');
+      return;
+    }
+    try {
+      debug.log('Starting Irys withdrawal process');
+      setLoading(true);
+      setError(null);
+      
+      const currentBalance = await data.irysUploader.getBalance();
+      debug.info('Current Irys balance:', currentBalance.toString());
+      
+      if (currentBalance <= 0) {
+        throw new Error('No balance to withdraw');
+      }
+
+      await data.irysUploader.withdraw(currentBalance.toString());
+      debug.info('Withdrawal successful');
+      
+      await refreshIrysBalance(data.irysUploader);
+    } catch (error) {
+      debug.error("Withdrawal failed:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (walletInfo.isConnected && data.ethProvider && data.sepoliaProvider && walletInfo.address) {
+      const updateInterval = setInterval(() => {
+        updateBalances(data.ethProvider, data.sepoliaProvider, walletInfo.address);
+      }, 15000);
+
+      return () => clearInterval(updateInterval);
+    }
+  }, [walletInfo.isConnected, data.ethProvider, data.sepoliaProvider, walletInfo.address]);
 
   useEffect(() => {
     if (window.ethereum) {
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
+      window.ethereum.on('accountsChanged', () => connectWallet());
+      window.ethereum.on('chainChanged', () => connectWallet());
 
       return () => {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
+        window.ethereum.removeListener('accountsChanged', connectWallet);
+        window.ethereum.removeListener('chainChanged', connectWallet);
       };
     }
-  }, [handleAccountsChanged, handleChainChanged]);
-
-  useEffect(() => {
-    const attemptReconnect = async () => {
-      if (isReconnecting || 
-          (lastSuccessfulConnection && Date.now() - lastSuccessfulConnection < RECONNECT_COOLDOWN) ||
-          connectionState !== CONNECTION_STATES.DISCONNECTED) {
-        return;
-      }
-
-      if (window.ethereum?.isConnected && window.ethereum?.selectedAddress) {
-        const currentConnectedAddress = window.ethereum.selectedAddress;
-        if (!walletInfo.isConnected || 
-            currentConnectedAddress.toLowerCase() !== walletInfo.address?.toLowerCase()) {
-          try {
-            await connectWallet();
-          } catch (error) {
-            console.error("Auto-reconnect failed:", error);
-          }
-        }
-      }
-    };
-    
-    attemptReconnect();
-  }, [connectWallet, walletInfo.isConnected, walletInfo.address, isReconnecting, connectionState, lastSuccessfulConnection]);
-
-  useEffect(() => {
-    if (!walletInfo.isConnected) {
-      setNetworkInitialized(false);
-    }
-  }, [walletInfo.isConnected]);
-
-  useEffect(() => {
-    refreshWalletInfo();
-  }, [data.ethProvider]);
-
-  useEffect(() => {
-    refreshIrysBalance();
-  }, [data.irysUploader, walletInfo.address]);
-
-  useEffect(() => {
-    if (data.ethProvider) {
-      fetchFactoryInfo(data.ethProvider);
-    }
-  }, [data.ethProvider, data.masterFactoryAddress]);
+  }, []);
 
   return (
     <WalletContext.Provider value={{ 
-      walletStatus, 
-      irysStatus, 
       connectWallet,
-      fetchFactoryInfo,
       walletInfo,
       irysBalance,
       loading,
-      snackbar,
-      closeSnackbar,
-      fundAccount,
-      withdrawAccount,
-      refreshWalletInfo,
-      refreshIrysBalance,
-      currentNetwork,
-      switchNetwork,
-      NETWORKS
+      error,
+      fundIrys,
+      withdrawIrys,
     }}>
       {children}
     </WalletContext.Provider>

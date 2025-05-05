@@ -66,16 +66,34 @@ export function usePublicContract(): PublicContractReturn {
       if (!data.ethProvider) {
         throw new Error('Provider not available');
       }
-      
+
+      if (!contractAddress || !ethers.isAddress(contractAddress)) {
+        throw new Error(`Invalid contract address: ${contractAddress}`);
+      }
+
       const { getPublicContract } = createContractFactories(data.ethProvider);
       const contract = getPublicContract(contractAddress);
-      
+
+      // First verify the contract exists and has code
+      const code = await data.ethProvider.getCode(contractAddress);
+      if (code === '0x') {
+        throw new Error(`No contract found at address: ${contractAddress}`);
+      }
+
+      try {
+        // Test if contract has required methods
+        await contract.owner();
+      } catch (e) {
+        throw new Error(`Address ${contractAddress} is not a valid Public Contract`);
+      }
+
+      // Now fetch all details
       const [owner, user, title, totalVerNo, activeVer] = await Promise.all([
-        contract.owner(),
-        contract.user(),
-        contract.title(),
-        contract.totalVerNo(),
-        contract.activeVer()
+        contract.owner().catch(() => 'Unknown'),
+        contract.user().catch(() => 'None'),
+        contract.title().catch(() => 'Untitled'),
+        contract.totalVerNo().catch(() => 0),
+        contract.activeVer().catch(() => 0)
       ]);
       
       return {
@@ -107,13 +125,37 @@ export function usePublicContract(): PublicContractReturn {
       
       const { getPublicContract } = createContractFactories(data.ethProvider);
       const contract = getPublicContract(contractAddress);
+
+      // First get total number of versions
+      const totalVerNo = await contract.totalVerNo();
+      console.log("Total versions:", Number(totalVerNo));
+
+      const versions = [];
       
-      const subContracts = await contract.getAllPublicSubContracts();
-      return subContracts;
+      // Iterate through each version number starting from 1
+      for (let i = 1; i <= Number(totalVerNo); i++) {
+        try {
+          // Get contract address from versions mapping
+          const versionAddr = await contract.versions(i);
+          
+          // Check if address is valid and not zero address
+          if (versionAddr && versionAddr !== ethers.ZeroAddress) {
+            versions.push(versionAddr);
+            console.log(`Version ${i} address:`, versionAddr);
+          }
+        } catch (verErr) {
+          console.warn(`Error fetching version ${i}:`, verErr);
+          continue;
+        }
+      }
+
+      console.log("Retrieved versions:", versions);
+      return versions;
+
     } catch (err) {
       console.error('Error getting all versions:', err);
       setError(`Failed to get versions: ${(err as Error).message}`);
-      throw err;
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +178,8 @@ export function usePublicContract(): PublicContractReturn {
       const { getPublicContract } = createContractFactories(data.ethProvider);
       const contract = getPublicContract(contractAddress);
       
-      const subContractAddress = await contract.getPublicContractByIndex(index);
+      // Changed function name to match contract
+      const subContractAddress = await contract.getPublicSubContractByIndex(index);
       return subContractAddress;
     } catch (err) {
       console.error('Error getting version by index:', err);

@@ -73,17 +73,17 @@ export const BroadcastContractABI = [
 
 export const PublicContractABI = [
   // Functions
-  "function owner() view returns (address)",
-  "function user() view returns (address)",
-  "function title() view returns (string)",
   "function totalVerNo() view returns (uint256)",
   "function versions(uint256) view returns (address)",
   "function activeVer() view returns (uint256)",
+  "function owner() view returns (address)",
+  "function user() view returns (address)",
+  "function title() view returns (string)",
   "function activationCodeHash() view returns (bytes32)",
   "function addNewPublicSubContract(string jsonHash, string softCopyHash, string storageLink, uint256 startDate, uint256 endDate) returns (address)",
   "function activate(string activationCode)",
   "function getAllPublicSubContracts() view returns (address[])",
-  "function getPublicContractByIndex(uint256 index) view returns (address)",
+  "function getPublicSubContractByIndex(uint256 index) view returns (address)", // Changed from getPublicContractByIndex
   "function getCurrentVersion() view returns (address)",
 
   // Events

@@ -15,7 +15,7 @@ export default function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/view/:id" element={<PublicView />} />
+        <Route path="/contracts/:id" element={<PublicView />} />
         <Route path="/activate/:id" element={<PublicActivate />} />
         <Route path="/create" element={<CreateContract/>} />
         <Route path="/verify" element={<Verify />} />
