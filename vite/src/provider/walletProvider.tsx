@@ -1,4 +1,4 @@
-import { useState, useContext, createContext, useEffect } from "react";
+import { useState, useContext, createContext, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { WebUploader } from "@irys/web-upload";
 import { WebEthereum } from "@irys/web-upload-ethereum";
@@ -53,6 +53,7 @@ function WalletProvider({children}) {
   const [irysBalance, setIrysBalance] = useState('N/A');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const switchNetwork = async (networkConfig) => {
     if (!window.ethereum) {
@@ -138,11 +139,21 @@ function WalletProvider({children}) {
     }
   };
 
-  const connectWallet = async () => {
+  const connectWallet = useCallback(async () => {
+    if (isConnecting) {
+      debug.warn('Connection already in progress');
+      return;
+    }
+
     try {
+      setIsConnecting(true);
       debug.log('Starting wallet connection process');
       setLoading(true);
       setError(null);
+
+      if (!window.ethereum) {
+        throw new Error('No ethereum provider found');
+      }
 
       debug.log('Requesting account access');
       await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -190,8 +201,9 @@ function WalletProvider({children}) {
       setError(error.message);
     } finally {
       setLoading(false);
+      setIsConnecting(false);
     }
-  };
+  }, [isConnecting, data.masterFactoryAddress]);
 
   const refreshIrysBalance = async (uploader) => {
     if (!uploader) {
@@ -269,6 +281,18 @@ function WalletProvider({children}) {
     }
   };
 
+  const handleAccountsChanged = useCallback(() => {
+    if (!isConnecting) {
+      connectWallet();
+    }
+  }, [connectWallet]);
+
+  const handleChainChanged = useCallback(() => {
+    if (!isConnecting) {
+      connectWallet();
+    }
+  }, [connectWallet]);
+
   useEffect(() => {
     if (walletInfo.isConnected && data.ethProvider && data.sepoliaProvider && walletInfo.address) {
       const updateInterval = setInterval(() => {
@@ -281,15 +305,15 @@ function WalletProvider({children}) {
 
   useEffect(() => {
     if (window.ethereum) {
-      window.ethereum.on('accountsChanged', () => connectWallet());
-      window.ethereum.on('chainChanged', () => connectWallet());
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', handleChainChanged);
 
       return () => {
-        window.ethereum.removeListener('accountsChanged', connectWallet);
-        window.ethereum.removeListener('chainChanged', connectWallet);
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
       };
     }
-  }, []);
+  }, [handleAccountsChanged, handleChainChanged]);
 
   return (
     <WalletContext.Provider value={{ 
