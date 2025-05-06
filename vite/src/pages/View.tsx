@@ -220,6 +220,24 @@ export default function ContractViewPage() {
     }
   };
 
+  // Add check for showing activation status
+  const renderActivationStatus = () => {
+    if (contractDetails?.type === 'broadcast') {
+      return null;
+    }
+
+    const isWaitingForActivation = contractDetails?.recipient === '0x0000000000000000000000000000000000000000';
+    const isActivated = contractDetails?.recipient && !isWaitingForActivation;
+
+    return (
+      <Chip 
+        label={isWaitingForActivation ? 'Waiting for Activation' : isActivated ? 'Activated' : 'Not Activated'} 
+        color={isActivated ? 'success' : 'warning'}
+        sx={{ ml: 2 }}
+      />
+    );
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -269,15 +287,11 @@ export default function ContractViewPage() {
           <DescriptionIcon color="primary" sx={{ mr: 1, fontSize: 30 }} />
           <Typography variant="h6">{contractDetails.title}</Typography>
           <Chip 
-            label={contractDetails.status} 
-            color={contractDetails.status === 'Active' ? 'success' : 'warning'}
-            sx={{ ml: 2 }}
-          />
-          <Chip 
             label={contractDetails.type.toUpperCase()} 
             color="info"
             sx={{ ml: 2 }}
           />
+          {renderActivationStatus()}
         </Box>
 
         <Typography variant="body1" paragraph sx={{ mb: 3 }}>
