@@ -29,40 +29,97 @@ import HistoryIcon from '@mui/icons-material/History';
 import PublicIcon from '@mui/icons-material/Public';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import LockIcon from '@mui/icons-material/Lock';
+
 import { usePublicContract } from '../hooks/contractHook/usePublicContractHook';
+import { usePrivateContract } from '../hooks/contractHook/usePrivateContractHook';
+import { useBroadcastContract } from '../hooks/contractHook/useBroadcastContractHook';
 import { usePublicSubContract } from '../hooks/contractHook/usePublicSubContractHook';
+import { usePrivateSubContract } from '../hooks/contractHook/usePrivateSubContractHook';
+import { useBroadcastSubContract } from '../hooks/contractHook/useBroadcastSubContractHook';
 import { useEventHistory } from '../hooks/contractHook/helpers/useEventHistory';
-import { ContractStatus } from '../hooks/contractHook/types';
+import { ContractStatus, ContractType } from '../hooks/contractHook/types';
 import { ethers } from 'ethers';
 
-export default function PublicContractViewPage() {
+export default function ContractViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [contractType, setContractType] = useState<ContractType | null>(null);
   
   // Contract hooks
   const publicContract = usePublicContract();
+  const privateContract = usePrivateContract();
+  const broadcastContract = useBroadcastContract();
   const publicSubContract = usePublicSubContract();
+  const privateSubContract = usePrivateSubContract();
+  const broadcastSubContract = useBroadcastSubContract();
   const eventHistory = useEventHistory();
 
   // Contract state
   const [contractDetails, setContractDetails] = useState<any>(null);
   const [versions, setVersions] = useState<any[]>([]);
 
+  // Detect contract type
+  useEffect(() => {
+    const detectContractType = async () => {
+      if (!id) return;
+      
+      try {
+        // Try each contract type until one works
+        const contractTypes: [ContractType, any][] = [
+          ['public', publicContract],
+          ['private', privateContract],
+          ['broadcast', broadcastContract]
+        ];
+
+        for (const [type, contract] of contractTypes) {
+          try {
+            await contract.getContractDetails(id);
+            setContractType(type);
+            return;
+          } catch {
+            continue;
+          }
+        }
+
+        throw new Error('Unknown contract type');
+      } catch (err) {
+        console.error('Error detecting contract type:', err);
+        setError(`Failed to detect contract type: ${(err as Error).message}`);
+      }
+    };
+
+    detectContractType();
+  }, [id]);
+
+  // Load contract data
   useEffect(() => {
     let mounted = true;
     let abortController = new AbortController();
 
     const loadContractData = async () => {
-      if (!id) return;
+      if (!id || !contractType) return;
       
       try {
         setLoading(true);
         setError(null);
 
+        // Select appropriate contract hook
+        const mainContract = {
+          public: publicContract,
+          private: privateContract,
+          broadcast: broadcastContract
+        }[contractType];
+
+        const subContract = {
+          public: publicSubContract,
+          private: privateSubContract,
+          broadcast: broadcastSubContract
+        }[contractType];
+
         // Get main contract details
-        const details = await publicContract.getContractDetails(id);
+        const details = await mainContract.getContractDetails(id);
         console.log("Contract details:", details);
 
         if (!mounted) return;
@@ -73,23 +130,25 @@ export default function PublicContractViewPage() {
         if (details.totalVerNo > 0) {
           try {
             // Get all version addresses
-            const versionAddresses = await publicContract.getAllVersions(id);
+            const versionAddresses = await mainContract.getAllVersions(id);
             console.log("Version addresses:", versionAddresses);
             
             if (!mounted) return;
 
-            // Process all versions at once instead of batches
+            // Process all versions at once
             const versionDetailsPromises = versionAddresses.map(async (addr) => {
               try {
-                const subDetails = await publicSubContract.getSubContractDetails(addr);
+                const subDetails = await subContract.getSubContractDetails(addr);
                 return {
                   version: Number(subDetails.version),
                   fileType: 'Contract Document',
                   status: subDetails.status === 0 ? 'Active' : 'Disabled',
                   size: 'N/A',
                   timestamp: new Date(Number(subDetails.deployTime) * 1000).toLocaleString(),
-                  hash: subDetails.storageLink?.split(',')[0] || 'N/A', // Get first part of storage link
-                  storageLink: subDetails.storageLink,
+                  hash: subDetails.jsonHash || 'N/A',
+                  storageLink: subDetails.storageLink || 
+                             (subDetails.jsonLink && subDetails.softCopyLink ? 
+                              `${subDetails.jsonLink},${subDetails.softCopyLink}` : ''),
                 };
               } catch (subError) {
                 console.error(`Error loading sub-contract ${addr}:`, subError);
@@ -109,10 +168,10 @@ export default function PublicContractViewPage() {
                 owner: details.owner || 'Unknown',
                 recipient: details.user || 'None',
                 status: 'Active',
-                type: 'public',
+                type: contractType,
                 created: new Date(Number(validVersions[0]?.timestamp || Date.now())).toLocaleString(),
                 currentVersion: Number(details.activeVer || 0),
-                description: 'Contract Document',
+                description: `${contractType.charAt(0).toUpperCase() + contractType.slice(1)} Contract Document`,
               });
             }
           } catch (versionsError) {
@@ -141,7 +200,7 @@ export default function PublicContractViewPage() {
       mounted = false;
       abortController.abort();
     };
-  }, [id, publicContract, publicSubContract]); // Added publicSubContract as dependency
+  }, [id, contractType]);
 
   const handleDownload = async (storageLink: string) => {
     if (!storageLink) return;
@@ -162,7 +221,7 @@ export default function PublicContractViewPage() {
       case 'private':
         return <LockIcon color="primary" sx={{ mr: 1 }} />;
       default:
-        return <PublicIcon color="primary" sx={{ mr: 1 }} />;
+        return <DescriptionIcon color="primary" sx={{ mr: 1 }} />;
     }
   };
 
