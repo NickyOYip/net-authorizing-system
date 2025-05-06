@@ -5,6 +5,7 @@ import { WebEthereum } from "@irys/web-upload-ethereum";
 import { EthersV6Adapter } from "@irys/web-upload-ethereum-ethers-v6";
 import { DataContext } from "./dataProvider";
 import { NETWORKS, switchNetwork } from "../utils/networkUtils";
+import { checkBalance, fundAccount, withdrawAccount } from '../hooks/irysHook/irysAction';
 
 // Debug logging function
 const debug = {
@@ -40,6 +41,17 @@ function WalletProvider({children}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
+
+  const prepareIrysNetwork = async () => {
+    try {
+      debug.log('Preparing network for Irys operation');
+      await switchNetwork(NETWORKS.SEPOLIA);
+      return true;
+    } catch (error) {
+      debug.error('Failed to prepare network for Irys:', error);
+      return false;
+    }
+  };
 
   const fetchFactoryInfo = async (provider) => {
     if (!provider || !data.masterFactoryAddress) {
@@ -177,12 +189,13 @@ function WalletProvider({children}) {
       return;
     }
     try {
+      await prepareIrysNetwork();
       debug.log('Fetching Irys balance');
-      const balance = await uploader.getBalance();
-      debug.info('Raw Irys balance:', balance.toString());
+      const balance = await checkBalance(uploader);
+      debug.info('Raw Irys balance:', balance);
       
       const formattedBalance = ethers.formatUnits(
-        ethers.getBigInt(balance.toString()), 
+        ethers.getBigInt(balance), 
         18
       );
       debug.info('Formatted Irys balance:', formattedBalance);
@@ -190,6 +203,9 @@ function WalletProvider({children}) {
     } catch (error) {
       debug.error("Irys balance refresh failed:", error);
       setIrysBalance('0.00 ETH');
+    } finally {
+      // Switch back to Hoodi after operation
+      await switchNetwork(NETWORKS.HOODI);
     }
   };
 
@@ -203,10 +219,12 @@ function WalletProvider({children}) {
       setLoading(true);
       setError(null);
       
-      const fundAmount = ethers.parseUnits(amount, 18);
-      debug.info('Funding amount in wei:', fundAmount.toString());
-      
-      await data.irysUploader.fund(fundAmount);
+      const networkReady = await prepareIrysNetwork();
+      if (!networkReady) {
+        throw new Error('Failed to switch to Sepolia network');
+      }
+
+      await fundAccount(data.irysUploader, amount);
       debug.info('Funding successful');
       
       await refreshIrysBalance(data.irysUploader);
@@ -215,6 +233,8 @@ function WalletProvider({children}) {
       setError(error.message);
     } finally {
       setLoading(false);
+      // Switch back to Hoodi after operation
+      await switchNetwork(NETWORKS.HOODI);
     }
   };
 
@@ -227,16 +247,17 @@ function WalletProvider({children}) {
       debug.log('Starting Irys withdrawal process');
       setLoading(true);
       setError(null);
-      
-      const currentBalance = await data.irysUploader.getBalance();
-      debug.info('Current Irys balance:', currentBalance.toString());
-      
-      if (currentBalance <= 0) {
-        throw new Error('No balance to withdraw');
+
+      const networkReady = await prepareIrysNetwork();
+      if (!networkReady) {
+        throw new Error('Failed to switch to Sepolia network');
       }
 
-      await data.irysUploader.withdraw(currentBalance.toString());
-      debug.info('Withdrawal successful');
+      const tx = await withdrawAccount(data.irysUploader);
+      if (!tx) {
+        throw new Error('Withdrawal failed');
+      }
+      debug.info('Withdrawal successful', tx);
       
       await refreshIrysBalance(data.irysUploader);
     } catch (error) {
@@ -244,6 +265,8 @@ function WalletProvider({children}) {
       setError(error.message);
     } finally {
       setLoading(false);
+      // Switch back to Hoodi after operation
+      await switchNetwork(NETWORKS.HOODI);
     }
   };
 
