@@ -52,6 +52,7 @@ export default function PublicContractViewPage() {
 
   useEffect(() => {
     let mounted = true;
+    let abortController = new AbortController();
 
     const loadContractData = async () => {
       if (!id) return;
@@ -66,7 +67,8 @@ export default function PublicContractViewPage() {
 
         if (!mounted) return;
 
-        let versionDetails = [];
+        // Reset versions before loading new ones
+        setVersions([]);
         
         if (details.totalVerNo > 0) {
           try {
@@ -74,62 +76,51 @@ export default function PublicContractViewPage() {
             const versionAddresses = await publicContract.getAllVersions(id);
             console.log("Version addresses:", versionAddresses);
             
-            if (mounted && versionAddresses.length > 0) {
-              // Process versions in batches to avoid UI freezing
-              const batchSize = 3;
-              const batches = [];
+            if (!mounted) return;
+
+            // Process all versions at once instead of batches
+            const versionDetailsPromises = versionAddresses.map(async (addr) => {
+              try {
+                const subDetails = await publicSubContract.getSubContractDetails(addr);
+                return {
+                  version: Number(subDetails.version),
+                  fileType: 'Contract Document',
+                  status: subDetails.status === 0 ? 'Active' : 'Disabled',
+                  size: 'N/A',
+                  timestamp: new Date(Number(subDetails.deployTime) * 1000).toLocaleString(),
+                  hash: subDetails.storageLink?.split(',')[0] || 'N/A', // Get first part of storage link
+                  storageLink: subDetails.storageLink,
+                };
+              } catch (subError) {
+                console.error(`Error loading sub-contract ${addr}:`, subError);
+                return null;
+              }
+            });
+
+            const versionDetails = await Promise.all(versionDetailsPromises);
+            
+            if (mounted) {
+              const validVersions = versionDetails.filter(v => v !== null);
+              setVersions(validVersions.sort((a, b) => b.version - a.version));
               
-              for (let i = 0; i < versionAddresses.length; i += batchSize) {
-                batches.push(versionAddresses.slice(i, i + batchSize));
-              }
-
-              for (const batch of batches) {
-                if (!mounted) break;
-
-                const batchResults = await Promise.all(
-                  batch.map(async (addr) => {
-                    try {
-                      const subDetails = await publicSubContract.getSubContractDetails(addr);
-                      return {
-                        version: Number(subDetails.version),
-                        fileType: 'Contract Document',
-                        status: subDetails.status === 0 ? 'Active' : 'Disabled',
-                        size: 'N/A',
-                        timestamp: new Date(Number(subDetails.deployTime) * 1000).toLocaleString(),
-                        hash: subDetails.jsonHash,
-                        storageLink: subDetails.storageLink,
-                      };
-                    } catch (subError) {
-                      console.error(`Error loading sub-contract ${addr}:`, subError);
-                      return null;
-                    }
-                  })
-                );
-
-                if (mounted) {
-                  versionDetails = [...versionDetails, ...batchResults.filter(v => v !== null)];
-                  setVersions(prev => [...prev, ...batchResults.filter(v => v !== null)]
-                    .sort((a, b) => b.version - a.version));
-                }
-              }
+              setContractDetails({
+                id,
+                title: details.title || 'Untitled',
+                owner: details.owner || 'Unknown',
+                recipient: details.user || 'None',
+                status: 'Active',
+                type: 'public',
+                created: new Date(Number(validVersions[0]?.timestamp || Date.now())).toLocaleString(),
+                currentVersion: Number(details.activeVer || 0),
+                description: 'Contract Document',
+              });
             }
           } catch (versionsError) {
             console.error("Error loading versions:", versionsError);
+            if (mounted) {
+              setError("Failed to load contract versions");
+            }
           }
-        }
-
-        if (mounted) {
-          setContractDetails({
-            id,
-            title: details.title || 'Untitled',
-            owner: details.owner || 'Unknown',
-            recipient: details.user || 'None',
-            status: 'Active',
-            type: 'public',
-            created: new Date(Number(versionDetails[0]?.deployTime || Date.now())).toLocaleString(),
-            currentVersion: Number(details.activeVer || 0),
-            description: 'Contract Document',
-          });
         }
 
       } catch (err) {
@@ -145,12 +136,21 @@ export default function PublicContractViewPage() {
     };
 
     loadContractData();
-    return () => { mounted = false; };
-  }, [id, publicContract]);
 
-  const handleDownload = async (hash: string) => {
-    // Implement download from Irys using the hash/storage link
-    window.open(`https://gateway.irys.xyz/${hash}`, '_blank');
+    return () => {
+      mounted = false;
+      abortController.abort();
+    };
+  }, [id, publicContract, publicSubContract]); // Added publicSubContract as dependency
+
+  const handleDownload = async (storageLink: string) => {
+    if (!storageLink) return;
+    // Split the storage link and get both JSON and document links
+    const [jsonId, documentId] = storageLink.split(',');
+    // Open document link (second part of storage link)
+    if (documentId) {
+      window.open(`https://gateway.irys.xyz/${documentId}`, '_blank');
+    }
   };
 
   const getContractTypeIcon = () => {
@@ -290,7 +290,7 @@ export default function PublicContractViewPage() {
                   <TableCell>
                     <IconButton 
                       color="primary"
-                      onClick={() => handleDownload(version.hash)}
+                      onClick={() => handleDownload(version.storageLink)}
                       title="Download this version"
                     >
                       <DownloadIcon />

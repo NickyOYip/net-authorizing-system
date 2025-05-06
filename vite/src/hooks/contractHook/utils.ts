@@ -1,5 +1,16 @@
 import { ethers } from 'ethers';
-import * as ABIs from './abis';
+import {
+  MasterFactoryABI,
+  BroadcastFactoryABI,
+  PublicFactoryABI,
+  PrivateFactoryABI,
+  BroadcastContractABI,
+  PublicContractABI,
+  PrivateContractABI,
+  BroadcastSubContractABI,
+  PublicSubContractABI,
+  PrivateSubContractABI
+} from './abis';
 
 /**
  * Creates a contract instance with appropriate ABI
@@ -82,34 +93,34 @@ export function findEventInLogs<T>(
 export function createContractFactories(provider: ethers.BrowserProvider) {
   return {
     getMasterFactoryContract: (address: string) => 
-      getContract(address, ABIs.MasterFactoryABI, provider),
+      getContract(address, MasterFactoryABI, provider),
       
     getBroadcastFactoryContract: (address: string) => 
-      getContract(address, ABIs.BroadcastFactoryABI, provider),
+      getContract(address, BroadcastFactoryABI, provider),
       
     getPublicFactoryContract: (address: string) => 
-      getContract(address, ABIs.PublicFactoryABI, provider),
+      getContract(address, PublicFactoryABI, provider),
       
     getPrivateFactoryContract: (address: string) => 
-      getContract(address, ABIs.PrivateFactoryABI, provider),
+      getContract(address, PrivateFactoryABI, provider),
       
     getBroadcastContract: (address: string) => 
-      getContract(address, ABIs.BroadcastContractABI, provider),
+      getContract(address, BroadcastContractABI, provider),
       
     getPublicContract: (address: string) => 
-      getContract(address, ABIs.PublicContractABI, provider),
+      getContract(address, PublicContractABI, provider),
       
     getPrivateContract: (address: string) => 
-      getContract(address, ABIs.PrivateContractABI, provider),
+      getContract(address, PrivateContractABI, provider),
       
     getBroadcastSubContract: (address: string) => 
-      getContract(address, ABIs.BroadcastSubContractABI, provider),
+      getContract(address, BroadcastSubContractABI, provider),
       
     getPublicSubContract: (address: string) => 
-      getContract(address, ABIs.PublicSubContractABI, provider),
+      getContract(address, PublicSubContractABI, provider),
       
     getPrivateSubContract: (address: string) => 
-      getContract(address, ABIs.PrivateSubContractABI, provider),
+      getContract(address, PrivateSubContractABI, provider),
   };
 }
 

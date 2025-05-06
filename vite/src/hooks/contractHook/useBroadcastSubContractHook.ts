@@ -21,6 +21,7 @@ interface BroadcastSubContractReturn extends BaseHookReturn {
   // Read operations
   getSubContractDetails: (subContractAddress: string) => Promise<BroadcastSubContractDetail>;
   verifyFileHash: (subContractAddress: string, fileHash: string, fileType: 'json' | 'softCopy') => Promise<boolean>;
+  getContractVariables: (subContractAddress: string) => Promise<BroadcastSubContractDetail>;
   
   // Write operations (owner or parent only)
   updateStatus: (
@@ -215,6 +216,60 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
       setIsLoading(false);
     }
   }, [data.ethProvider]);
+
+  /**
+   * Get individual state variables
+   */
+  const getContractVariables = useCallback(async (subContractAddress: string) => {
+    try {
+      if (!data.ethProvider) {
+        throw new Error('Provider not available');
+      }
+
+      const { getBroadcastSubContract } = createContractFactories(data.ethProvider);
+      const contract = getBroadcastSubContract(subContractAddress);
+
+      const [
+        broadcastAddr,
+        owner,
+        status,
+        version,
+        jsonHash,
+        softCopyHash,
+        storageLink,
+        startDate,
+        endDate,
+        deployTime
+      ] = await Promise.all([
+        contract.broadcastContractAddr(),
+        contract.owner(),
+        contract.status(),
+        contract.version(),
+        contract.jsonHash(),
+        contract.softCopyHash(),
+        contract.storageLink(),
+        contract.startDate(),
+        contract.endDate(),
+        contract.deployTime()
+      ]);
+
+      return {
+        broadcastAddr,
+        owner,
+        status,
+        version: Number(version),
+        jsonHash,
+        softCopyHash,
+        storageLink,
+        startDate: Number(startDate),
+        endDate: Number(endDate),
+        deployTime: Number(deployTime)
+      };
+    } catch (err) {
+      setError(`Failed to get contract variables: ${(err as Error).message}`);
+      throw err;
+    }
+  }, [data.ethProvider]);
   
   return {
     isLoading,
@@ -222,6 +277,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
     getSubContractDetails,
     verifyFileHash,
     updateStatus,
-    getStatusUpdatedEvents
+    getStatusUpdatedEvents,
+    getContractVariables
   };
 }

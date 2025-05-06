@@ -16,7 +16,7 @@ export const NETWORKS = {
   HOODI: {
     chainId: "0x88bb0",
     chainName: "Hoodi Testnet",
-    rpcUrls: ["https://0xrpc.io/hoodi"],
+    rpcUrls: ["https://ethereum-hoodi-rpc.publicnode.com"],
     blockExplorerUrls: ["https://hoodi.etherscan.io/"]
   }
 };

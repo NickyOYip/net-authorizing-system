@@ -16,6 +16,7 @@ interface BroadcastContractReturn extends BaseHookReturn {
   getAllVersions: (contractAddress: string) => Promise<string[]>;
   getVersionByIndex: (contractAddress: string, index: number) => Promise<string>;
   getCurrentVersion: (contractAddress: string) => Promise<string>;
+  getVersionByNumber: (contractAddress: string, versionNumber: number) => Promise<string>;
   
   // Write operations
   addNewBroadcastSubContract: (
@@ -159,6 +160,34 @@ export function useBroadcastContract(): BroadcastContractReturn {
   }, [data.ethProvider]);
   
   /**
+   * Get version by version number
+   */
+  const getVersionByNumber = useCallback(async (
+    contractAddress: string,
+    versionNumber: number
+  ) => {
+    try {
+      resetState();
+      
+      if (!data.ethProvider) {
+        throw new Error('Provider not available');
+      }
+      
+      const { getBroadcastContract } = createContractFactories(data.ethProvider);
+      const contract = getBroadcastContract(contractAddress);
+      
+      const subContractAddress = await contract.versions(versionNumber);
+      return subContractAddress;
+    } catch (err) {
+      console.error('Error getting version by number:', err);
+      setError(`Failed to get version: ${(err as Error).message}`);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [data.ethProvider]);
+  
+  /**
    * Add a new sub-contract version
    */
   const addNewBroadcastSubContract = useCallback(async (
@@ -275,6 +304,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
     getAllVersions,
     getVersionByIndex,
     getCurrentVersion,
+    getVersionByNumber,
     addNewBroadcastSubContract,
     getNewBroadcastSubContractEvents
   };

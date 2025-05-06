@@ -14,7 +14,7 @@ const DataProvider = ({ children }) => {
     irysUploader: null,    // Irys uploader instance (on Sepolia)
 
     //network setting
-    masterFactoryAddress: '0xF6463d646190B1178eC5cA532d6649B0A9194E99',
+    masterFactoryAddress: '0xE4022C96C857E41689ffF2A8e259ac6647e16795',
     broadcastFactory:{// ftech from master factory
       version: null,
       address: null,
