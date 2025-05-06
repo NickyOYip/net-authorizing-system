@@ -40,6 +40,7 @@ import { useBroadcastSubContract } from '../hooks/contractHook/useBroadcastSubCo
 import { useEventHistory } from '../hooks/contractHook/helpers/useEventHistory';
 import { ContractStatus, ContractType } from '../hooks/contractHook/types';
 import { ethers } from 'ethers';
+import { detectContractType } from '../hooks/contractHook/utils/contractTypeDetector';
 
 export default function ContractViewPage() {
   const { id } = useParams();
@@ -63,43 +64,23 @@ export default function ContractViewPage() {
 
   // Detect contract type
   useEffect(() => {
-    const detectContractType = async () => {
+    const detectType = async () => {
       if (!id) return;
       
       try {
-        // Try to get contract details from each contract type
-        try {
-          const details = await broadcastContract.getContractDetails(id);
-          if (details) {
-            setContractType('broadcast');
-            return;
-          }
-        } catch {}
-
-        try {
-          const details = await publicContract.getContractDetails(id);
-          if (details) {
-            setContractType('public');
-            return;
-          }
-        } catch {}
-
-        try {
-          const details = await privateContract.getContractDetails(id);
-          if (details) {
-            setContractType('private');
-            return;
-          }
-        } catch {}
-
-        throw new Error('Contract not found or invalid contract type');
+        const type = await detectContractType(id, {
+          broadcast: broadcastContract,
+          public: publicContract,
+          private: privateContract
+        });
+        setContractType(type);
       } catch (err) {
         console.error('Error detecting contract type:', err);
         setError(`Failed to detect contract type: ${(err as Error).message}`);
       }
     };
 
-    detectContractType();
+    detectType();
   }, [id, broadcastContract, publicContract, privateContract]);
 
   // Load contract data
