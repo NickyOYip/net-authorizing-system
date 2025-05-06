@@ -178,7 +178,7 @@ export default function ContractViewPage() {
                 recipient: details.user || 'None',
                 status: 'Active',
                 type: contractType,
-                created: new Date(Number(validVersions[0]?.timestamp || Date.now())).toLocaleString(),
+                created: validVersions[0]?.timestamp || 'Not available', // Changed this line to use formatted timestamp directly
                 currentVersion: Number(details.activeVer || 0),
                 description: `${contractType.charAt(0).toUpperCase() + contractType.slice(1)} Contract Document`,
               });
