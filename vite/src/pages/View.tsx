@@ -339,10 +339,8 @@ export default function ContractViewPage() {
             <TableHead>
               <TableRow>
                 <TableCell>Version</TableCell>
-                <TableCell>File Type</TableCell>
-                <TableCell>Size</TableCell>
                 <TableCell>Timestamp</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>Download</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -354,8 +352,6 @@ export default function ContractViewPage() {
                       <Chip label="Current" color="primary" size="small" sx={{ ml: 1 }} />
                     )}
                   </TableCell>
-                  <TableCell>{version.fileType}</TableCell>
-                  <TableCell>{version.size}</TableCell>
                   <TableCell>{version.timestamp}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
