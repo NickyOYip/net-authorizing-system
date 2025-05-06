@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   Box, 
   Typography, 
@@ -41,10 +41,12 @@ import { useEventHistory } from '../hooks/contractHook/helpers/useEventHistory';
 import { ContractStatus, ContractType } from '../hooks/contractHook/types';
 import { ethers } from 'ethers';
 import { detectContractType } from '../hooks/contractHook/utils/contractTypeDetector';
+import { DataContext } from '../provider/dataProvider';
 
 export default function ContractViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { data } = useContext(DataContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [contractType, setContractType] = useState<ContractType | null>(null);
@@ -65,13 +67,14 @@ export default function ContractViewPage() {
   // Detect contract type
   useEffect(() => {
     const detectType = async () => {
-      if (!id) return;
+      if (!id || !data.ethProvider) return;
       
       try {
         const type = await detectContractType(id, {
           broadcast: broadcastContract,
           public: publicContract,
-          private: privateContract
+          private: privateContract,
+          provider: data.ethProvider
         });
         setContractType(type);
       } catch (err) {
@@ -81,7 +84,7 @@ export default function ContractViewPage() {
     };
 
     detectType();
-  }, [id, broadcastContract, publicContract, privateContract]);
+  }, [id, broadcastContract, publicContract, privateContract, data.ethProvider]);
 
   // Load contract data
   useEffect(() => {
