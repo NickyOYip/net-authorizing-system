@@ -30,6 +30,7 @@ export const WalletContext = createContext({
   error: null,
   fundIrys: async () => {},
   withdrawIrys: async () => {},
+  refreshWalletInfo: async () => {},
 });
 
 function WalletProvider({children}) {
@@ -252,33 +253,23 @@ function WalletProvider({children}) {
     }
   }, [connectWallet]);
 
-  const handleChainChanged = useCallback(() => {
-    if (!isConnecting) {
-      connectWallet();
-    }
-  }, [connectWallet]);
-
-  useEffect(() => {
+  const refreshWalletInfo = useCallback(async () => {
     if (walletInfo.isConnected && data.ethProvider && data.sepoliaProvider && walletInfo.address) {
-      const updateInterval = setInterval(() => {
-        updateBalances(data.ethProvider, data.sepoliaProvider, walletInfo.address);
-      }, 15000);
-
-      return () => clearInterval(updateInterval);
+      await updateBalances(data.ethProvider, data.sepoliaProvider, walletInfo.address);
+      if (data.irysUploader) {
+        await refreshIrysBalance(data.irysUploader);
+      }
     }
-  }, [walletInfo.isConnected, data.ethProvider, data.sepoliaProvider, walletInfo.address]);
+  }, [walletInfo.isConnected, data.ethProvider, data.sepoliaProvider, walletInfo.address, data.irysUploader]);
 
   useEffect(() => {
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
-
       return () => {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
       };
     }
-  }, [handleAccountsChanged, handleChainChanged]);
+  }, [handleAccountsChanged]);
 
   return (
     <WalletContext.Provider value={{ 
@@ -289,6 +280,7 @@ function WalletProvider({children}) {
       error,
       fundIrys,
       withdrawIrys,
+      refreshWalletInfo,
     }}>
       {children}
     </WalletContext.Provider>
