@@ -30,6 +30,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import LockIcon from '@mui/icons-material/Lock';
 import DataObjectIcon from '@mui/icons-material/DataObject';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import { usePublicContract } from '../hooks/contractHook/usePublicContractHook';
 import { usePrivateContract } from '../hooks/contractHook/usePrivateContractHook';
@@ -63,6 +64,14 @@ export default function ContractViewPage() {
   // Contract state
   const [contractDetails, setContractDetails] = useState<any>(null);
   const [versions, setVersions] = useState<any[]>([]);
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        console.log('Copied:', text);
+      })
+      .catch(err => console.error('Copy failed:', err));
+  };
 
   // Detect contract type
   useEffect(() => {
@@ -301,15 +310,30 @@ export default function ContractViewPage() {
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6}>
             <Typography variant="subtitle2">Contract ID:</Typography>
-            <Typography variant="body1">{contractDetails.id}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body1">{contractDetails.id}</Typography>
+              <IconButton size="small" onClick={() => handleCopy(contractDetails.id)} title="Copy Contract ID" sx={{ color: '#fff' }}>
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </Grid>
           <Grid item xs={12} sm={6}>
             <Typography variant="subtitle2">Owner:</Typography>
-            <Typography variant="body1">{contractDetails.owner}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body1">{contractDetails.owner}</Typography>
+              <IconButton size="small" onClick={() => handleCopy(contractDetails.owner)} title="Copy Owner Address" sx={{ color: '#fff' }}>
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </Grid>
           <Grid item xs={12} sm={6}>
             <Typography variant="subtitle2">Recipient:</Typography>
-            <Typography variant="body1">{contractDetails.recipient}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body1">{contractDetails.recipient}</Typography>
+              <IconButton size="small" onClick={() => handleCopy(contractDetails.recipient)} title="Copy Recipient Address" sx={{ color: '#fff' }}>
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </Grid>
           <Grid item xs={12} sm={6}>
             <Typography variant="subtitle2">Created Date:</Typography>
