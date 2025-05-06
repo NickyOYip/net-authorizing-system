@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import * as irysAction from '../hooks/irysHook/irysAction';
 import { WebUploader } from '@irys/sdk';
+import { NETWORKS, switchNetwork } from '../utils/networkUtils';
 
 // Progress state type
 export interface CreateProgressState {
@@ -45,6 +46,36 @@ const generateFileHash = async (file: File): Promise<string> => {
   return hashHex;
 };
 
+const prepareIrysNetwork = async () => {
+  try {
+    console.log('Preparing network for Irys operation');
+    await switchNetwork(NETWORKS.SEPOLIA);
+    return true;
+  } catch (error) {
+    console.error('Failed to prepare network for Irys:', error);
+    return false;
+  }
+};
+
+const performIrysOperation = async <T>(operation: () => Promise<T>): Promise<T> => {
+  try {
+    const networkReady = await prepareIrysNetwork();
+    if (!networkReady) {
+      throw new Error('Failed to switch to Sepolia network');
+    }
+    
+    const result = await operation();
+    
+    // Switch back to Hoodi after operation
+    await switchNetwork(NETWORKS.HOODI);
+    return result;
+  } catch (error) {
+    // Switch back to Hoodi even if operation fails
+    await switchNetwork(NETWORKS.HOODI);
+    throw error;
+  }
+};
+
 /**
  * Service for contract creation
  */
@@ -84,16 +115,18 @@ export const createService = {
         success: null
       });
 
-      // Upload files using direct irysAction functions
+      // Upload files with network switching
       let documentTxId, jsonTxId;
       try {
-        // Upload document
-        const documentReceipt = await irysAction.uploadData(irys, params.documentFile);
-        documentTxId = documentReceipt.id;
-        
-        // Upload JSON
-        const jsonReceipt = await irysAction.uploadData(irys, params.jsonFile);
-        jsonTxId = jsonReceipt.id;
+        await performIrysOperation(async () => {
+          // Upload document
+          const documentReceipt = await irysAction.uploadData(irys, params.documentFile);
+          documentTxId = documentReceipt.id;
+          
+          // Upload JSON
+          const jsonReceipt = await irysAction.uploadData(irys, params.jsonFile);
+          jsonTxId = jsonReceipt.id;
+        });
       } catch (err) {
         console.error("File upload failed:", err);
         throw new Error(`File upload failed: ${(err as Error).message}`);
@@ -208,16 +241,18 @@ export const createService = {
         success: null
       });
 
-      // Upload files using direct irysAction functions
+      // Upload files with network switching
       let documentTxId, jsonTxId;
       try {
-        // Upload document
-        const documentReceipt = await irysAction.uploadData(irys, params.documentFile);
-        documentTxId = documentReceipt.id;
-        
-        // Upload JSON
-        const jsonReceipt = await irysAction.uploadData(irys, params.jsonFile);
-        jsonTxId = jsonReceipt.id;
+        await performIrysOperation(async () => {
+          // Upload document
+          const documentReceipt = await irysAction.uploadData(irys, params.documentFile);
+          documentTxId = documentReceipt.id;
+          
+          // Upload JSON
+          const jsonReceipt = await irysAction.uploadData(irys, params.jsonFile);
+          jsonTxId = jsonReceipt.id;
+        });
       } catch (err) {
         console.error("File upload failed:", err);
         throw new Error(`File upload failed: ${(err as Error).message}`);

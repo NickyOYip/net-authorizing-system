@@ -5,9 +5,9 @@ import Public from './pages/Public'
 import Private from './pages/Private'
 import Verify from './pages/Verify'
 import Layout from './components/Layout'
-import PublicView from './pages/PublicView'
-import PublicActivate from './pages/PublicActivate'
-import Activate from './pages/PublicActivate'
+import PublicView from './pages/View'
+import PublicActivate from './pages/Activate'
+import Activate from './pages/Activate'
 import CreateContract from './pages/Create'
 
 export default function App() {
