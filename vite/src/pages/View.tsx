@@ -67,24 +67,32 @@ export default function ContractViewPage() {
       if (!id) return;
       
       try {
-        // Try each contract type until one works
-        const contractTypes: [ContractType, any][] = [
-          ['public', publicContract],
-          ['private', privateContract],
-          ['broadcast', broadcastContract]
-        ];
-
-        for (const [type, contract] of contractTypes) {
-          try {
-            await contract.getContractDetails(id);
-            setContractType(type);
+        // Try to get contract details from each contract type
+        try {
+          const details = await broadcastContract.getContractDetails(id);
+          if (details) {
+            setContractType('broadcast');
             return;
-          } catch {
-            continue;
           }
-        }
+        } catch {}
 
-        throw new Error('Unknown contract type');
+        try {
+          const details = await publicContract.getContractDetails(id);
+          if (details) {
+            setContractType('public');
+            return;
+          }
+        } catch {}
+
+        try {
+          const details = await privateContract.getContractDetails(id);
+          if (details) {
+            setContractType('private');
+            return;
+          }
+        } catch {}
+
+        throw new Error('Contract not found or invalid contract type');
       } catch (err) {
         console.error('Error detecting contract type:', err);
         setError(`Failed to detect contract type: ${(err as Error).message}`);
@@ -92,7 +100,7 @@ export default function ContractViewPage() {
     };
 
     detectContractType();
-  }, [id]);
+  }, [id, broadcastContract, publicContract, privateContract]);
 
   // Load contract data
   useEffect(() => {
