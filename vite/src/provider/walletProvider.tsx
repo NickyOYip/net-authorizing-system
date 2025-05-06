@@ -4,6 +4,7 @@ import { WebUploader } from "@irys/web-upload";
 import { WebEthereum } from "@irys/web-upload-ethereum";
 import { EthersV6Adapter } from "@irys/web-upload-ethereum-ethers-v6";
 import { DataContext } from "./dataProvider";
+import { NETWORKS, switchNetwork } from "../utils/networkUtils";
 
 // Debug logging function
 const debug = {
@@ -11,22 +12,6 @@ const debug = {
   error: (...args: any[]) => console.error('[Wallet Error]', ...args),
   warn: (...args: any[]) => console.warn('[Wallet Warning]', ...args),
   info: (...args: any[]) => console.info('[Wallet Info]', ...args),
-};
-
-// Simplified network configurations
-const NETWORKS = {
-  SEPOLIA: {
-    chainId: "0xaa36a7",
-    chainName: "Sepolia",
-    rpcUrls: ["https://rpc.sepolia.org"],
-    blockExplorerUrls: ["https://sepolia.etherscan.io"]
-  },
-  HOODI: {
-    chainId: "0x88bb0",
-    chainName: "Hoodi Testnet",
-    rpcUrls: ["https://0xrpc.io/hoodi"],
-    blockExplorerUrls: ["https://hoodi.etherscan.io/"]
-  }
 };
 
 const DEFAULT_WALLET_INFO = {
@@ -54,26 +39,6 @@ function WalletProvider({children}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
-
-  const switchNetwork = async (networkConfig) => {
-    if (!window.ethereum) {
-      debug.warn('No ethereum provider found');
-      return false;
-    }
-    
-    try {
-      debug.log(`Switching to network: ${networkConfig.chainName}`);
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: networkConfig.chainId }],
-      });
-      debug.info(`Successfully switched to ${networkConfig.chainName}`);
-      return true;
-    } catch (error) {
-      debug.error("Network switch failed:", error);
-      return false;
-    }
-  };
 
   const fetchFactoryInfo = async (provider) => {
     if (!provider || !data.masterFactoryAddress) {
