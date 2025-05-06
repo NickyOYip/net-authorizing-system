@@ -29,6 +29,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import PublicIcon from '@mui/icons-material/Public';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import LockIcon from '@mui/icons-material/Lock';
+import DataObjectIcon from '@mui/icons-material/DataObject';
 
 import { usePublicContract } from '../hooks/contractHook/usePublicContractHook';
 import { usePrivateContract } from '../hooks/contractHook/usePrivateContractHook';
@@ -202,11 +203,13 @@ export default function ContractViewPage() {
     };
   }, [id, contractType]);
 
-  const handleDownload = async (storageLink: string) => {
-    if (!storageLink) return;
-    // Split the storage link and get both JSON and document links
-    const [jsonId, documentId] = storageLink.split(',');
-    // Open document link (second part of storage link)
+  const handleDownloadJson = (jsonId: string) => {
+    if (jsonId) {
+      window.open(`https://gateway.irys.xyz/${jsonId}`, '_blank');
+    }
+  };
+
+  const handleDownloadDoc = (documentId: string) => {
     if (documentId) {
       window.open(`https://gateway.irys.xyz/${documentId}`, '_blank');
     }
@@ -347,13 +350,28 @@ export default function ContractViewPage() {
                   <TableCell>{version.size}</TableCell>
                   <TableCell>{version.timestamp}</TableCell>
                   <TableCell>
-                    <IconButton 
-                      color="primary"
-                      onClick={() => handleDownload(version.storageLink)}
-                      title="Download this version"
-                    >
-                      <DownloadIcon />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <IconButton 
+                        color="primary"
+                        onClick={() => {
+                          const [jsonId] = version.storageLink.split(',');
+                          handleDownloadJson(jsonId);
+                        }}
+                        title="Download JSON"
+                      >
+                        <DataObjectIcon />
+                      </IconButton>
+                      <IconButton 
+                        color="primary"
+                        onClick={() => {
+                          const [, documentId] = version.storageLink.split(',');
+                          handleDownloadDoc(documentId);
+                        }}
+                        title="Download Document"
+                      >
+                        <DownloadIcon />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
