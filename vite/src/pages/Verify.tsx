@@ -64,7 +64,13 @@ export default function VerifyDocument() {
         
         const detectedType = await verifyService.detectContractType(contractAddress);
         console.log(`[Verify] Contract type detected: ${detectedType}`);
-        setContractType(detectedType);
+        
+        if (detectedType === 'unknown') {
+          setError("This address doesn't appear to be a valid contract. Please verify the address and try again.");
+          setContractType(null);
+        } else {
+          setContractType(detectedType);
+        }
       } catch (err: any) {
         console.error('[Verify] Error detecting contract type:', err);
         setError(`Invalid contract address: ${err.message}`);
@@ -83,10 +89,18 @@ export default function VerifyDocument() {
         setError("Please enter a contract address");
         return;
       }
+      
+      // Block proceeding if contract type is unknown or null
       if (!contractType) {
-        setError("Enter a valid contract address");
+        setError("Please enter a valid contract address");
         return;
       }
+      
+      if (contractType === 'unknown') {
+        setError("This doesn't appear to be a valid contract. Please verify the address.");
+        return;
+      }
+      
       if (contractType === 'private') {
         if (!selectedFile || !fileHash) {
           setError("Please select a document file");
@@ -209,7 +223,9 @@ export default function VerifyDocument() {
   // Get contract type label for display
   const getContractTypeLabel = () => {
     if (!contractType) return 'Unknown';
-    return contractType.charAt(0).toUpperCase() + contractType.slice(1);
+    return contractType === 'unknown' 
+      ? 'Not a valid contract' 
+      : contractType.charAt(0).toUpperCase() + contractType.slice(1);
   };
 
   return (
@@ -252,10 +268,12 @@ export default function VerifyDocument() {
               placeholder="Enter the contract address (0x...)"
               helperText={
                 isDetectingType ? "Detecting contract type..." : 
+                contractType === 'unknown' ? "Not a valid contract" :
                 contractType ? `Contract type detected: ${getContractTypeLabel()}` : 
                 "Enter the contract address of the document to verify"
               }
               disabled={isDetectingType}
+              error={contractType === 'unknown'}
               sx={{
                 mb: 3, 
                 color: "white !important", 
@@ -335,7 +353,7 @@ export default function VerifyDocument() {
                 color="primary"
                 onClick={handleNext}
                 sx={{ mt: 3 }}
-                disabled={isDetectingType || !contractType}
+                disabled={isDetectingType || !contractType || contractType === 'unknown'}
               >
                 CONTINUE
               </Button>
