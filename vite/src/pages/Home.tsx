@@ -123,18 +123,12 @@ export default function Home() {
     setSearchResults([]);
 
     try {
-      // load user's contracts then filter by term
-      const allContracts = await homeService.getUserRelatedContracts();
-      console.log('[Home] 🔍 user contracts for search:', allContracts);
+      // Use the proper searchContracts method instead of getUserRelatedContracts
+      const allContracts = await homeService.searchContracts(searchTerm);
+      console.log('[Home] 🔍 search results:', allContracts);
       
-      // First filter by search term
-      const termFiltered = allContracts.filter(c =>
-        [c.address, c.owner, c.title]
-          .some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      
-      // Then apply current type filters
-      const filteredResults = termFiltered.filter(contract => {
+      // Apply current type filters to the search results
+      const filteredResults = allContracts.filter(contract => {
         if (contract.type === 'broadcast' && !filter.broadcast) return false;
         if (contract.type === 'public' && !filter.public) return false;
         if (contract.type === 'private' && !filter.private) return false;

@@ -60,6 +60,13 @@ async function batchQueryFilter(
   let allEvents: ethers.Event[] = [];
   // ensure a read‐only contract backed by the provider
   const reader = contract.connect(provider);
+  
+  // Debug the contract address - added for debugging
+  console.log(`[homeService][debug] Using contract:`, {
+    address: contract.address,
+    hasProvider: !!contract.provider
+  });
+  
   for (let from = startBlock; from <= latest; from += step) {
     const to = Math.min(from + step - 1, latest);
     console.log(`[homeService][debug] batchQueryFilter ${contract.address} from ${from}→${to}`);
@@ -78,12 +85,7 @@ export function useHomeService() {
   // Search contracts by address using events
   const searchContracts = async (searchTerm) => {
     console.log('[homeService] ➡️ searchContracts()', { searchTerm, isConnected });
-    console.log('[homeService]  factories:', {
-      broadcastFactory: !!broadcastFactory,
-      publicFactory: !!publicFactory,
-      privateFactory: !!privateFactory
-    });
-
+    
     if (!searchTerm) return [];
     
     if (!isConnected) {
@@ -94,43 +96,106 @@ export function useHomeService() {
       const searchAddress = searchTerm.toLowerCase();
       console.log('[homeService]  normalized address:', searchAddress);
 
-      const events = await Promise.all([
-        // Search for contracts where searchTerm matches contractAddr or ownerAddr
+      // Get contract addresses directly from DataContext
+      const bfAddr = data.broadcastFactory.address;
+      const pfAddr = data.publicFactory.address;
+      const prfAddr = data.privateFactory.address;
+      
+      // Log factory addresses
+      console.log('[homeService]  factory addresses:', {
+        broadcastFactory: bfAddr,
+        publicFactory: pfAddr,
+        privateFactory: prfAddr
+      });
+
+      // Check if we have valid factory addresses
+      if (!bfAddr && !pfAddr && !prfAddr) {
+        console.error('[homeService] No factory addresses available!');
+        return [];
+      }
+
+      // Create contract instances only if addresses exist
+      const signer = await data.ethProvider.getSigner();
+      const broadcastFactory = bfAddr ? new ethers.Contract(bfAddr, BroadcastFactoryABI, signer) : null;
+      const publicFactory = pfAddr ? new ethers.Contract(pfAddr, PublicFactoryABI, signer) : null;
+      const privateFactory = prfAddr ? new ethers.Contract(prfAddr, PrivateFactoryABI, signer) : null;
+
+      // Make search term less strict - search for partial matches
+      // (only if it's not a full Ethereum address)
+      let searchFilter;
+      if (searchAddress.length === 42) { // Full Ethereum address
+        // Use exact match if it's a complete address
+        searchFilter = (contractAddr, ownerAddr) => 
+          contractAddr === searchAddress || ownerAddr === searchAddress;
+      } else {
+        // Use contains match for partial searches
+        searchFilter = (contractAddr, ownerAddr) => 
+          contractAddr.includes(searchAddress) || ownerAddr.includes(searchAddress);
+      }
+
+      // Fetch all recent contracts first, then filter by search term
+      console.log('[homeService] Fetching all recent contracts to search through');
+      const [broadcastEvents, publicEvents, privateEvents] = await Promise.all([
         broadcastFactory
-          ? broadcastFactory.queryFilter(
-              broadcastFactory.filters.NewBroadcastContractOwned(null, searchAddress, searchAddress, null)
+          ? batchQueryFilter(
+              broadcastFactory,
+              broadcastFactory.filters.NewBroadcastContractOwned()
             )
-          : Promise.resolve([]),
+          : [],
         publicFactory
-          ? publicFactory.queryFilter(
-              publicFactory.filters.NewPublicContractOwned(null, searchAddress, searchAddress, null)
+          ? batchQueryFilter(
+              publicFactory,
+              publicFactory.filters.NewPublicContractOwned()
             )
-          : Promise.resolve([]),
+          : [],
         privateFactory
-          ? privateFactory.queryFilter(
-              privateFactory.filters.NewPrivateContractOwned(null, searchAddress, searchAddress, null)
+          ? batchQueryFilter(
+              privateFactory,
+              privateFactory.filters.NewPrivateContractOwned()
             )
-          : Promise.resolve([]),
+          : []
       ]);
-      console.log('[homeService]  raw events:', events);
+
+      console.log('[homeService] Total contracts fetched:', {
+        broadcast: broadcastEvents.length,
+        public: publicEvents.length, 
+        private: privateEvents.length
+      });
+
+      // Filter contracts by search term
+      const filteredBroadcast = broadcastEvents.filter(event => 
+        searchFilter(event.args.contractAddr.toLowerCase(), event.args.ownerAddr.toLowerCase())
+      );
+      
+      const filteredPublic = publicEvents.filter(event => 
+        searchFilter(event.args.contractAddr.toLowerCase(), event.args.ownerAddr.toLowerCase())
+      );
+      
+      const filteredPrivate = privateEvents.filter(event => 
+        searchFilter(event.args.contractAddr.toLowerCase(), event.args.ownerAddr.toLowerCase())
+      );
+
+      console.log('[homeService] Filtered contracts:', {
+        broadcast: filteredBroadcast.length,
+        public: filteredPublic.length,
+        private: filteredPrivate.length
+      });
 
       // Transform events to contract objects
-      const [broadcastEvents, publicEvents, privateEvents] = events;
-      
       const contracts = [
-        ...(broadcastEvents?.map(event => ({
+        ...(filteredBroadcast.map(event => ({
           type: 'broadcast',
           address: event.args.contractAddr,
           owner: event.args.ownerAddr,
           title: event.args.title
         })) || []),
-        ...(publicEvents?.map(event => ({
+        ...(filteredPublic.map(event => ({
           type: 'public',
           address: event.args.contractAddr,
           owner: event.args.ownerAddr,
           title: event.args.title
         })) || []),
-        ...(privateEvents?.map(event => ({
+        ...(filteredPrivate.map(event => ({
           type: 'private',
           address: event.args.contractAddr,
           owner: event.args.ownerAddr,
