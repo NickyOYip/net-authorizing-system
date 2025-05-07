@@ -67,6 +67,8 @@ export default function Home() {
 
   // Handle search
   const handleSearch = async () => {
+    console.log('[Home] 🔍 handleSearch()', { searchTerm, filter });
+    
     if (!searchTerm.trim()) return;
     
     setSearchLoading(true);
@@ -75,6 +77,7 @@ export default function Home() {
     
     try {
       const results = await homeService.searchContracts(searchTerm);
+      console.log('[Home] 🔍 search results:', results);
       
       // Apply filters
       const filteredResults = results.filter(contract => {
@@ -90,7 +93,7 @@ export default function Home() {
         setSearchError('No contracts found matching your search and filters.');
       }
     } catch (e: any) {
-      console.error('Search error:', e);
+      console.error('[Home] ❌ handleSearch error:', e);
       setSearchError(e?.message || 'Failed to search contracts.');
     }
     
@@ -100,6 +103,8 @@ export default function Home() {
   // Load user contracts when tab changes to "My Contracts"
   useEffect(() => {
     const fetchUserContracts = async () => {
+      console.log('[Home] 👤 fetchUserContracts()', { tabValue, isWalletConnected, filter });
+      
       if (tabValue !== 1) return;
       
       setUserContractsLoading(true);
@@ -113,6 +118,7 @@ export default function Home() {
         }
         
         const contracts = await homeService.getUserRelatedContracts();
+        console.log('[Home] 👤 user contracts raw:', contracts);
         
         // Apply filters
         const filteredContracts = contracts.filter(contract => {
@@ -128,7 +134,7 @@ export default function Home() {
           setUserContractsError('You have no contracts matching selected filters.');
         }
       } catch (e: any) {
-        console.error('Error loading user contracts:', e);
+        console.error('[Home] ❌ fetchUserContracts error:', e);
         setUserContractsError(e?.message || 'Failed to load your contracts.');
       }
       

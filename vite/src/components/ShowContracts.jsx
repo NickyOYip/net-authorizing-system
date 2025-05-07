@@ -13,54 +13,51 @@ import {
   TableRow,
   Alert,
   Chip,
-  Typography
+  Typography,
+  InputAdornment
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import { InputAdornment } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
-import { mockContracts } from '../mockHelpers';
 
+// map each type to its filter color
+const typeColors = {
+  broadcast: '#4e73df',
+  public: '#1cc88a',
+  private: '#36b9cc'
+};
 
-export default function ShowContracts({ type }) {
-
-  //types are private/broadcast/public, then you can know what type of contract to display
-  //or you can pass the list of contracts into this jsx
-
-  // Use mockContracts from helper
-  const docs = mockContracts;
-
-  const [data] = useState(docs);
+export default function ShowContracts({ type, contracts }) {
+  // use the passed‐in contracts instead of mocks
+  const docs = contracts || [];
   const [searchTerm, setSearchTerm] = useState('');
- //for search function 
-  const contracts = data.filter((row) =>
-    
-    
-    Object.values(row).some(
-      (value) =>
-        value &&
-        value.toString().trim().toLowerCase().includes(searchTerm.toLowerCase())
 
+  // filter by searchTerm
+  const filtered = docs.filter(row =>
+    Object.values(row).some(
+      val =>
+        val &&
+        val.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
   return (
     <>
       <Box>
-        {type == 'public' && (
-          <Typography variant="h4" sx={{borderLeft:"solid 10px #1cc88a",padding:"10px"}} gutterBottom>
-            My Public Contracts:
+        {type === 'public' && (
+          <Typography variant="h4" sx={{ borderLeft: "solid 10px #1cc88a", padding: "10px" }} gutterBottom>
+            Public Contracts
           </Typography>
         )}
-        {type == 'broadcast' && (
-           <Typography variant="h4"  sx={{borderLeft:"solid 10px #4e73df",padding:"10px"}} gutterBottom>
-            All Broadcast Contracts:
+        {type === 'broadcast' && (
+          <Typography variant="h4" sx={{ borderLeft: "solid 10px #4e73df", padding: "10px" }} gutterBottom>
+            Broadcast Contracts
           </Typography>
         )}
-        {type == 'private' && (
-           <Typography variant="h4" sx={{borderLeft:"solid 10px #36b9cc",padding:"10px"}}gutterBottom>
-            My Private Contracts:
+        {type === 'private' && (
+          <Typography variant="h4" sx={{ borderLeft: "solid 10px #36b9cc", padding: "10px" }} gutterBottom>
+            Private Contracts
           </Typography>
         )}
       </Box>
@@ -70,60 +67,62 @@ export default function ShowContracts({ type }) {
         variant="outlined"
         placeholder="Search..."
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={e => setSearchTerm(e.target.value)}
         sx={{ mb: 2 }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
               <SearchIcon sx={{ color: "white !important" }} />
             </InputAdornment>
-          ),
+          )
         }}
       />
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Contract ID</TableCell>
+              <TableCell>Address</TableCell>
               <TableCell>Title</TableCell>
-              <TableCell>Recipient</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell>Owner</TableCell>
-              <TableCell>Created Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Active Version</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {contracts.map((contract) => (
-              <TableRow key={contract.id}>
-                <TableCell>{contract.id}</TableCell>
+            {filtered.map(contract => (
+              <TableRow key={contract.address}>
+                <TableCell>{contract.address}</TableCell>
                 <TableCell>{contract.title}</TableCell>
-                <TableCell>{contract.recipient}</TableCell>
-                <TableCell>{contract.owner}</TableCell>
-                <TableCell>{contract.created}</TableCell>
                 <TableCell>
                   <Chip
-                    label={contract.status}
-                    color={contract.status === 'Active' ? 'success' : 'warning'}
+                    label={contract.type}
                     size="small"
+                    sx={{
+                      borderRadius: '20px',
+                      px: 2,
+                      color: '#000',
+                      backgroundColor: typeColors[contract.type] || '#ccc',
+                      border: `1px solid ${typeColors[contract.type] || '#ccc'}`,
+                      textTransform: 'capitalize'
+                    }}
                   />
                 </TableCell>
-                <TableCell>{contract.activeVersion}</TableCell>
+                <TableCell>{contract.owner}</TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                       component={Link}
-                      to={`/view/${contract.id}`}
+                      to={`/contracts/${contract.address}`}
                       size="small"
                       startIcon={<VisibilityIcon />}
                     >
                       View
                     </Button>
-                    {contract.status === 'Pending Activation' && (
+                    {type === 'private' && (
                       <Button
                         component={Link}
-                        to={`/activate/${contract.id}`}
+                        to={`/activate/${contract.address}`}
                         size="small"
                         color="secondary"
                         startIcon={<LockOpenIcon />}
