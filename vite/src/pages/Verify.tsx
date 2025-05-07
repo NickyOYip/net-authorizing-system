@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import {useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/all.css'
 import {
   Box,
@@ -21,30 +21,61 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import CircularProgress from '@mui/material/CircularProgress';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { mockVerify } from '../mockHelpers';
-
-//skip step 2 , merge with step 1 with private contract 
-//add back to all steppers 
+import { useVerifyService } from '../services/verifyService';
+import { ContractType } from '../utils/contractUtils';
 
 export default function VerifyDocument() {
   const [activeStep, setActiveStep] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedJson, setSelectedJson] = useState(null);
-  const [contractType, setContractType] = useState('');
+  const [contractType, setContractType] = useState<ContractType | null>(null);
   const [contractAddress, setContractAddress] = useState('');
   const [fileHash, setFileHash] = useState('');
   const [jsonHash, setJsonHash] = useState('');
   const navigate = useNavigate();
+  const verifyService = useVerifyService();
 
   const [verificationResult, setVerificationResult] = useState<null | {
     verified: boolean;
     message: string;
+    contractType?: ContractType;
+    details?: any;
   }>(null);
 
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState(null);
+  const [isDetectingType, setIsDetectingType] = useState(false);
 
   const steps = ['Enter Contract Information', 'Verify Document'];
+
+  // Auto-detect contract type when address changes - fixed infinite loop issue
+  useEffect(() => {
+    const detectType = async () => {
+      // Only run detection if address is valid and no detection is currently in progress
+      if (!contractAddress || contractAddress.length < 40 || isDetectingType) return;
+      
+      // Set detection flag
+      setIsDetectingType(true);
+      setError(null);
+      
+      try {
+        // Check if we already have a type detected (avoid unnecessary API calls)
+        if (contractType && contractAddress) return;
+        
+        const detectedType = await verifyService.detectContractType(contractAddress);
+        console.log(`[Verify] Contract type detected: ${detectedType}`);
+        setContractType(detectedType);
+      } catch (err: any) {
+        console.error('[Verify] Error detecting contract type:', err);
+        setError(`Invalid contract address: ${err.message}`);
+        setContractType(null);
+      } finally {
+        setIsDetectingType(false);
+      }
+    };
+    
+    detectType();
+  }, [contractAddress, verifyService.detectContractType]);  // Only depend on the specific method
 
   const handleNext = () => {
     if (activeStep === 0) {
@@ -52,23 +83,20 @@ export default function VerifyDocument() {
         setError("Please enter a contract address");
         return;
       }
-      if (contractType == '') {
-        setError("Enter a valid contract!");
+      if (!contractType) {
+        setError("Enter a valid contract address");
         return;
       }
-      if (contractType == 'private') {
-
+      if (contractType === 'private') {
         if (!selectedFile || !fileHash) {
-          setError("Please select a file !");
+          setError("Please select a document file");
           return;
         }
-
         if (!selectedJson || !jsonHash) {
-          setError("Please select a metadata file !");
+          setError("Please select a metadata file");
           return;
         }
       }
-
     }
     setActiveStep((prevStep) => prevStep + 1);
     setError(null);
@@ -80,7 +108,6 @@ export default function VerifyDocument() {
 
     setSelectedFile(file);
 
-
     try {
       // Calculate hash of the file
       const arrayBuffer = await file.arrayBuffer();
@@ -91,12 +118,10 @@ export default function VerifyDocument() {
       setFileHash(hashHex);
     } catch (err) {
       console.error("Error calculating file hash:", err);
-
     }
   };
 
   const handleJsonChange = async (event) => {
-
     const file = event.target.files[0];
     if (!file) return;
 
@@ -112,41 +137,41 @@ export default function VerifyDocument() {
       setJsonHash(hashHex);
     } catch (err) {
       console.error("Error calculating file hash:", err);
-
     }
   };
 
-
-
-  const handleContractTypeSelect = (type: string) => {
-    setContractType(type);
-  };
-
-  const handleProceedToVerification = () => {
-    if (!contractType) {
-      setError('Please select a contract type');
-      return;
-    }
-    if (!contractAddress) {
-      setError('Please enter a contract address');
-      return;
-    }
-    setActiveStep(2);
-  };
-
-  const handleVerify = () => {
+  const handleVerify = async () => {
     setIsVerifying(true);
     setError('');
-    // Use mockVerify from helper
-    mockVerify(setVerificationResult, setIsVerifying);
+    
+    try {
+      const params = {
+        contractAddress,
+        contractType,
+        ...(contractType === 'private' && { fileHash, jsonHash })
+      };
+      
+      const result = await verifyService.verifyDocument(params);
+      setVerificationResult(result);
+    } catch (err: any) {
+      console.error("Verification error:", err);
+      setVerificationResult({
+        verified: false,
+        message: `Verification failed: ${err.message}`,
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleReset = () => {
     setActiveStep(0);
     setSelectedFile(null);
     setSelectedJson(null);
-    setContractType('');
+    setContractType(null);
     setContractAddress('');
+    setFileHash('');
+    setJsonHash('');
     setVerificationResult(null);
     setError('');
   };
@@ -155,12 +180,17 @@ export default function VerifyDocument() {
     handleReset();
   };
 
+  // Get contract type label for display
+  const getContractTypeLabel = () => {
+    if (!contractType) return 'Unknown';
+    return contractType.charAt(0).toUpperCase() + contractType.slice(1);
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
         Verify Document
       </Typography>
-
 
       <Typography variant="body1" paragraph>
         Verify the authenticity of documents stored on the blockchain. Provide the contract address to check if it matches the stored hash.
@@ -186,31 +216,35 @@ export default function VerifyDocument() {
         {/* Step 1: Input contract address */}
         {activeStep === 0 && (
           <Box sx={{ py: 2 }}>
-
             <TextField
               fullWidth
               label="Contract Address*"
               variant="outlined"
               color="primary"
               value={contractAddress}
-              onChange={(e) => {
-                setContractAddress(e.target.value);
-                setContractType(e.target.value); //delete this line when can fetch the contract type
-              }}
+              onChange={(e) => setContractAddress(e.target.value)}
               placeholder="Enter the contract address (0x...)"
-              helperText="Enter the contract address of the contract to verify"
+              helperText={
+                isDetectingType ? "Detecting contract type..." : 
+                contractType ? `Contract type detected: ${getContractTypeLabel()}` : 
+                "Enter the contract address of the document to verify"
+              }
+              disabled={isDetectingType}
               sx={{
-                mb: 3, color: "white !important", '& .MuiOutlinedInput-root': {
+                mb: 3, 
+                color: "white !important", 
+                '& .MuiOutlinedInput-root': {
                   '& .MuiInputLabel-root': {
                     color: 'white',
                   },
                 }
               }}
             />
-            {contractType == 'private' && (
+            
+            {contractType === 'private' && (
               <>
                 <Typography sx={{marginBottom:"10px"}}>
-                  This is a Private Contract. Please provide us  with the following data for verification.
+                  This is a Private Contract. Please provide the document files for verification.
                 </Typography>
 
                 <input
@@ -242,7 +276,6 @@ export default function VerifyDocument() {
 
                 <label htmlFor="jsonfile">
                   <Button
-
                     variant="outlined"
                     component="span"
                     startIcon={<CloudUploadIcon />}
@@ -276,7 +309,7 @@ export default function VerifyDocument() {
                 color="primary"
                 onClick={handleNext}
                 sx={{ mt: 3 }}
-                //disabled={contractAddress == '' || contractType == ''}
+                disabled={isDetectingType || !contractType}
               >
                 CONTINUE
               </Button>
@@ -291,7 +324,7 @@ export default function VerifyDocument() {
               Document Information:
             </Typography>
             <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
-              {contractType == 'private' && (
+              {contractType === 'private' && (
                 <>
                   <Typography variant="body2">
                     <strong>File Name:</strong> {selectedFile.name || 'No file selected'}
@@ -302,7 +335,7 @@ export default function VerifyDocument() {
                 </>
               )}
               <Typography variant="body2" sx={{ mt: 1 }}>
-                <strong>Contract Type:</strong> {contractType.toUpperCase() || 'Not selected'}
+                <strong>Contract Type:</strong> {getContractTypeLabel() || 'Not detected'}
               </Typography>
               <Typography variant="body2" sx={{ mt: 1 }}>
                 <strong>Contract Address:</strong> {contractAddress || 'Not provided'}
@@ -355,7 +388,6 @@ export default function VerifyDocument() {
               )}
             </Paper>
 
-
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <Button
                 variant="outlined"
@@ -365,16 +397,15 @@ export default function VerifyDocument() {
                 VERIFY ANOTHER DOCUMENT
               </Button>
 
-              {/** Verifiers can download through this button */}
-              {verificationResult?.verified == true && (
+              {verificationResult?.verified === true && (
                 <Button
                   variant="outlined"
                   sx={{ mt: 2, ml: "10px" }}
+                  onClick={() => navigate(`/contracts/${contractAddress}`)}
                 >
-                  Click here to view the contract
+                  View Contract Details
                 </Button>
               )}
-
             </Box>
           </Box>
         )}
@@ -382,7 +413,7 @@ export default function VerifyDocument() {
       <Button
         onClick={() => navigate(-1)}
         startIcon={<ArrowBackIcon />}
-        sx={{ mb: 2,mt:2}}
+        sx={{ mb: 2, mt: 2 }}
       >
         Back
       </Button>
