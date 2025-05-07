@@ -74,12 +74,20 @@ export default function Home() {
     setSearchLoading(true);
     setSearchError(null);
     setSearchResults([]);
-    
+
     try {
-      const results = await homeService.searchContracts(searchTerm);
+      // load user's contracts then filter by term
+      const allContracts = await homeService.getUserRelatedContracts();
+      console.log('[Home] 🔍 user contracts for search:', allContracts);
+      // filter by searchTerm across address, owner, title
+      const termFiltered = allContracts.filter(c =>
+        [c.address, c.owner, c.title]
+          .some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      const results = termFiltered;
       console.log('[Home] 🔍 search results:', results);
       
-      // Apply filters
+      // Apply type filters
       const filteredResults = results.filter(contract => {
         if (contract.type === 'broadcast' && !filter.broadcast) return false;
         if (contract.type === 'public' && !filter.public) return false;
