@@ -370,7 +370,7 @@ export default function ContractViewPage() {
               <TableRow>
                 <TableCell>Version</TableCell>
                 <TableCell>Timestamp</TableCell>
-                <TableCell>Download</TableCell>
+                <TableCell>{contractDetails?.type !== 'private' ? 'Download' : 'Access'}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -384,28 +384,38 @@ export default function ContractViewPage() {
                   </TableCell>
                   <TableCell>{version.timestamp}</TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <IconButton 
-                        color="primary"
-                        onClick={() => {
-                          const [jsonId] = version.storageLink.split(',');
-                          handleDownloadJson(jsonId);
-                        }}
-                        title="Download JSON"
-                      >
-                        <DataObjectIcon />
-                      </IconButton>
-                      <IconButton 
-                        color="primary"
-                        onClick={() => {
-                          const [, documentId] = version.storageLink.split(',');
-                          handleDownloadDoc(documentId);
-                        }}
-                        title="Download Document"
-                      >
-                        <DownloadIcon />
-                      </IconButton>
-                    </Box>
+                    {contractDetails.type !== 'private' ? (
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton 
+                          color="primary"
+                          onClick={() => {
+                            const [jsonId] = version.storageLink.split(',');
+                            handleDownloadJson(jsonId);
+                          }}
+                          title="Download JSON"
+                        >
+                          <DataObjectIcon />
+                        </IconButton>
+                        <IconButton 
+                          color="primary"
+                          onClick={() => {
+                            const [, documentId] = version.storageLink.split(',');
+                            handleDownloadDoc(documentId);
+                          }}
+                          title="Download Document"
+                        >
+                          <DownloadIcon />
+                        </IconButton>
+                      </Box>
+                    ) : (
+                      <Chip 
+                        icon={<LockIcon fontSize="small" />} 
+                        label="Private Document" 
+                        color="secondary"
+                        size="small"
+                        sx={{ fontSize: '0.75rem' }}
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
