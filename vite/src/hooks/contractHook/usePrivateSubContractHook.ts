@@ -23,7 +23,8 @@ interface PrivateSubContractDetail {
 interface PrivateSubContractReturn extends BaseHookReturn {
   // Read operations
   getSubContractDetails: (subContractAddress: string) => Promise<PrivateSubContractDetail>;
-  verifyFileHash: (subContractAddress: string, fileHash: string, fileType: 'json' | 'softCopy') => Promise<boolean>;
+  // Update signature to match how it's being called in verifyService
+  verifyFileHash: (subContractAddress: string, fileHash: string, jsonHash: string) => Promise<boolean>;
   
   // Write operations (owner or parent only)
   updateStatus: (
@@ -110,33 +111,62 @@ export function usePrivateSubContract(): PrivateSubContractReturn {
   }, [data.ethProvider]);
   
   /**
-   * Verify a file against the stored hash
+   * Verify file hashes against stored hashes
+   * Enhanced with better error handling and direct hash comparison
    */
   const verifyFileHash = useCallback(async (
     subContractAddress: string,
     fileHash: string,
-    fileType: 'json' | 'softCopy'
+    jsonHash: string
   ) => {
+    console.log('[PrivateSubContract] ▶️ verifyFileHash() called with:', { 
+      subContractAddress, 
+      fileHash: `${fileHash.substring(0, 10)}...${fileHash.substring(fileHash.length - 8)}`,
+      jsonHash: `${jsonHash.substring(0, 10)}...${jsonHash.substring(jsonHash.length - 8)}`
+    });
+    
     try {
       resetState();
       
       if (!data.ethProvider) {
+        console.error('[PrivateSubContract] ❌ No provider available');
         throw new Error('Provider not available');
       }
       
+      console.log('[PrivateSubContract] 🔧 Creating contract factory...');
       const { getPrivateSubContract } = createContractFactories(data.ethProvider);
       const subContract = getPrivateSubContract(subContractAddress);
+      console.log('[PrivateSubContract] ✅ Contract instance created');
       
-      let storedHash: string;
-      if (fileType === 'json') {
-        storedHash = await subContract.jsonHash();
-      } else {
-        storedHash = await subContract.softCopyHash();
-      }
+      // Get contract details first to avoid separate calls to hash functions
+      console.log('[PrivateSubContract] 🔍 Retrieving contract details...');
+      const details = await subContract.getDetail().catch(err => {
+        console.error('[PrivateSubContract] ❌ Failed to get contract details:', err);
+        throw new Error('Could not retrieve contract details');
+      });
+      console.log('[PrivateSubContract] ✅ Contract details retrieved');
       
-      return fileHash === storedHash;
+      // From the contract details, indices 6 and 7 contain the jsonHash and softCopyHash
+      const storedJsonHash = details[6];
+      const storedFileHash = details[7];
+      
+      console.log('[PrivateSubContract] 📊 Hash comparison:', {
+        contract: subContractAddress,
+        providedFileHash: fileHash,
+        storedFileHash: storedFileHash,
+        providedJsonHash: jsonHash,
+        storedJsonHash: storedJsonHash,
+        fileHashMatch: fileHash === storedFileHash,
+        jsonHashMatch: jsonHash === storedJsonHash
+      });
+      
+      // Both hashes must match for successful verification
+      const isVerified = fileHash === storedFileHash && jsonHash === storedJsonHash;
+      console.log(`[PrivateSubContract] ${isVerified ? '✅ Verification SUCCEEDED' : '❌ Verification FAILED'}`);
+      
+      return isVerified;
     } catch (err) {
-      console.error('Error verifying file hash:', err);
+      console.error('[PrivateSubContract] ❌ Error verifying file hash:', err);
       setError(`Failed to verify file: ${(err as Error).message}`);
       return false;
     } finally {

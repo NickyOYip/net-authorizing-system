@@ -106,18 +106,23 @@ export default function VerifyDocument() {
     const file = event.target.files[0];
     if (!file) return;
 
+    console.log('[Verify] 📄 File selected:', { name: file.name, size: file.size });
     setSelectedFile(file);
 
     try {
+      console.log('[Verify] 🔐 Calculating file hash...');
       // Calculate hash of the file
       const arrayBuffer = await file.arrayBuffer();
       const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
+      console.log('[Verify] ✅ File hash calculated:', { 
+        hash: `${hashHex.substring(0, 10)}...${hashHex.substring(hashHex.length - 8)}`
+      });
       setFileHash(hashHex);
     } catch (err) {
-      console.error("Error calculating file hash:", err);
+      console.error("[Verify] ❌ Error calculating file hash:", err);
     }
   };
 
@@ -125,22 +130,28 @@ export default function VerifyDocument() {
     const file = event.target.files[0];
     if (!file) return;
 
+    console.log('[Verify] 📄 JSON file selected:', { name: file.name, size: file.size });
     setSelectedJson(file);
 
     try {
+      console.log('[Verify] 🔐 Calculating JSON hash...');
       // Calculate hash of the file
       const arrayBuffer = await file.arrayBuffer();
       const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
+      console.log('[Verify] ✅ JSON hash calculated:', { 
+        hash: `${hashHex.substring(0, 10)}...${hashHex.substring(hashHex.length - 8)}`
+      });
       setJsonHash(hashHex);
     } catch (err) {
-      console.error("Error calculating file hash:", err);
+      console.error("[Verify] ❌ Error calculating JSON hash:", err);
     }
   };
 
   const handleVerify = async () => {
+    console.log('[Verify] ▶️ handleVerify() called');
     setIsVerifying(true);
     setError('');
     
@@ -151,15 +162,30 @@ export default function VerifyDocument() {
         ...(contractType === 'private' && { fileHash, jsonHash })
       };
       
+      console.log('[Verify] 📤 Verification parameters:', {
+        contractAddress,
+        contractType,
+        fileHash: contractType === 'private' ? `${fileHash.substring(0, 10)}...${fileHash.substring(fileHash.length - 8)}` : 'N/A',
+        jsonHash: contractType === 'private' ? `${jsonHash.substring(0, 10)}...${jsonHash.substring(jsonHash.length - 8)}` : 'N/A'
+      });
+      
+      console.log('[Verify] 🔄 Calling verifyService.verifyDocument()...');
       const result = await verifyService.verifyDocument(params);
+      console.log('[Verify] ✅ Verification complete, result:', {
+        verified: result.verified,
+        contractType: result.contractType,
+        hasDetails: !!result.details
+      });
+      
       setVerificationResult(result);
     } catch (err: any) {
-      console.error("Verification error:", err);
+      console.error("[Verify] ❌ Verification error:", err);
       setVerificationResult({
         verified: false,
         message: `Verification failed: ${err.message}`,
       });
     } finally {
+      console.log('[Verify] 🏁 Verification process finished');
       setIsVerifying(false);
     }
   };

@@ -43,102 +43,223 @@ export function useVerifyService() {
   }) => {
     const { contractAddress, fileHash, jsonHash, contractType: providedType } = params;
     
+    console.log('[verifyService] ▶️ verifyDocument() called with:', { 
+      contractAddress, 
+      fileHash: fileHash ? `${fileHash.substring(0, 10)}...` : undefined,
+      jsonHash: jsonHash ? `${jsonHash.substring(0, 10)}...` : undefined,
+      contractType: providedType 
+    });
+    
     try {
       // Auto-detect contract type if not provided
+      console.log('[verifyService] 🔍 Detecting contract type...');
       const contractType = providedType || await detectContractType(contractAddress);
-      console.log(`[verifyService] Contract type detected: ${contractType}`);
+      console.log(`[verifyService] ✅ Contract type detected: ${contractType}`);
       
       // Choose the right verification method based on contract type
       let verified = false;
       let details = null;
       let mainContractDetails = null;
+      let activeSubContractAddress = null;
       
       switch (contractType) {
         case 'broadcast':
+          console.log('[verifyService] 🔄 Verifying BROADCAST contract...');
           try {
-            // For broadcast contracts, first check if the main contract exists
+            // Get the main contract details first
+            console.log('[verifyService] 🔍 Fetching main contract details...');
             mainContractDetails = await broadcastContract.getContractDetails(contractAddress);
+            console.log('[verifyService] ✅ Main contract details retrieved:', { 
+              title: mainContractDetails?.title,
+              activeVer: mainContractDetails?.activeVer
+            });
             
-            // If we made it here, the contract exists - that's a successful verification for broadcast
-            verified = true;
             details = { mainContractDetails };
             
-            // Try to get the active version details, but don't fail verification if this fails
-            try {
-              if (mainContractDetails?.activeVer) {
-                const versionAddresses = await broadcastContract.getAllVersions(contractAddress);
-                if (versionAddresses && versionAddresses.length > 0) {
-                  const activeVersionAddress = versionAddresses[mainContractDetails.activeVer - 1];
-                  if (activeVersionAddress) {
-                    const versionDetails = await broadcastSub.getSubContractDetails(activeVersionAddress);
+            // Find the active sub-contract address
+            if (mainContractDetails?.activeVer > 0) {
+              console.log('[verifyService] 🔍 Fetching version addresses...');
+              const versionAddresses = await broadcastContract.getAllVersions(contractAddress);
+              console.log('[verifyService] ✅ Version addresses retrieved:', { 
+                count: versionAddresses.length, 
+                addresses: versionAddresses
+              });
+              
+              if (versionAddresses && versionAddresses.length > 0) {
+                const activeVer = mainContractDetails.activeVer;
+                // Check if the active version index is valid
+                if (activeVer > 0 && activeVer <= versionAddresses.length) {
+                  // Arrays are 0-indexed but versions start at 1
+                  activeSubContractAddress = versionAddresses[activeVer - 1]; 
+                  console.log(`[verifyService] 🔍 Active version ${activeVer} address: ${activeSubContractAddress}`);
+                  
+                  // Try to get sub-contract details to verify it exists
+                  try {
+                    console.log('[verifyService] 🔍 Fetching sub-contract details...');
+                    const versionDetails = await broadcastSub.getSubContractDetails(activeSubContractAddress);
+                    console.log('[verifyService] ✅ Sub-contract details retrieved:', {
+                      version: versionDetails.version,
+                      deployTime: versionDetails.deployTime
+                    });
                     details.versionDetails = versionDetails;
+                    verified = true;
+                  } catch (subError) {
+                    console.error('[verifyService] ❌ Failed to get sub-contract details:', subError);
+                    verified = false;
                   }
+                } else {
+                  console.error(`[verifyService] ❌ Invalid active version: ${activeVer} (total versions: ${versionAddresses.length})`);
+                  verified = false;
                 }
+              } else {
+                console.error('[verifyService] ❌ No version addresses found');
+                verified = false;
               }
-            } catch (subError) {
-              console.log("[verifyService] Could not fetch version details, but contract exists:", subError);
-              // Still verified even if sub-details fail
+            } else {
+              console.error('[verifyService] ❌ No active version found');
+              verified = false;
             }
           } catch (error) {
             verified = false;
-            console.error("[verifyService] Could not verify broadcast contract:", error);
+            console.error("[verifyService] ❌ Could not verify broadcast contract:", error);
           }
           break;
           
         case 'public':
+          console.log('[verifyService] 🔄 Verifying PUBLIC contract...');
           try {
-            // Similar approach for public contracts
+            // Get the main contract details first
+            console.log('[verifyService] 🔍 Fetching main contract details...');
             mainContractDetails = await publicContract.getContractDetails(contractAddress);
-            verified = true;
+            console.log('[verifyService] ✅ Main contract details retrieved:', { 
+              title: mainContractDetails?.title,
+              activeVer: mainContractDetails?.activeVer
+            });
+            
             details = { mainContractDetails };
             
-            try {
-              if (mainContractDetails?.activeVer) {
-                const versionAddresses = await publicContract.getAllVersions(contractAddress);
-                if (versionAddresses && versionAddresses.length > 0) {
-                  const activeVersionAddress = versionAddresses[mainContractDetails.activeVer - 1];
-                  if (activeVersionAddress) {
-                    const versionDetails = await publicSub.getSubContractDetails(activeVersionAddress);
+            // Find the active sub-contract address
+            if (mainContractDetails?.activeVer > 0) {
+              console.log('[verifyService] 🔍 Fetching version addresses...');
+              const versionAddresses = await publicContract.getAllVersions(contractAddress);
+              console.log('[verifyService] ✅ Version addresses retrieved:', { 
+                count: versionAddresses.length, 
+                addresses: versionAddresses
+              });
+              
+              if (versionAddresses && versionAddresses.length > 0) {
+                const activeVer = mainContractDetails.activeVer;
+                // Check if the active version index is valid
+                if (activeVer > 0 && activeVer <= versionAddresses.length) {
+                  // Arrays are 0-indexed but versions start at 1
+                  activeSubContractAddress = versionAddresses[activeVer - 1]; 
+                  console.log(`[verifyService] 🔍 Active version ${activeVer} address: ${activeSubContractAddress}`);
+                  
+                  // Try to get sub-contract details to verify it exists
+                  try {
+                    console.log('[verifyService] 🔍 Fetching sub-contract details...');
+                    const versionDetails = await publicSub.getSubContractDetails(activeSubContractAddress);
+                    console.log('[verifyService] ✅ Sub-contract details retrieved:', {
+                      version: versionDetails.version,
+                      deployTime: versionDetails.deployTime
+                    });
                     details.versionDetails = versionDetails;
+                    verified = true;
+                  } catch (subError) {
+                    console.error('[verifyService] ❌ Failed to get sub-contract details:', subError);
+                    verified = false;
                   }
+                } else {
+                  console.error(`[verifyService] ❌ Invalid active version: ${activeVer} (total versions: ${versionAddresses.length})`);
+                  verified = false;
                 }
+              } else {
+                console.error('[verifyService] ❌ No version addresses found');
+                verified = false;
               }
-            } catch (subError) {
-              console.log("[verifyService] Could not fetch version details, but contract exists:", subError);
+            } else {
+              console.error('[verifyService] ❌ No active version found');
+              verified = false;
             }
           } catch (error) {
             verified = false;
-            console.error("[verifyService] Could not verify public contract:", error);
+            console.error("[verifyService] ❌ Could not verify public contract:", error);
           }
           break;
           
         case 'private':
+          console.log('[verifyService] 🔄 Verifying PRIVATE contract...');
           // For private contracts, we need to verify the file hash
           if (!fileHash || !jsonHash) {
+            console.error('[verifyService] ❌ Missing required files for private contract');
             throw new Error('Document and metadata file are required for private contract verification');
           }
           
           try {
-            // Call the actual verification method
-            verified = await privateSub.verifyFileHash(contractAddress, fileHash, jsonHash);
+            // Get the main contract details first
+            console.log('[verifyService] 🔍 Fetching main contract details...');
+            mainContractDetails = await privateContract.getContractDetails(contractAddress);
+            console.log('[verifyService] ✅ Main contract details retrieved:', { 
+              title: mainContractDetails?.title,
+              activeVer: mainContractDetails?.activeVer
+            });
             
-            // Try to get contract details if available, but don't fail if we can't
-            try {
-              mainContractDetails = await privateContract.getContractDetails(contractAddress);
-              details = { mainContractDetails };
-            } catch (e) {
-              console.log('[verifyService] Could not fetch private contract details');
+            details = { mainContractDetails };
+            
+            // Find the active sub-contract address
+            if (mainContractDetails?.activeVer > 0) {
+              console.log('[verifyService] 🔍 Fetching version addresses...');
+              const versionAddresses = await privateContract.getAllVersions(contractAddress);
+              console.log('[verifyService] ✅ Version addresses retrieved:', { 
+                count: versionAddresses.length, 
+                addresses: versionAddresses
+              });
+              
+              if (versionAddresses && versionAddresses.length > 0) {
+                const activeVer = mainContractDetails.activeVer;
+                // Check if the active version index is valid
+                if (activeVer > 0 && activeVer <= versionAddresses.length) {
+                  // Arrays are 0-indexed but versions start at 1
+                  activeSubContractAddress = versionAddresses[activeVer - 1]; 
+                  console.log(`[verifyService] 🔍 Active version ${activeVer} address: ${activeSubContractAddress}`);
+                  
+                  // For private contracts, verify file hashes against the active sub-contract
+                  console.log('[verifyService] 🔍 Verifying file hashes against sub-contract...');
+                  verified = await privateSub.verifyFileHash(activeSubContractAddress, fileHash, jsonHash);
+                  console.log(`[verifyService] ${verified ? '✅ File verification SUCCEEDED' : '❌ File verification FAILED'}`);
+                  
+                  try {
+                    console.log('[verifyService] 🔍 Fetching sub-contract details...');
+                    const versionDetails = await privateSub.getSubContractDetails(activeSubContractAddress);
+                    console.log('[verifyService] ✅ Sub-contract details retrieved');
+                    details.versionDetails = versionDetails;
+                  } catch (detailsError) {
+                    console.log('[verifyService] ⚠️ Could not fetch sub-contract details but verification completed');
+                  }
+                } else {
+                  console.error(`[verifyService] ❌ Invalid active version: ${activeVer} (total versions: ${versionAddresses.length})`);
+                  verified = false;
+                }
+              } else {
+                console.error('[verifyService] ❌ No version addresses found');
+                verified = false;
+              }
+            } else {
+              console.error('[verifyService] ❌ No active version found');
+              verified = false;
             }
           } catch (error) {
             verified = false;
-            console.error("[verifyService] Could not verify private contract:", error);
+            console.error("[verifyService] ❌ Could not verify private contract:", error);
           }
           break;
           
         default:
+          console.error('[verifyService] ❌ Unknown contract type:', contractType);
           throw new Error('Unknown contract type');
       }
       
+      console.log(`[verifyService] 🏁 Verification completed: ${verified ? 'SUCCESS' : 'FAILURE'}`);
       return {
         verified,
         contractType,
@@ -148,7 +269,7 @@ export function useVerifyService() {
           : 'Document verification failed. The provided document does not match the blockchain record.',
       };
     } catch (error) {
-      console.error("[verifyService] Verification error:", error);
+      console.error("[verifyService] ❌ Verification error:", error);
       throw error;
     }
   };
