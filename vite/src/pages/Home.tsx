@@ -20,6 +20,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import ShowContracts from '../components/ShowContracts';
 import { useHomeService } from '../services/homeService';
 import { DataContext } from '../provider/dataProvider';
+import { ContractType } from '../utils/contractUtils';
 
 // Custom styled filter button to match the design in the screenshot
 const FilterButton = styled(Button)(({ theme, active, color }) => ({
@@ -64,6 +65,21 @@ export default function Home() {
   const [userContracts, setUserContracts] = useState<any[]>([]);
   const [userContractsLoading, setUserContractsLoading] = useState(false);
   const [userContractsError, setUserContractsError] = useState<string | null>(null);
+
+  // Example of using the contract type detection (for demo purposes)
+  const [detectedType, setDetectedType] = useState<ContractType | null>(null);
+  
+  const handleContractTypeDetection = async (address: string) => {
+    if (!address) return;
+    
+    try {
+      const contractType = await homeService.getContractTypeFromAddress(address);
+      setDetectedType(contractType);
+      console.log(`[Home] Detected contract type for ${address}: ${contractType}`);
+    } catch (err) {
+      console.error('[Home] Error detecting contract type:', err);
+    }
+  };
 
   // Apply filters immediately to existing results when filter changes
   useEffect(() => {
@@ -194,6 +210,18 @@ export default function Home() {
       [type]: !prev[type]
     }));
   };
+
+  // You can add this to your search logic if needed
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      // Example showing how to detect types for contracts without type info
+      searchResults.forEach(contract => {
+        if (!contract.type || contract.type === 'unknown') {
+          handleContractTypeDetection(contract.address);
+        }
+      });
+    }
+  }, [searchResults]);
 
   return (
     <Box sx={{ p: 3 }}>

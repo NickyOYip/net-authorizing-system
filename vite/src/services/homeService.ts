@@ -7,6 +7,7 @@ import { BroadcastFactoryABI } from '../hooks/contractHook/abis/broadcastFactory
 import { PublicFactoryABI }    from '../hooks/contractHook/abis/publicFactory';
 import { PrivateFactoryABI }   from '../hooks/contractHook/abis/privateFactory';
 import { DataContext } from '../provider/dataProvider';
+import { getContractType, getCachedContractType, ContractType } from '../utils/contractUtils';
 
 // Debug: RPC provider to fetch events directly
 const debugProvider = new ethers.JsonRpcProvider('https://ethereum-hoodi-rpc.publicnode.com');
@@ -109,7 +110,7 @@ export function useHomeService() {
           ? privateFactory.queryFilter(
               privateFactory.filters.NewPrivateContractOwned(null, searchAddress, searchAddress, null)
             )
-          : Promise.resolve([])
+          : Promise.resolve([]),
       ]);
       console.log('[homeService]  raw events:', events);
 
@@ -189,7 +190,7 @@ export function useHomeService() {
               pr,
               pr.filters.NewPrivateContractOwned(null, null, userAddress, null)
             )
-          : []
+          : [],
       ]);
 
       console.log('[homeService]  raw user events:', { broadcastEvents, publicEvents, privateEvents });
@@ -232,10 +233,17 @@ export function useHomeService() {
       private:   data.privateFactory.address,
     };
   };
+  
+  // Determine contract type from address (new method)
+  const getContractTypeFromAddress = async (address: string): Promise<ContractType> => {
+    const factories = await getCurrentFactories();
+    return getCachedContractType(address, factories, data.ethProvider);
+  };
 
   return {
     searchContracts,
     getUserRelatedContracts,
     getCurrentFactories,
+    getContractTypeFromAddress, // Export the new function
   };
 }
