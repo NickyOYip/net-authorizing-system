@@ -65,7 +65,38 @@ export default function Home() {
   const [userContractsLoading, setUserContractsLoading] = useState(false);
   const [userContractsError, setUserContractsError] = useState<string | null>(null);
 
-  // Handle search
+  // Apply filters immediately to existing results when filter changes
+  useEffect(() => {
+    if (tabValue === 0 && searchResults.length > 0) {
+      const filteredResults = searchResults.filter(contract => {
+        if (contract.type === 'broadcast' && !filter.broadcast) return false;
+        if (contract.type === 'public' && !filter.public) return false;
+        if (contract.type === 'private' && !filter.private) return false;
+        return true;
+      });
+      setSearchResults(filteredResults);
+      if (filteredResults.length === 0) {
+        setSearchError('No contracts found matching your filters.');
+      }
+    }
+  }, [filter, tabValue]);
+
+  // Update user contracts when filter changes
+  useEffect(() => {
+    if (tabValue === 1 && userContracts.length > 0) {
+      const filteredContracts = userContracts.filter(contract => {
+        if (contract.type === 'broadcast' && !filter.broadcast) return false;
+        if (contract.type === 'public' && !filter.public) return false;
+        if (contract.type === 'private' && !filter.private) return false;
+        return true;
+      });
+      setUserContracts(filteredContracts);
+      if (filteredContracts.length === 0) {
+        setUserContractsError('You have no contracts matching selected filters.');
+      }
+    }
+  }, [filter, tabValue]);
+
   const handleSearch = async () => {
     console.log('[Home] 🔍 handleSearch()', { searchTerm, filter });
     
@@ -79,16 +110,15 @@ export default function Home() {
       // load user's contracts then filter by term
       const allContracts = await homeService.getUserRelatedContracts();
       console.log('[Home] 🔍 user contracts for search:', allContracts);
-      // filter by searchTerm across address, owner, title
+      
+      // First filter by search term
       const termFiltered = allContracts.filter(c =>
         [c.address, c.owner, c.title]
           .some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
-      const results = termFiltered;
-      console.log('[Home] 🔍 search results:', results);
       
-      // Apply type filters
-      const filteredResults = results.filter(contract => {
+      // Then apply current type filters
+      const filteredResults = termFiltered.filter(contract => {
         if (contract.type === 'broadcast' && !filter.broadcast) return false;
         if (contract.type === 'public' && !filter.public) return false;
         if (contract.type === 'private' && !filter.private) return false;
@@ -163,11 +193,6 @@ export default function Home() {
       ...prev,
       [type]: !prev[type]
     }));
-    
-    // Re-search if we're already showing results
-    if (searchResults.length > 0 && tabValue === 0) {
-      handleSearch();
-    }
   };
 
   return (
