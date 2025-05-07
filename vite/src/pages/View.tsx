@@ -41,13 +41,14 @@ import { useBroadcastSubContract } from '../hooks/contractHook/useBroadcastSubCo
 import { useEventHistory } from '../hooks/contractHook/helpers/useEventHistory';
 import { ContractStatus, ContractType } from '../hooks/contractHook/types';
 import { ethers } from 'ethers';
-import { detectContractType } from '../hooks/contractHook/utils/contractTypeDetector';
 import { DataContext } from '../provider/dataProvider';
+import { useHomeService } from '../services/homeService';
 
 export default function ContractViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data } = useContext(DataContext);
+  const homeService = useHomeService();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [contractType, setContractType] = useState<ContractType | null>(null);
@@ -73,27 +74,34 @@ export default function ContractViewPage() {
       .catch(err => console.error('Copy failed:', err));
   };
 
-  // Detect contract type
+  // Detect contract type - simplified to only use event-based detection
   useEffect(() => {
     const detectType = async () => {
       if (!id || !data.ethProvider) return;
       
       try {
-        const type = await detectContractType(id, {
-          broadcast: broadcastContract,
-          public: publicContract,
-          private: privateContract,
-          provider: data.ethProvider
-        });
-        setContractType(type);
+        setLoading(true);
+        
+        // Use only event-based detection
+        const type = await homeService.getContractTypeFromAddress(id);
+        console.log('[View] Contract type detected via events:', type);
+        
+        if (type) {
+          setContractType(type);
+          // Add this line to stop the loading state when successful
+          setLoading(false);
+        } else {
+          throw new Error('Unable to determine contract type');
+        }
       } catch (err) {
-        console.error('Error detecting contract type:', err);
+        console.error('[View] Error detecting contract type:', err);
         setError(`Failed to detect contract type: ${(err as Error).message}`);
+        setLoading(false);
       }
     };
 
     detectType();
-  }, [id, broadcastContract, publicContract, privateContract, data.ethProvider]);
+  }, [id, data.ethProvider, homeService]);
 
   // Load contract data
   useEffect(() => {
