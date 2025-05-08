@@ -99,18 +99,22 @@ async function batchQueryFilter(
   contract: ethers.Contract,
   eventFilter: ethers.EventFilter,
   step = 40000,
-  startBlock = 0
+  startBlock = 0,
+  maxRounds = 3       // ← add maxRounds
 ) {
   const provider = contract.provider || debugProvider;
   const latest = await provider.getBlockNumber();
   let allEvents: ethers.Event[] = [];
-  // ensure a read‐only contract backed by the provider
   const reader = contract.connect(provider);
+
+  let rounds = 0;      // ← track rounds
   for (let from = startBlock; from <= latest; from += step) {
+    if (rounds >= maxRounds) break;    // ← stop after 3 rounds
     const to = Math.min(from + step - 1, latest);
     console.log(`[contractUtils][debug] batchQueryFilter ${contract.address} from ${from}→${to}`);
     const evs = await reader.queryFilter(eventFilter, from, to);
     allEvents.push(...(evs || []));
+    rounds++;       // ← increment
   }
   return allEvents;
 }
