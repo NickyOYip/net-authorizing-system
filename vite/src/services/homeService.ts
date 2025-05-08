@@ -6,6 +6,9 @@ import {
 import { BroadcastFactoryABI } from '../hooks/contractHook/abis/broadcastFactory';
 import { PublicFactoryABI }    from '../hooks/contractHook/abis/publicFactory';
 import { PrivateFactoryABI }   from '../hooks/contractHook/abis/privateFactory';
+// Add imports for contract ABIs
+import { PublicContractABI } from '../hooks/contractHook/abis/publicContract';
+import { PrivateContractABI } from '../hooks/contractHook/abis/privateContract';
 import { DataContext } from '../provider/dataProvider';
 import { getContractType, getCachedContractType, ContractType } from '../utils/contractUtils';
 
@@ -47,31 +50,28 @@ async function fetchUserEvents(ownerAddr: string, factoryAddrs: (string|null)[])
   }
 }
 
-// Batch contract.queryFilter in ≤40 k‐block chunks,
-// using debugProvider if contract.provider is missing
+// Batch contract.queryFilter in ≤40k‐block chunks, max 3 rounds
 async function batchQueryFilter(
   contract: ethers.Contract,
   eventFilter: ethers.EventFilter,
   step = 40000,
-  startBlock = 0
+  startBlock = 0,
+  maxRounds = 3       // ← add maxRounds
 ) {
   const provider = contract.provider || debugProvider;
   const latest = await provider.getBlockNumber();
   let allEvents: ethers.Event[] = [];
-  // ensure a read‐only contract backed by the provider
   const reader = contract.connect(provider);
-  
-  // Debug the contract address - added for debugging
-  console.log(`[homeService][debug] Using contract:`, {
-    address: contract.address,
-    hasProvider: !!contract.provider
-  });
-  
+
+  console.log(`[homeService][debug] Using contract:`, { address: contract.address, hasProvider: !!contract.provider });
+  let rounds = 0;      // ← track rounds
   for (let from = startBlock; from <= latest; from += step) {
+    if (rounds >= maxRounds) break;    // ← stop after 3 rounds
     const to = Math.min(from + step - 1, latest);
     console.log(`[homeService][debug] batchQueryFilter ${contract.address} from ${from}→${to}`);
     const evs = await reader.queryFilter(eventFilter, from, to);
     allEvents.push(...(evs || []));
+    rounds++;       // ← increment
   }
   return allEvents;
 }
@@ -290,6 +290,122 @@ export function useHomeService() {
     }
   };
 
+  // Get contracts activated by the current user using activation events
+  const getUserActivatedContracts = async () => {
+    console.log('[homeService] ➡️ getUserActivatedContracts()', { isConnected });
+
+    if (!isConnected) {
+      return [];
+    }
+
+    try {
+      const signer = await data.ethProvider.getSigner();
+      const userAddress = await signer.getAddress();
+      console.log('[homeService] Finding contracts activated by:', userAddress);
+
+      // Get current factory addresses
+      const factories = await getCurrentFactories();
+      
+      // Create contract instances for factories
+      const pfAddr = factories.public;
+      const prfAddr = factories.private;
+
+      // We need to query ALL public/private contracts to find activation events
+      // First get all contracts created by ANY user
+      const publicFactory = pfAddr ? new ethers.Contract(pfAddr, PublicFactoryABI, signer) : null;
+      const privateFactory = prfAddr ? new ethers.Contract(prfAddr, PrivateFactoryABI, signer) : null;
+
+      // Get all public and private contracts
+      const [publicEvents, privateEvents] = await Promise.all([
+        publicFactory
+          ? batchQueryFilter(
+              publicFactory,
+              publicFactory.filters.NewPublicContractOwned()
+            )
+          : [],
+        privateFactory
+          ? batchQueryFilter(
+              privateFactory,
+              privateFactory.filters.NewPrivateContractOwned()
+            )
+          : []
+      ]);
+
+      console.log('[homeService] Found contracts to check for activations:', {
+        public: publicEvents.length,
+        private: privateEvents.length
+      });
+
+      // Now for each contract, check if the user has activated it
+      const activatedContracts = [];
+
+      // Process public contracts
+      if (publicEvents.length > 0) {
+        for (const event of publicEvents) {
+          try {
+            const contractAddr = event.args.contractAddr;
+            const publicContract = new ethers.Contract(contractAddr, PublicContractABI, signer);
+            
+            // Query for activation events where this user is the activator
+            const activationFilter = publicContract.filters.PublicContractActivated(null, null, userAddress);
+            const activationEvents = await publicContract.queryFilter(activationFilter);
+            
+            if (activationEvents.length > 0) {
+              // User has activated this contract
+              const activationEvent = activationEvents[0];
+              activatedContracts.push({
+                type: 'public',
+                address: contractAddr,
+                owner: event.args.ownerAddr,
+                title: event.args.title,
+                activatedAt: new Date(Number(activationEvent.blockNumber) * 1000), // Approximate timestamp
+                isActivated: true
+              });
+            }
+          } catch (err) {
+            console.warn('[homeService] Error checking public contract activation:', err);
+          }
+        }
+      }
+
+      // Process private contracts
+      if (privateEvents.length > 0) {
+        for (const event of privateEvents) {
+          try {
+            const contractAddr = event.args.contractAddr;
+            const privateContract = new ethers.Contract(contractAddr, PrivateContractABI, signer);
+            
+            // Query for activation events where this user is the activator
+            const activationFilter = privateContract.filters.PrivateContractActivated(null, null, userAddress);
+            const activationEvents = await privateContract.queryFilter(activationFilter);
+            
+            if (activationEvents.length > 0) {
+              // User has activated this contract
+              const activationEvent = activationEvents[0];
+              activatedContracts.push({
+                type: 'private',
+                address: contractAddr,
+                owner: event.args.ownerAddr,
+                title: event.args.title,
+                activatedAt: new Date(Number(activationEvent.blockNumber) * 1000), // Approximate timestamp
+                isActivated: true
+              });
+            }
+          } catch (err) {
+            console.warn('[homeService] Error checking private contract activation:', err);
+          }
+        }
+      }
+
+      console.log('[homeService] Found activated contracts:', activatedContracts);
+      return activatedContracts;
+
+    } catch (error) {
+      console.error('[homeService] ❌ getUserActivatedContracts error:', error);
+      return [];
+    }
+  };
+
   // Get current factory addresses from DataContext instead of masterFactory
   const getCurrentFactories = async () => {
     return {
@@ -308,6 +424,7 @@ export function useHomeService() {
   return {
     searchContracts,
     getUserRelatedContracts,
+    getUserActivatedContracts,  // Add the new function to the return object
     getCurrentFactories,
     getContractTypeFromAddress, // Export the new function
   };
