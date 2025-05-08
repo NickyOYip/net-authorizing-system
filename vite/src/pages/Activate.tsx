@@ -54,6 +54,7 @@ export default function Activate() {
     verifying: null,
     activating: null,
     uploading: null,
+    encrypting: null, // Add encryption progress state
     success: null
   });
 
@@ -284,6 +285,7 @@ export default function Activate() {
       verifying: null,
       activating: null,
       uploading: null,
+      encrypting: null, // Add reset for encryption progress
       success: null
     });
   };
@@ -511,6 +513,18 @@ export default function Activate() {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Typography sx={{ minWidth: 150 }}>Activating Contract:</Typography>
                     {activationProgress.activating === true ? (
+                      <LinearProgress sx={{ flexGrow: 1 }} />
+                    ) : (
+                      <CheckCircleIcon color="success" />
+                    )}
+                  </Box>
+                )}
+                
+                {/* Add encryption progress indicator */}
+                {activationProgress.encrypting !== null && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Typography sx={{ minWidth: 150 }}>Encrypting Files:</Typography>
+                    {activationProgress.encrypting === true ? (
                       <LinearProgress sx={{ flexGrow: 1 }} />
                     ) : (
                       <CheckCircleIcon color="success" />

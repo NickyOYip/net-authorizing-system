@@ -4,6 +4,7 @@ import { useContext, useState } from 'react';
 import { getCachedContractType, ContractType } from '../utils/contractUtils';
 import * as irysAction from '../hooks/irysHook/irysAction';
 import { NETWORKS, switchNetwork } from '../utils/networkUtils';
+import { encryptFile } from '../utils/encryptionUtils';
 import { WebUploader } from '@irys/sdk';
 import { ethers } from 'ethers';
 
@@ -12,6 +13,7 @@ export interface ActivationProgressState {
   verifying: boolean | null;
   activating: boolean | null;
   uploading: boolean | null;
+  encrypting: boolean | null; // New state for encryption progress
   success: boolean | null;
 }
 
@@ -107,21 +109,31 @@ export function useActivateService() {
       let documentTxId, jsonTxId;
       
       await performIrysOperation(async () => {
-        console.log('[activateService] 📤 Uploading document to Irys');
-        const documentReceipt = await irysAction.uploadData(irys, documentFile);
-        documentTxId = documentReceipt.id;
-        console.log('[activateService] ✅ Document uploaded:', documentTxId);
+        // Get user's address
+        const signer = await data.ethProvider.getSigner();
+        const userAddress = await signer.getAddress();
         
-        console.log('[activateService] 📤 Uploading JSON metadata to Irys');
-        const jsonReceipt = await irysAction.uploadData(irys, jsonFile);
+        console.log('[activateService] 🔒 Encrypting document file...');
+        const encryptedDocumentFile = await encryptFile(documentFile, userAddress);
+        
+        console.log('[activateService] 🔒 Encrypting JSON file...');
+        const encryptedJsonFile = await encryptFile(jsonFile, userAddress);
+        
+        console.log('[activateService] 📤 Uploading encrypted document to Irys');
+        const documentReceipt = await irysAction.uploadData(irys, encryptedDocumentFile);
+        documentTxId = documentReceipt.id;
+        console.log('[activateService] ✅ Encrypted document uploaded:', documentTxId);
+        
+        console.log('[activateService] 📤 Uploading encrypted JSON metadata to Irys');
+        const jsonReceipt = await irysAction.uploadData(irys, encryptedJsonFile);
         jsonTxId = jsonReceipt.id;
-        console.log('[activateService] ✅ JSON metadata uploaded:', jsonTxId);
+        console.log('[activateService] ✅ Encrypted JSON metadata uploaded:', jsonTxId);
       });
 
       return { documentTxId, jsonTxId };
     } catch (error) {
-      console.error('[activateService] ❌ Error uploading files:', error);
-      throw new Error(`File upload failed: ${(error as Error).message}`);
+      console.error('[activateService] ❌ Error uploading encrypted files:', error);
+      throw new Error(`Encrypted file upload failed: ${(error as Error).message}`);
     }
   };
 
@@ -155,6 +167,7 @@ export function useActivateService() {
         verifying: true,
         activating: null,
         uploading: null,
+        encrypting: null,
         success: null
       });
 
@@ -168,6 +181,7 @@ export function useActivateService() {
             verifying: false,
             activating: false,
             uploading: false,
+            encrypting: false,
             success: false
           });
           
@@ -187,6 +201,7 @@ export function useActivateService() {
               verifying: false,
               activating: true,
               uploading: null,
+              encrypting: null,
               success: null
             });
             
@@ -199,6 +214,7 @@ export function useActivateService() {
               verifying: false,
               activating: false,
               uploading: false,
+              encrypting: false,
               success: true
             });
             
@@ -216,6 +232,7 @@ export function useActivateService() {
               verifying: false,
               activating: false,
               uploading: false,
+              encrypting: false,
               success: false
             });
             
@@ -230,7 +247,7 @@ export function useActivateService() {
           // For private contracts:
           // 1. Verify file hashes (required)
           // 2. Activate with code
-          // 3. Upload encrypted files to Irys
+          // 3. Encrypt and upload files to Irys
           // 4. Update data links on the contract
           
           try {
@@ -280,6 +297,7 @@ export function useActivateService() {
               verifying: false,
               activating: true,
               uploading: null,
+              encrypting: null,
               success: null
             });
             
@@ -287,19 +305,29 @@ export function useActivateService() {
             const activateTx = await privateContract.activate(contractAddress, activationCode);
             console.log('[activateService] ✅ Private contract activated successfully:', activateTx.hash);
             
-            // Step 4: Upload encrypted files to Irys
-            console.log('[activateService] 📤 Uploading files to Irys...');
+            // Step 4: Encrypt and upload files to Irys
+            console.log('[activateService] 🔒 Encrypting and uploading files...');
+            
+            // Update progress - encrypting
+            progressCallback({
+              verifying: false,
+              activating: false,
+              uploading: null,
+              encrypting: true,
+              success: null
+            });
+            
+            // Perform the actual encryption and upload
+            const { documentTxId, jsonTxId } = await uploadFilesToIrys(documentFile, jsonFile);
             
             // Update progress - uploading
             progressCallback({
               verifying: false,
               activating: false,
               uploading: true,
+              encrypting: false,
               success: null
             });
-            
-            // Perform the actual upload
-            const { documentTxId, jsonTxId } = await uploadFilesToIrys(documentFile, jsonFile);
             
             // Step 5: Update data links on the contract
             console.log('[activateService] 📝 Updating data links on contract...');
@@ -315,6 +343,7 @@ export function useActivateService() {
               verifying: false,
               activating: false,
               uploading: false,
+              encrypting: false,
               success: true
             });
             
@@ -336,6 +365,7 @@ export function useActivateService() {
               verifying: false,
               activating: false,
               uploading: false,
+              encrypting: false,
               success: false
             });
             
@@ -353,6 +383,7 @@ export function useActivateService() {
             verifying: false,
             activating: false,
             uploading: false,
+            encrypting: false,
             success: false
           });
           
@@ -369,6 +400,7 @@ export function useActivateService() {
         verifying: false,
         activating: false,
         uploading: false,
+        encrypting: false,
         success: false
       });
       
