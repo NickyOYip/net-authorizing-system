@@ -13,6 +13,8 @@
     "@irys/web-upload": "^0.0.15",
     "@irys/web-upload-ethereum": "^0.0.16",
     "@irys/web-upload-ethereum-ethers-v6": "^0.0.16",
+    "@metamask/eth-sig-util": "^5.1.0",
+    "ethereumjs-util": "^7.1.5",
     "@mui/icons-material": "^6",
     "@mui/material": "^6",
     "@mui/x-date-pickers": "^7.28.3",

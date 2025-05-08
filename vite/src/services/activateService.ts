@@ -109,16 +109,18 @@ export function useActivateService() {
       let documentTxId, jsonTxId;
       
       await performIrysOperation(async () => {
-        // Get user's address
+        // Get user's address for encryption
         const signer = await data.ethProvider.getSigner();
         const userAddress = await signer.getAddress();
         
+        // Step 1: Encrypt the files with MetaMask
         console.log('[activateService] 🔒 Encrypting document file...');
         const encryptedDocumentFile = await encryptFile(documentFile, userAddress);
         
         console.log('[activateService] 🔒 Encrypting JSON file...');
         const encryptedJsonFile = await encryptFile(jsonFile, userAddress);
         
+        // Step 2: Upload the encrypted files to Irys
         console.log('[activateService] 📤 Uploading encrypted document to Irys');
         const documentReceipt = await irysAction.uploadData(irys, encryptedDocumentFile);
         documentTxId = documentReceipt.id;

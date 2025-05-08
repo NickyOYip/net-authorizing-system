@@ -1,0 +1,29 @@
+{
+  "contract_metadata": {
+    "contract_type": "Employment Agreement",
+    "parties": {
+      "employer": "TechCorp Inc.",
+      "employee": "Jane Smith",
+      "employee_id": "EMP-2024-001"
+    },
+    "terms": {
+      "start_date": "2024-06-01",
+      "end_date": "2026-05-31",
+      "position": "Senior Software Engineer",
+      "salary": "$120,000/year",
+      "benefits": ["Health Insurance", "401(k) Matching", "Stock Options"],
+      "probation_period": "90 days"
+    },
+    "confidentiality": {
+      "nda_attached": true,
+      "non_compete_duration": "12 months post-termination"
+    },
+    "signatures": {
+      "employer_signed": true,
+      "employee_signed": true,
+      "signature_date": "2024-05-15"
+    },
+    "status": "Active",
+    "governing_law": "California, USA"
+  }
+}

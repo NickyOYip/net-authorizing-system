@@ -1,27 +1,29 @@
+import { encrypt, decrypt } from '@metamask/eth-sig-util';
 import { ethers } from 'ethers';
-import { secp256k1 } from '@noble/curves/secp256k1';
-import * as eciesjs from 'eciesjs';
+import { Buffer } from 'buffer';
 
-// Request the user's public key from MetaMask
-// This function uses eth_getEncryptionPublicKey which is a MetaMask-specific method
+/**
+ * Get encryption public key from MetaMask
+ */
 export async function getEncryptionPublicKey(address: string): Promise<string> {
   try {
-    console.log('[encryptionUtils] 🔑 Requesting encryption public key for address:', address);
+    console.log('[encryptionUtils] 🔑 Requesting encryption public key from MetaMask...');
+    
     if (!window.ethereum) {
       throw new Error('MetaMask is not installed');
     }
-
+    
+    // This method is supported in all MetaMask versions
     const publicKey = await window.ethereum.request({
       method: 'eth_getEncryptionPublicKey',
-      params: [address],
+      params: [address]
     });
     
-    console.log('[encryptionUtils] ✅ Received public key:', publicKey.substring(0, 10) + '...');
+    console.log('[encryptionUtils] ✅ Public key obtained:', publicKey);
     return publicKey;
   } catch (error: any) {
     console.error('[encryptionUtils] ❌ Failed to get encryption public key:', error);
     
-    // Provide more helpful error messages
     if (error.code === 4001) {
       throw new Error('User denied access to their encryption public key');
     }
@@ -30,125 +32,378 @@ export async function getEncryptionPublicKey(address: string): Promise<string> {
   }
 }
 
-// Encrypt data with the user's public key using MetaMask's eth_encrypt method
-export async function encryptWithMetaMask(data: Uint8Array, address: string): Promise<string> {
+/**
+ * Encrypt data using eth-sig-util library
+ */
+export async function encryptWithMetaMask(data: string, address: string) {
   try {
-    console.log('[encryptionUtils] 🔒 Encrypting data with MetaMask');
-    
-    if (!window.ethereum) {
-      throw new Error('MetaMask is not installed');
-    }
-    
-    // Convert data to hex string for MetaMask encryption
-    const dataStr = ethers.hexlify(data).replace('0x', '');
-    
-    // Use MetaMask's encryption method
-    const encryptedData = await window.ethereum.request({
-      method: 'eth_encrypt',
-      params: [dataStr, address],
+    console.log('[encryptionUtils] 🔐 Requesting public key from MetaMask...');
+    const publicKey = await window.ethereum.request({
+      method: 'eth_getEncryptionPublicKey',
+      params: [address]
     });
-    
-    console.log('[encryptionUtils] ✅ Data encrypted successfully with MetaMask');
+
+    console.log('[encryptionUtils] ✅ Public key obtained:', publicKey);
+
+    const encryptedData = encrypt({
+      publicKey: publicKey,
+      data: data,
+      version: 'x25519-xsalsa20-poly1305'
+    });
+
+    console.log('[encryptionUtils] ✅ Data encrypted:', encryptedData);
     return encryptedData;
-  } catch (error: any) {
-    console.error('[encryptionUtils] ❌ MetaMask encryption failed:', error);
-    throw new Error(`MetaMask encryption failed: ${error.message || 'Unknown error'}`);
-  }
-}
-
-// Alternative encryption method using Web Crypto API
-export async function encryptWithWebCrypto(data: Uint8Array, publicKeyHex: string): Promise<Uint8Array> {
-  try {
-    console.log('[encryptionUtils] 🔒 Encrypting data with Web Crypto API');
-    
-    // For simplicity, we'll use AES-GCM encryption with a random key
-    // Then encrypt that key with the public key
-    
-    // Generate a random AES key
-    const aesKey = await crypto.subtle.generateKey(
-      { name: 'AES-GCM', length: 256 },
-      true,
-      ['encrypt', 'decrypt']
-    );
-    
-    // Generate a random IV
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    
-    // Encrypt the data with AES-GCM
-    const encryptedData = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      aesKey,
-      data
-    );
-    
-    // Export the AES key
-    const exportedKey = await crypto.subtle.exportKey('raw', aesKey);
-    
-    // We should encrypt the AES key with the public key here
-    // But for simplicity, we'll just concatenate the key, IV, and encrypted data
-    // In a real implementation, you'd use the public key to encrypt the AES key
-    
-    // Create the final encrypted package
-    const result = new Uint8Array(exportedKey.byteLength + iv.byteLength + encryptedData.byteLength);
-    result.set(new Uint8Array(exportedKey), 0);
-    result.set(iv, exportedKey.byteLength);
-    result.set(new Uint8Array(encryptedData), exportedKey.byteLength + iv.byteLength);
-    
-    console.log('[encryptionUtils] ✅ Data encrypted successfully with Web Crypto API');
-    return result;
-  } catch (error: any) {
-    console.error('[encryptionUtils] ❌ Web Crypto encryption failed:', error);
-    throw new Error(`Web Crypto encryption failed: ${error.message || 'Unknown error'}`);
-  }
-}
-
-// Try to encrypt with MetaMask, fallback to Web Crypto if not available
-export async function encryptData(data: Uint8Array, address: string): Promise<string | Uint8Array> {
-  try {
-    // First try MetaMask's encryption
-    return await encryptWithMetaMask(data, address);
   } catch (error) {
-    console.warn('[encryptionUtils] ⚠️ MetaMask encryption failed, trying Web Crypto', error);
-    
-    // If MetaMask encryption fails, try to get the public key and use Web Crypto
-    try {
-      const publicKey = await getEncryptionPublicKey(address);
-      return await encryptWithWebCrypto(data, publicKey);
-    } catch (cryptoError) {
-      console.error('[encryptionUtils] ❌ All encryption methods failed');
-      throw new Error(`Encryption failed: ${(error as Error).message} and ${(cryptoError as Error).message}`);
-    }
+    console.error('[encryptionUtils] ❌ MetaMask encryption failed:', error);
+    throw new Error(`MetaMask encryption failed: ${error.message}`);
   }
 }
 
-// Encrypt a file and return encrypted data
+/**
+ * Encrypt a file
+ */
 export async function encryptFile(file: File, address: string): Promise<File> {
   try {
-    console.log('[encryptionUtils] 🔒 Encrypting file:', file.name);
-    
-    // Read file as ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
-    const fileData = new Uint8Array(arrayBuffer);
+    const data = Buffer.from(arrayBuffer).toString('base64');
     
-    // Encrypt the file data
-    const encryptedData = await encryptData(fileData, address);
+    // Include file metadata in the encrypted package
+    const fileData = {
+      name: file.name,
+      type: file.type,
+      data: data
+    };
     
-    // Convert the encrypted data to a string if it's not already
-    const dataToStore = typeof encryptedData === 'string' 
-      ? encryptedData 
-      : JSON.stringify(Array.from(encryptedData));
+    const encryptedData = await encryptWithMetaMask(JSON.stringify(fileData), address);
+    const encryptedString = JSON.stringify(encryptedData);
     
     // Create a new file with encrypted data
     const encryptedFile = new File(
-      [dataToStore], 
+      [encryptedString], 
       `${file.name}.encrypted`, 
       { type: 'application/json' }
     );
     
     console.log('[encryptionUtils] ✅ File encrypted successfully');
     return encryptedFile;
-  } catch (error: any) {
+  } catch (error) {
     console.error('[encryptionUtils] ❌ File encryption failed:', error);
-    throw new Error(`File encryption failed: ${error.message || 'Unknown error'}`);
+    throw new Error(`File encryption failed: ${error.message}`);
   }
+}
+
+/**
+ * Decrypt data using private key
+ */
+export async function decryptWithPrivateKey(encryptedData: string, privateKey: string): Promise<string> {
+  try {
+    console.log('[encryptionUtils] 🔑 Attempting decryption with private key');
+    
+    // Make sure privateKey is in the right format (strip '0x' prefix if present)
+    const formattedPrivateKey = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey;
+    
+    // Parse the encrypted data - handle both string and object formats
+    let encryptedDataObj;
+    try {
+      // If encryptedData is already a string representation of JSON, parse it
+      encryptedDataObj = JSON.parse(encryptedData);
+      console.log('[encryptionUtils] ✅ Successfully parsed encrypted data as JSON');
+    } catch (parseError) {
+      console.error('[encryptionUtils] ❌ Error parsing encrypted data:', parseError);
+      throw new Error('Invalid encrypted data format');
+    }
+    
+    // Attempt decryption using eth-sig-util
+    try {
+      console.log('[encryptionUtils] 🔄 Calling decrypt function...');
+      const decryptedData = decrypt({
+        encryptedData: encryptedDataObj,
+        privateKey: formattedPrivateKey
+      });
+      
+      console.log('[encryptionUtils] ✅ Decryption successful');
+      return decryptedData;
+    } catch (decryptError) {
+      console.error('[encryptionUtils] ❌ Decryption function failed:', decryptError);
+      throw new Error(`Decryption failed: ${decryptError.message || 'Invalid key or corrupted data'}`);
+    }
+  } catch (error) {
+    console.error('[encryptionUtils] ❌ Client decryption failed:', error);
+    throw new Error(`Client decryption failed: ${error.message}`);
+  }
+}
+
+/**
+ * Decrypt a file using private key
+ */
+export async function decryptFileWithPrivateKey(encryptedData: string, privateKey: string): Promise<File> {
+  try {
+    const decryptedData = await decryptWithPrivateKey(encryptedData, privateKey);
+    const buffer = Buffer.from(decryptedData, 'base64');
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+    return new File([arrayBuffer], 'decrypted_file', { type: 'application/octet-stream' });
+  } catch (error) {
+    console.error('[encryptionUtils] ❌ File decryption failed:', error);
+    throw new Error(`File decryption failed: ${error.message}`);
+  }
+}
+
+/**
+ * Download and decrypt a file from Irys
+ */
+export async function downloadAndDecryptFile(
+  fileId: string,
+  userAddress: string,
+  fileName: string = 'document',
+  privateKey?: string
+): Promise<void> {
+  try {
+    console.log('[encryptionUtils] 🔍 Downloading encrypted file from Irys:', fileId);
+    
+    // Fetch the file from Irys
+    const response = await fetch(`https://gateway.irys.xyz/${fileId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+    
+    // Log response details
+    console.log('[encryptionUtils] 📄 Response headers:', {
+      contentType: response.headers.get('Content-Type'),
+      contentLength: response.headers.get('Content-Length'),
+      status: response.status
+    });
+    
+    // Get the encrypted data
+    const encryptedData = await response.text();
+    console.log('[encryptionUtils] ✅ File downloaded, size:', encryptedData.length, 'bytes');
+    
+    // If no private key provided, just download the encrypted file
+    if (!privateKey) {
+      console.log('[encryptionUtils] ℹ️ No private key provided, downloading encrypted file');
+      downloadAsFile(encryptedData, `${fileName}.encrypted.json`, 'application/json');
+      return;
+    }
+    
+    // Try to parse the encrypted data as JSON
+    let parsedEncryptedData;
+    try {
+      parsedEncryptedData = JSON.parse(encryptedData);
+      console.log('[encryptionUtils] ✅ Successfully parsed encrypted data as JSON');
+    } catch (jsonError) {
+      console.error('[encryptionUtils] ❌ Error parsing encrypted data:', jsonError);
+      downloadAsFile(encryptedData, fileName, 'application/octet-stream');
+      throw new Error('Invalid encrypted data format - not valid JSON');
+    }
+    
+    // Attempt decryption
+    try {
+      console.log('[encryptionUtils] 🔄 Attempting to decrypt data with private key');
+      const decryptedData = await decryptWithPrivateKey(encryptedData, privateKey);
+      
+      // Try to handle the decrypted data in different ways
+      await handleDecryptedData(decryptedData, fileName);
+    } catch (decryptError) {
+      console.error('[encryptionUtils] ❌ Decryption failed:', decryptError);
+      downloadAsFile(encryptedData, `${fileName}.encrypted`, 'application/json');
+      throw new Error(`Decryption failed: ${decryptError.message}`);
+    }
+  } catch (error) {
+    console.error('[encryptionUtils] ❌ Download and decrypt failed:', error);
+    throw new Error(`Download and decrypt failed: ${error.message || 'Unknown error'}`);
+  }
+}
+
+/**
+ * Handle decrypted data and determine how to process it
+ */
+async function handleDecryptedData(decryptedData: string, fileName: string): Promise<void> {
+  console.log('[encryptionUtils] 🔍 Analyzing decrypted data structure');
+  
+  // First try to parse as JSON with metadata
+  try {
+    // Check if decrypted data looks like JSON
+    if (decryptedData.trim().startsWith('{') && decryptedData.trim().endsWith('}')) {
+      const fileData = JSON.parse(decryptedData);
+      console.log('[encryptionUtils] ✅ Successfully parsed decrypted data as JSON');
+      
+      // Check if this JSON contains metadata about a file
+      if (fileData.name && (fileData.data || fileData.content)) {
+        await handleJsonWithFileMetadata(fileData, fileName);
+        return;
+      } else {
+        // Regular JSON data - download as JSON
+        console.log('[encryptionUtils] ✅ Data appears to be a regular JSON document');
+        const prettyJson = JSON.stringify(fileData, null, 2);
+        downloadAsFile(prettyJson, fileName.endsWith('.json') ? fileName : `${fileName}.json`, 'application/json');
+        return;
+      }
+    }
+  } catch (jsonError) {
+    console.log('[encryptionUtils] ℹ️ Decrypted data is not valid JSON, trying alternative formats');
+  }
+  
+  // If not JSON, try handling as base64 or raw content
+  await handleNonJsonData(decryptedData, fileName);
+}
+
+/**
+ * Handle decrypted JSON data with file metadata
+ */
+async function handleJsonWithFileMetadata(
+  fileData: any, 
+  defaultFileName: string
+): Promise<void> {
+  console.log('[encryptionUtils] ✅ File metadata found in decrypted data');
+  
+  // Extract file content and metadata
+  const outputFilename = fileData.name || defaultFileName;
+  const fileType = fileData.type || getMimeTypeFromFileName(outputFilename);
+  let fileContent = fileData.data || fileData.content;
+  
+  // Check if content is base64 encoded
+  if (typeof fileContent === 'string' && isBase64(fileContent)) {
+    try {
+      console.log('[encryptionUtils] 🔄 Converting base64 content to binary');
+      fileContent = Buffer.from(fileContent, 'base64');
+      console.log('[encryptionUtils] ✅ Successfully decoded base64 data');
+    } catch (e) {
+      console.error('[encryptionUtils] ⚠️ Failed to convert from base64, using as-is:', e);
+    }
+  }
+  
+  console.log('[encryptionUtils] 📦 File information:', {
+    name: outputFilename,
+    type: fileType,
+    contentLength: typeof fileContent === 'string' ? fileContent.length : fileContent.byteLength
+  });
+  
+  // Download the file
+  downloadAsFile(fileContent, outputFilename, fileType);
+  console.log('[encryptionUtils] ✅ File downloaded successfully');
+}
+
+/**
+ * Handle decrypted data that isn't JSON
+ */
+async function handleNonJsonData(data: string, fileName: string): Promise<void> {
+  // Check if it's base64 encoded
+  if (isBase64(data)) {
+    try {
+      console.log('[encryptionUtils] 🔍 Detected base64 encoded data, trying to decode');
+      const binaryData = Buffer.from(data, 'base64');
+      
+      // Try to detect file type
+      const fileExt = detectBinaryFileType(binaryData);
+      const outputName = fileExt ? `${fileName.split('.')[0]}.${fileExt}` : fileName;
+      const mimeType = getMimeTypeFromFileName(outputName);
+      
+      console.log('[encryptionUtils] ✅ Successfully decoded base64 data as binary');
+      downloadAsFile(binaryData, outputName, mimeType);
+      return;
+    } catch (e) {
+      console.error('[encryptionUtils] ⚠️ Error processing base64 data:', e);
+    }
+  }
+  
+  // If all else fails, treat as plain text
+  console.log('[encryptionUtils] 📄 Processing as plain text');
+  downloadAsFile(data, fileName, 'text/plain');
+}
+
+/**
+ * Check if a string is likely base64 encoded
+ */
+function isBase64(str: string): boolean {
+  // Base64 pattern check (not perfect but good enough for most cases)
+  if (str.length % 4 !== 0) {
+    return false;
+  }
+  
+  // More strict check for base64 format
+  const base64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+  const isPattern = base64Regex.test(str);
+  
+  // Check for common base64 binary content indicators
+  const hasCommonPrefixes = 
+    str.startsWith('JVBERi0') || // PDF
+    str.startsWith('R0lGODlh') || // GIF
+    str.startsWith('iVBORw0') || // PNG
+    str.startsWith('/9j/4AA') || // JPEG
+    str.startsWith('UEsDBB'); // ZIP/Office
+  
+  return isPattern || hasCommonPrefixes;
+}
+
+/**
+ * Try to detect file type from binary data
+ */
+function detectBinaryFileType(data: Buffer | Uint8Array): string | null {
+  // Simple file type detection based on magic numbers
+  const bytes = new Uint8Array(data instanceof Buffer ? data.buffer : data);
+  
+  // PDF: %PDF (hex: 25 50 44 46)
+  if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+    return 'pdf';
+  }
+  
+  // PNG: 89 50 4E 47
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
+    return 'png';
+  }
+  
+  // JPEG: FF D8 FF
+  if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+    return 'jpg';
+  }
+  
+  // More file types can be added here
+  
+  return null;
+}
+
+// Helper function to download data as a file
+function downloadAsFile(data: string | ArrayBuffer | Uint8Array, fileName: string, mimeType: string): void {
+  const blob = new Blob([data], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  
+  document.body.appendChild(a);
+  a.click();
+  
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+  
+  console.log('[encryptionUtils] ✅ File download initiated:', fileName);
+}
+
+// Helper function to determine MIME type from filename
+function getMimeTypeFromFileName(fileName: string): string {
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  
+  const mimeTypes: Record<string, string> = {
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'ppt': 'application/vnd.ms-powerpoint',
+    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'txt': 'text/plain',
+    'csv': 'text/csv',
+    'json': 'application/json',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'svg': 'image/svg+xml',
+    'mp3': 'audio/mpeg',
+    'mp4': 'video/mp4',
+    'zip': 'application/zip',
+  };
+  
+  return mimeTypes[extension] || 'application/octet-stream';
 }
