@@ -209,6 +209,15 @@ To use the application, you'll need to configure your MetaMask wallet with both 
 2. View the document details and verification status
 3. Download and verify the document contents against on-chain hashes
 
+### Demo Test Addresses
+
+You can use these test addresses to view sample contracts in the system:
+
+- `0x591D38E6eAA91C336589A9E1F2197AF364Ce3f36`
+- `0x84D80644Ff4bCCb6380DA194e3d413B4813C4AAB`
+
+Simply enter either address in the search field on the Verify page to view associated test contracts.
+
 ## Documentation
 
 - [Contract Design](./docs/ContractDesign.md) - Detailed smart contract architecture
