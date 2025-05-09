@@ -25,6 +25,19 @@ To use this application, you'll need test ETH on both networks. You can obtain t
 
 Please request test ETH from these faucets before attempting to create or interact with contracts.
 
+### Why Two Networks?
+
+The dual-chain approach addresses specific technical challenges:
+
+1. **Gas Cost Management**: Sepolia gas prices can be unstable and expensive during peak times. High-cost operations are therefore executed on Hoodi, which offers more stable and lower gas fees.
+
+2. **Event Querying Limitations**: The Graph (event query service) is not currently supported on the Hoodi network. As a result:
+   - The dashboard may not show all activated contracts that exist on the Hoodi network
+   - Users can still access these contracts by using the search function
+   - Contracts deployed on Sepolia will display correctly in all views
+
+This hybrid approach allows for cost-effective operations while maintaining essential functionality across both networks.
+
 ## Important Notes on Data Storage
 
 **⚠️ Development Environment Limitations:**

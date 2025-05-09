@@ -88,6 +88,28 @@ vite/
 
 4. Open [http://localhost:5173](http://localhost:5173) in your browser
 
+## Network Configuration
+
+This application operates across two Ethereum testnets:
+
+- **Sepolia**: Main network for contract deployments and events
+- **Hoodi**: Secondary network for cost-sensitive operations
+
+### Network Limitations
+
+**Important to know when using the application:**
+
+- The dashboard may not show all activated contracts from the Hoodi network
+- This is because The Graph (event indexing service) is not available on Hoodi
+- **Workaround**: Use the search functionality to find contracts deployed on Hoodi
+- Contracts on Sepolia will appear correctly in all views
+
+### Getting Test ETH
+
+Before using the application, obtain test ETH from:
+- Sepolia: [https://sepolia-faucet.pk910.de/](https://sepolia-faucet.pk910.de/)
+- Hoodi: [https://hoodi-faucet.pk910.de/](https://hoodi-faucet.pk910.de/)
+
 ### Important: Devnet Storage Limitations
 
 This application currently uses Irys devnet for storing data on Arweave. Be aware of these limitations:
