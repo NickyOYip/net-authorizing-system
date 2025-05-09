@@ -88,6 +88,22 @@ vite/
 
 4. Open [http://localhost:5173](http://localhost:5173) in your browser
 
+### Important: Devnet Storage Limitations
+
+This application currently uses Irys devnet for storing data on Arweave. Be aware of these limitations:
+
+- **Data Retention**: Files stored on Irys devnet are automatically deleted after 60 days
+- **Testing Only**: The devnet is suitable for testing but not for production use
+- **Backups Required**: Always keep local backups of any documents you upload through this system
+
+To configure the application for permanent storage:
+1. Create an Irys account and fund it with AR tokens
+2. Update the environment variable to point to the mainnet node:
+   ```
+   VITE_IRYS_NODE=https://node1.irys.xyz
+   ```
+3. Adjust the frontend code to handle mainnet transaction fees
+
 ## Usage
 
 ### Creating a Document Contract

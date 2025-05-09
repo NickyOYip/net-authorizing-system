@@ -6,13 +6,60 @@ A blockchain-based document verification and authorization system that provides 
 - **🌐 Public Contracts**: Targeted to specific users with activation codes
 - **🔒 Private Contracts**: Secure document sharing with encrypted storage
 
-## Features
+## Project Overview
 
-- Multiple verification modes for different privacy/access needs
-- Version control for documents with history tracking
-- Blockchain-based verification for tamper-proof records
-- Decentralized storage using Arweave via Irys
-- Smart contract architecture with upgradeable factories
+The Net Authorizing System (NAT) is a decentralized application (DApp) designed to address e-document forgery and inefficient verification processes. Built on Ethereum blockchain with Arweave for decentralized storage, NAT enables secure creation, management, and verification of documents through smart contracts.
+
+This system integrates MetaMask for self-sovereign identity, ensuring secure and transparent user interactions without relying on centralized servers. It was developed as a Final Year Project to demonstrate how blockchain technology can enhance document trustworthiness.
+
+## Dual-Chain Architecture
+
+This is a fully decentralized application running on two Ethereum testnets:
+- **Sepolia**: Primary network for contract deployments
+- **Hoodi**: Secondary network for specific features
+
+To use this application, you'll need test ETH on both networks. You can obtain test ETH from the following faucets:
+
+- Sepolia Faucet: [https://sepolia-faucet.pk910.de/](https://sepolia-faucet.pk910.de/)
+- Hoodi Faucet: [https://hoodi-faucet.pk910.de/](https://hoodi-faucet.pk910.de/)
+
+Please request test ETH from these faucets before attempting to create or interact with contracts.
+
+## Important Notes on Data Storage
+
+**⚠️ Development Environment Limitations:**
+
+This project currently uses Irys devnet for storing data on Arweave. Please be aware that:
+
+- All data stored on Irys devnet will be **deleted after 60 days**
+- For permanent storage, the application must be configured to use Irys mainnet
+- Transition to production would require funding an Irys account with AR tokens
+
+During development and testing, please keep local backups of any important documents uploaded to the system, as they will not be permanently stored on the devnet.
+
+## Key Features
+
+- **Modular Smart Contracts**: Split Contracts architecture with three contract types:
+  - Broadcast (publicly accessible)
+  - Public (entity-issued with activation codes)
+  - Private (sensitive data with encryption)
+
+- **Decentralized Storage**: Arweave integration via Irys reduces storage costs from $1088/MB (Ethereum) to $0.02/MB
+
+- **Event-Based Data Access**: Optimized UI rendering through Ethereum events, reducing costs by 96%
+
+- **Security**: Blockchain immutability and MetaMask authentication prevent forgery and unauthorized access
+
+- **Version Control**: Document versioning with full history tracking
+
+- **Role-Based Access**: Different interfaces for document issuers, recipients, and verifiers
+
+## Technical Achievements
+
+- 97% transaction success rate across testing scenarios
+- 80% reduction in verification time compared to traditional systems
+- ~$63 HKD per contract deployment cost (estimated for Ethereum mainnet)
+- Elimination of single points of failure in document management
 
 ## Project Structure
 
@@ -45,6 +92,7 @@ net-authorizing-system/
 - Node.js (v14+)
 - npm or yarn
 - MetaMask or other web3 wallet
+- Test ETH on Sepolia and Hoodi networks
 
 ### Smart Contract Setup
 
@@ -62,6 +110,7 @@ net-authorizing-system/
    ```
    PRIVATE_KEY=your_private_key_without_0x_prefix
    SEPOLIA_RPC_URL=https://eth-sepolia.public.blastapi.io
+   HOODI_RPC_URL=https://rpc.testnet.hoodinetwork.com
    ETHERSCAN_API_KEY=your_etherscan_api_key
    REPORT_GAS=true
    ```
@@ -72,8 +121,11 @@ net-authorizing-system/
    npx hardhat node
    npx hardhat run scripts/deploy-all.js --network localhost
    
-   # For testnet (Sepolia)
+   # For Sepolia testnet
    npx hardhat run scripts/deploy-all.js --network sepolia
+   
+   # For Hoodi testnet
+   npx hardhat run scripts/deploy-all.js --network hoodi
    ```
 
 Refer to the [Web3 README](./web3/README.md) for more detailed information on smart contract deployment and testing.
@@ -90,7 +142,13 @@ Refer to the [Web3 README](./web3/README.md) for more detailed information on sm
    npm install
    ```
 
-3. Create a `.env.local` file (copy from `.env.example` if available)
+3. Create a `.env.local` file with network configuration:
+   ```
+   VITE_IRYS_NODE=https://node2.irys.xyz
+   VITE_DEFAULT_CHAIN_ID=11155111 # Sepolia testnet
+   VITE_HOODI_CHAIN_ID=80085 # Hoodi testnet
+   VITE_CONTRACT_ADDRESSES_PATH=/deployments/latest.json
+   ```
 
 4. Start the development server:
    ```bash
@@ -100,6 +158,24 @@ Refer to the [Web3 README](./web3/README.md) for more detailed information on sm
 5. Open [http://localhost:5173](http://localhost:5173) in your browser
 
 Refer to the [Vite README](./vite/README.md) for more detailed frontend information.
+
+## Network Configuration
+
+To use the application, you'll need to configure your MetaMask wallet with both networks:
+
+### Sepolia Network
+- Network Name: Sepolia
+- RPC URL: https://eth-sepolia.public.blastapi.io
+- Chain ID: 11155111
+- Currency Symbol: ETH
+- Block Explorer: https://sepolia.etherscan.io/
+
+### Hoodi Network
+- Network Name: Hoodi Testnet
+- RPC URL: https://rpc.testnet.hoodinetwork.com
+- Chain ID: 80085
+- Currency Symbol: HOO
+- Block Explorer: https://explorer.testnet.hoodinetwork.com/
 
 ## Usage
 
@@ -124,13 +200,20 @@ Refer to the [Vite README](./vite/README.md) for more detailed frontend informat
 - [Contract Design](./docs/ContractDesign.md) - Detailed smart contract architecture
 - [User Flow](./docs/UserFlow.md) - Step-by-step user interaction flows
 
-## Contributing
+## Team
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- IEONG Kai Yip (Alex)
+- WONG Ka Ho (Shison)
+- WONG Ki Tung (Nicky)
+
+## Advisors
+
+- Dr. AU YEUNG Siu Kei (Jeff)
+- Dr. TAO Bishenghui
+
+## Acknowledgments
+
+We thank Kinetix Systems Limited for their business insights, Dr. Ma Xiaoxue for demo feedback, and the open-source communities behind Solidity, React, MetaMask, Hardhat, and Arweave.
 
 ## License
 
