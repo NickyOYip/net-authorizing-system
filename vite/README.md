@@ -92,8 +92,8 @@ vite/
 
 This application operates across two Ethereum testnets:
 
-- **Sepolia**: Main network for contract deployments and events
-- **Hoodi**: Secondary network for cost-sensitive operations
+- **Hoodi**: Primary network for Ethereum contract deployments and interactions
+- **Sepolia**: Secondary network for Irys/Arweave storage operations
 
 ### Network Limitations
 
@@ -102,13 +102,12 @@ This application operates across two Ethereum testnets:
 - The dashboard may not show all activated contracts from the Hoodi network
 - This is because The Graph (event indexing service) is not available on Hoodi
 - **Workaround**: Use the search functionality to find contracts deployed on Hoodi
-- Contracts on Sepolia will appear correctly in all views
 
 ### Getting Test ETH
 
 Before using the application, obtain test ETH from:
-- Sepolia: [https://sepolia-faucet.pk910.de/](https://sepolia-faucet.pk910.de/)
-- Hoodi: [https://hoodi-faucet.pk910.de/](https://hoodi-faucet.pk910.de/)
+- Sepolia: [https://sepolia-faucet.pk910.de/](https://sepolia-faucet.pk910.de/) - Used for storage operations
+- Hoodi: [https://hoodi-faucet.pk910.de/](https://hoodi-faucet.pk910.de/) - Used for contract interactions
 
 ### Important: Devnet Storage Limitations
 
