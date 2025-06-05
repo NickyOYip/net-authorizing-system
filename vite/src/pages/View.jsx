@@ -48,7 +48,6 @@ import { usePublicSubContract } from '../hooks/contractHook/usePublicSubContract
 import { usePrivateSubContract } from '../hooks/contractHook/usePrivateSubContractHook';
 import { useBroadcastSubContract } from '../hooks/contractHook/useBroadcastSubContractHook';
 import { useEventHistory } from '../hooks/contractHook/helpers/useEventHistory';
-import { ContractStatus, ContractType } from '../hooks/contractHook/types';
 import { ethers } from 'ethers';
 import { DataContext } from '../provider/dataProvider';
 import { useHomeService } from '../services/homeService';
@@ -60,8 +59,8 @@ export default function ContractViewPage() {
   const { data } = useContext(DataContext);
   const homeService = useHomeService();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [contractType, setContractType] = useState<ContractType | null>(null);
+  const [error, setError] = useState(null);
+  const [contractType, setContractType] = useState(null);
   
   // Contract hooks
   const publicContract = usePublicContract();
@@ -74,9 +73,9 @@ export default function ContractViewPage() {
 
   // Contract state
   const [contractDetails, setContractDetails] = useState<any>(null);
-  const [versions, setVersions] = useState<any[]>([]);
+  const [versions, setVersions] = useState([]);
 
-  const handleCopy = (text: string) => {
+  const handleCopy = (text) => {
     navigator.clipboard.writeText(text)
       .then(() => {
         console.log('Copied:', text);
@@ -127,7 +126,7 @@ export default function ContractViewPage() {
         }
       } catch (err) {
         console.error('[View] ❌ Error detecting contract type:', err);
-        setError(`Failed to detect contract type: ${(err as Error).message}`);
+        setError(`Failed to detect contract type: ${(err).message}`);
         setLoading(false);
       }
       // Don't set loading to false here to allow the next useEffect to run with the contract type
@@ -256,7 +255,7 @@ export default function ContractViewPage() {
       } catch (err) {
         console.error('[View] ❌ Error loading contract data:', err);
         if (mounted) {
-          setError(`Failed to load contract: ${(err as Error).message}`);
+          setError(`Failed to load contract: ${(err).message}`);
         }
       } finally {
         if (mounted) {
@@ -301,20 +300,20 @@ export default function ContractViewPage() {
     return () => { mounted = false; };
   }, [contractDetails?.recipient, data.ethProvider]);
 
-  const handleDownloadJson = (jsonId: string) => {
+  const handleDownloadJson = (jsonId) => {
     if (jsonId) {
       window.open(`https://gateway.irys.xyz/${jsonId}`, '_blank');
     }
   };
 
-  const handleDownloadDoc = (documentId: string) => {
+  const handleDownloadDoc = (documentId) => {
     if (documentId) {
       window.open(`https://gateway.irys.xyz/${documentId}`, '_blank');
     }
   };
 
   // Add new function to handle private file decryption with better link validation
-  const handleDecryptFile = async (fileId: string | undefined, fileType: 'json' | 'document') => {
+  const handleDecryptFile = async (fileId, fileType) => {
     if (!fileId) {
       setError(`No storage link found for the ${fileType} file. The contract might not be fully activated.`);
       return;
@@ -361,7 +360,7 @@ export default function ContractViewPage() {
       setPrivateKey(''); // Clear private key from memory
     } catch (error) {
       console.error('[View] Download/decrypt error:', error);
-      setDecryptionError((error as Error).message);
+      setDecryptionError((error ).message);
     } finally {
       setIsDecrypting(false);
     }

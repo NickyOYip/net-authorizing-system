@@ -20,7 +20,6 @@ import LockIcon from '@mui/icons-material/Lock';
 import ShowContracts from '../components/ShowContracts';
 import { useHomeService } from '../services/homeService';
 import { DataContext } from '../provider/dataProvider';
-import { ContractType } from '../utils/contractUtils';
 
 // Custom styled filter button to match the design in the screenshot
 const FilterButton = styled(Button)(({ theme, active, color }) => ({
@@ -44,12 +43,12 @@ export default function Home() {
 
   // Tab state: 0 = Search, 1 = My Contracts
   const [tabValue, setTabValue] = useState(0);
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
   // Filter state
-  const [filter, setFilter] = useState<{broadcast: boolean, public: boolean, private: boolean}>({
+  const [filter, setFilter] = useState({
     broadcast: true,
     public: true,
     private: true
@@ -57,19 +56,19 @@ export default function Home() {
 
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState(null);
 
   // User contracts state
-  const [userContracts, setUserContracts] = useState<any[]>([]);
+  const [userContracts, setUserContracts] = useState([]);
   const [userContractsLoading, setUserContractsLoading] = useState(false);
-  const [userContractsError, setUserContractsError] = useState<string | null>(null);
+  const [userContractsError, setUserContractsError] = useState(null);
 
   // Example of using the contract type detection (for demo purposes)
-  const [detectedType, setDetectedType] = useState<ContractType | null>(null);
+  const [detectedType, setDetectedType] = useState(null);
   
-  const handleContractTypeDetection = async (address: string) => {
+  const handleContractTypeDetection = async (address) => {
     if (!address) return;
     
     try {
@@ -140,7 +139,7 @@ export default function Home() {
       if (filteredResults.length === 0) {
         setSearchError('No contracts found matching your search and filters.');
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error('[Home] ❌ handleSearch error:', e);
       setSearchError(e?.message || 'Failed to search contracts.');
     }
@@ -181,7 +180,7 @@ export default function Home() {
         if (filteredContracts.length === 0) {
           setUserContractsError('You have no contracts matching selected filters.');
         }
-      } catch (e: any) {
+      } catch (e) {
         console.error('[Home] ❌ fetchUserContracts error:', e);
         setUserContractsError(e?.message || 'Failed to load your contracts.');
       }
@@ -198,7 +197,7 @@ export default function Home() {
     }
   };
   
-  const toggleFilter = (type: 'broadcast' | 'public' | 'private') => {
+  const toggleFilter = (type) => {
     setFilter(prev => ({
       ...prev,
       [type]: !prev[type]

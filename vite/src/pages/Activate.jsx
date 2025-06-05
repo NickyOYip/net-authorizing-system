@@ -20,9 +20,7 @@ import SendIcon from '@mui/icons-material/Send';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useActivateService, ActivationProgressState } from '../services/activateService';
 import { DataContext } from '../provider/dataProvider';
-import { ContractType } from '../utils/contractUtils';
 
 export default function Activate() {
   // Get contract ID from URL params
@@ -35,22 +33,22 @@ export default function Activate() {
   // Component state
   const [activeStep, setActiveStep] = useState(0);
   const [contractAddress, setContractAddress] = useState(id || '');
-  const [contractType, setContractType] = useState<ContractType | null>(null);
+  const [contractType, setContractType] = useState(null);
   const [activationCode, setActivationCode] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedJson, setSelectedJson] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedJson, setSelectedJson] = useState(null);
   const [fileHash, setFileHash] = useState('');
   const [jsonHash, setJsonHash] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const [isDetectingType, setIsDetectingType] = useState(false);
 
   // Activation state
   const [isActivating, setIsActivating] = useState(false);
   const [activationComplete, setActivationComplete] = useState(false);
   const [activationSuccess, setActivationSuccess] = useState(false);
-  const [activationError, setActivationError] = useState<string | null>(null);
-  const [activationTxHash, setActivationTxHash] = useState<string | null>(null);
-  const [activationProgress, setActivationProgress] = useState<ActivationProgressState>({
+  const [activationError, setActivationError] = useState(null);
+  const [activationTxHash, setActivationTxHash] = useState(null);
+  const [activationProgress, setActivationProgress] = useState({
     verifying: null,
     activating: null,
     uploading: null,
@@ -82,7 +80,7 @@ export default function Activate() {
         } else {
           setContractType(detectedType);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('[Activate] ❌ Error detecting contract type:', err);
         setError(`Invalid contract address: ${err.message}`);
         setContractType(null);
@@ -142,7 +140,7 @@ export default function Activate() {
   };
 
   // Handle address input change
-  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddressChange = (e) => {
     setContractAddress(e.target.value);
     // Reset contract type when address changes
     if (contractType) {
@@ -151,12 +149,12 @@ export default function Activate() {
   };
 
   // Handle activation code input change
-  const handleActivationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleActivationChange = (e) => {
     setActivationCode(e.target.value);
   };
 
   // Calculate file hash when document file selected
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -183,7 +181,7 @@ export default function Activate() {
   };
 
   // Calculate file hash when metadata/json file selected
-  const handleJsonChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleJsonChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -256,7 +254,7 @@ export default function Activate() {
       }
       
       setActivationComplete(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error("[Activate] ❌ Activation error:", err);
       setActivationSuccess(false);
       setActivationError(err.message || "An unexpected error occurred during activation.");
@@ -291,7 +289,7 @@ export default function Activate() {
   };
 
   // Copy text to clipboard helper
-  const handleCopy = (text: string) => {
+  const handleCopy = (text) => {
     navigator.clipboard.writeText(text)
       .then(() => {
         console.log('Text copied to clipboard');

@@ -22,7 +22,6 @@ import ErrorIcon from '@mui/icons-material/Error';
 import CircularProgress from '@mui/material/CircularProgress';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useVerifyService } from '../services/verifyService';
-import { ContractType } from '../utils/contractUtils';
 
 export default function VerifyDocument() {
   const [activeStep, setActiveStep] = useState(0);
@@ -35,12 +34,7 @@ export default function VerifyDocument() {
   const navigate = useNavigate();
   const verifyService = useVerifyService();
 
-  const [verificationResult, setVerificationResult] = useState<null | {
-    verified: boolean;
-    message: string;
-    contractType?: ContractType;
-    details?: any;
-  }>(null);
+  const [verificationResult, setVerificationResult] = useState(null);
 
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState(null);
@@ -71,7 +65,7 @@ export default function VerifyDocument() {
         } else {
           setContractType(detectedType);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('[Verify] Error detecting contract type:', err);
         setError(`Invalid contract address: ${err.message}`);
         setContractType(null);
@@ -192,7 +186,7 @@ export default function VerifyDocument() {
       });
       
       setVerificationResult(result);
-    } catch (err: any) {
+    } catch (err) {
       console.error("[Verify] ❌ Verification error:", err);
       setVerificationResult({
         verified: false,
