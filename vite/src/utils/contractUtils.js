@@ -3,9 +3,6 @@ import { BroadcastFactoryABI } from '../hooks/contractHook/abis/broadcastFactory
 import { PublicFactoryABI } from '../hooks/contractHook/abis/publicFactory';
 import { PrivateFactoryABI } from '../hooks/contractHook/abis/privateFactory';
 
-// Define a type for contract types
-export type ContractType = 'broadcast' | 'public' | 'private' | 'unknown';
-
 // Debug: RPC provider to fetch events directly
 const debugProvider = new ethers.JsonRpcProvider('https://ethereum-hoodi-rpc.publicnode.com');
 
@@ -19,14 +16,10 @@ const debugProvider = new ethers.JsonRpcProvider('https://ethereum-hoodi-rpc.pub
  * @returns The contract type or 'unknown' if not determined
  */
 export async function getContractType(
-  contractAddress: string, 
-  factoryAddresses: { 
-    broadcast: string | null, 
-    public: string | null, 
-    private: string | null 
-  },
-  provider?: ethers.Signer | ethers.Provider
-): Promise<ContractType> {
+  contractAddress, 
+  factoryAddresses,
+  provider
+){
   // Use provided provider or fallback to debug provider
   const ethProvider = provider || debugProvider;
   
@@ -66,12 +59,12 @@ export async function getContractType(
  * by querying past events
  */
 async function isContractFromFactory(
-  contractAddress: string,
-  factoryAddress: string | null,
-  factoryABI: any,
-  eventName: string,
-  provider: ethers.Signer | ethers.Provider
-): Promise<boolean> {
+  contractAddress,
+  factoryAddress,
+  factoryABI,
+  eventName,
+  provider
+) {
   if (!factoryAddress) return false;
   
   try {
@@ -96,14 +89,14 @@ async function isContractFromFactory(
  * Batch contract.queryFilter in ≤40 k‐block chunks
  */
 async function batchQueryFilter(
-  contract: ethers.Contract,
-  eventFilter: ethers.EventFilter,
+  contract,
+  eventFilter,
   step = 40000,
   startBlock = 0
 ) {
   const provider = contract.provider || debugProvider;
   const latest = await provider.getBlockNumber();
-  let allEvents: ethers.Event[] = [];
+  let allEvents = [];
   // ensure a read‐only contract backed by the provider
   const reader = contract.connect(provider);
   for (let from = startBlock; from <= latest; from += step) {
@@ -119,17 +112,13 @@ async function batchQueryFilter(
  * Get contract type with caching for better performance
  * Stores previously detected types in memory
  */
-const contractTypeCache = new Map<string, ContractType>();
+const contractTypeCache = new Map();
 
 export async function getCachedContractType(
-  contractAddress: string,
-  factoryAddresses: {
-    broadcast: string | null,
-    public: string | null,
-    private: string | null
-  },
-  provider?: ethers.Signer | ethers.Provider
-): Promise<ContractType> {
+  contractAddress,
+  factoryAddresses,
+  provider
+) {
   const lowerCaseAddr = contractAddress.toLowerCase();
   
   // Return from cache if available

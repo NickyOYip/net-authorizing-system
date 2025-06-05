@@ -2,34 +2,14 @@ import { useState, useContext, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../../provider/dataProvider';
 import { createContractFactories, waitForTransaction, findEventInLogs, eventInterfaces } from './utils';
-import { BaseHookReturn, NewContractOwnedEvent, CreatePublicPrivateParams } from './types';
-
-interface PublicFactoryReturn extends BaseHookReturn {
-  // Read operations
-  getAllPublicContracts: (factoryAddress: string) => Promise<string[]>;
-  getPublicContractByIndex: (factoryAddress: string, index: number) => Promise<string>;
-  
-  // Write operations
-  createPublicContract: (
-    factoryAddress: string, 
-    params: CreatePublicPrivateParams
-  ) => Promise<NewContractOwnedEvent>;
-  
-  // Events
-  getNewPublicContractEvents: (
-    factoryAddress: string,
-    fromBlock?: number,
-    toBlock?: number
-  ) => Promise<NewContractOwnedEvent[]>;
-}
 
 /**
  * Hook for interacting with the PublicFactory contract
  */
-export function usePublicFactory(): PublicFactoryReturn {
+export function usePublicFactory() {
   const { data } = useContext(DataContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
   const resetState = () => {
     setIsLoading(true);
@@ -39,7 +19,7 @@ export function usePublicFactory(): PublicFactoryReturn {
   /**
    * Get all public contracts created by this factory
    */
-  const getAllPublicContracts = useCallback(async (factoryAddress: string) => {
+  const getAllPublicContracts = useCallback(async (factoryAddress) => {
     try {
       resetState();
       
@@ -54,7 +34,7 @@ export function usePublicFactory(): PublicFactoryReturn {
       return contracts;
     } catch (err) {
       console.error('Error getting all public contracts:', err);
-      setError(`Failed to get contracts: ${(err as Error).message}`);
+      setError(`Failed to get contracts: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -65,8 +45,8 @@ export function usePublicFactory(): PublicFactoryReturn {
    * Get a public contract by its index
    */
   const getPublicContractByIndex = useCallback(async (
-    factoryAddress: string,
-    index: number
+    factoryAddress,
+    index
   ) => {
     try {
       resetState();
@@ -82,7 +62,7 @@ export function usePublicFactory(): PublicFactoryReturn {
       return contractAddress;
     } catch (err) {
       console.error('Error getting public contract by index:', err);
-      setError(`Failed to get contract: ${(err as Error).message}`);
+      setError(`Failed to get contract: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -93,8 +73,8 @@ export function usePublicFactory(): PublicFactoryReturn {
    * Create a new public contract
    */
   const createPublicContract = useCallback(async (
-    factoryAddress: string,
-    params: CreatePublicPrivateParams
+    factoryAddress,
+    params
   ) => {
     try {
       resetState();
@@ -114,7 +94,7 @@ export function usePublicFactory(): PublicFactoryReturn {
       
       const receipt = await waitForTransaction(tx);
       
-      const event = findEventInLogs<NewContractOwnedEvent>(
+      const event = findEventInLogs(
         receipt,
         'NewPublicContractOwned',
         eventInterfaces.publicFactory,
@@ -136,7 +116,7 @@ export function usePublicFactory(): PublicFactoryReturn {
       return event;
     } catch (err) {
       console.error('Error creating public contract:', err);
-      setError(`Failed to create contract: ${(err as Error).message}`);
+      setError(`Failed to create contract: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -147,9 +127,9 @@ export function usePublicFactory(): PublicFactoryReturn {
    * Get NewPublicContractOwned events from blockchain
    */
   const getNewPublicContractEvents = useCallback(async (
-    factoryAddress: string,
-    fromBlock?: number,
-    toBlock?: number
+    factoryAddress,
+    fromBlock,
+    toBlock
   ) => {
     try {
       resetState();
@@ -168,7 +148,7 @@ export function usePublicFactory(): PublicFactoryReturn {
         toBlock || 'latest'
       );
       
-      const results: NewContractOwnedEvent[] = [];
+      const results = [];
       
       for (const event of events) {
         if (event.args) {
@@ -187,7 +167,7 @@ export function usePublicFactory(): PublicFactoryReturn {
       return results;
     } catch (err) {
       console.error('Error getting NewPublicContractOwned events:', err);
-      setError(`Failed to get events: ${(err as Error).message}`);
+      setError(`Failed to get events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);

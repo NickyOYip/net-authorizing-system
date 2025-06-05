@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { useBroadcastSubContract, usePublicSubContract, usePrivateSubContract } from '../hooks/contractHook';
 import { DataContext } from '../provider/dataProvider';
-import { getCachedContractType, ContractType } from '../utils/contractUtils';
+import { getCachedContractType } from '../utils/contractUtils';
 import { useBroadcastContract, usePublicContract, usePrivateContract } from '../hooks/contractHook';
 
 export function useVerifyService() {
@@ -17,7 +17,7 @@ export function useVerifyService() {
   const { data } = useContext(DataContext);
 
   // Detect contract type based on address
-  const detectContractType = async (contractAddress: string): Promise<ContractType> => {
+  const detectContractType = async (contractAddress) => {
     if (!contractAddress) throw new Error('Contract address is required');
     
     try {
@@ -35,12 +35,7 @@ export function useVerifyService() {
   };
 
   // Unified verification function that works for all contract types
-  const verifyDocument = async (params: {
-    contractAddress: string,
-    fileHash?: string,
-    jsonHash?: string,
-    contractType?: ContractType
-  }) => {
+  const verifyDocument = async (params) => {
     const { contractAddress, fileHash, jsonHash, contractType: providedType } = params;
     
     console.log('[verifyService] ▶️ verifyDocument() called with:', { 

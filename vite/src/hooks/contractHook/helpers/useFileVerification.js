@@ -2,30 +2,12 @@ import { useState, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useBroadcastSubContract, usePublicSubContract, usePrivateSubContract } from '..';
 
-interface FileVerificationReturn {
-  isLoading: boolean;
-  error: string | null;
-  
-  // Verify file against any subcontract (auto-detects contract type)
-  verifyFile: (
-    subContractAddress: string,
-    fileHash: string,
-    fileType: 'json' | 'softCopy'
-  ) => Promise<{
-    isValid: boolean;
-    contractType: 'broadcast' | 'public' | 'private';
-  }>;
-  
-  // Generate hash for file (useful for pre-verification)
-  generateFileHash: (file: File) => Promise<string>;
-}
-
 /**
  * Helper hook for verifying file hashes against any contract type
  */
-export function useFileVerification(): FileVerificationReturn {
+export function useFileVerification() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
   // Import all contract hooks
   const broadcastSubContract = useBroadcastSubContract();
@@ -35,7 +17,7 @@ export function useFileVerification(): FileVerificationReturn {
   /**
    * Generate a hash for a file
    */
-  const generateFileHash = useCallback(async (file: File): Promise<string> => {
+  const generateFileHash = useCallback(async (file) => {
     try {
       setIsLoading(true);
       
@@ -52,7 +34,7 @@ export function useFileVerification(): FileVerificationReturn {
       return hashHex;
     } catch (err) {
       console.error('Error generating file hash:', err);
-      setError(`Failed to generate hash: ${(err as Error).message}`);
+      setError(`Failed to generate hash: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -63,9 +45,9 @@ export function useFileVerification(): FileVerificationReturn {
    * Verify a file hash against any contract type
    */
   const verifyFile = useCallback(async (
-    subContractAddress: string,
-    fileHash: string,
-    fileType: 'json' | 'softCopy'
+    subContractAddress,
+    fileHash,
+    fileType
   ) => {
     try {
       setIsLoading(true);
@@ -78,7 +60,7 @@ export function useFileVerification(): FileVerificationReturn {
           fileHash,
           fileType
         );
-        return { isValid, contractType: 'broadcast' as const };
+        return { isValid, contractType: 'broadcast' };
       } catch (broadcastError) {
         // Try next type
       }
@@ -89,7 +71,7 @@ export function useFileVerification(): FileVerificationReturn {
           fileHash,
           fileType
         );
-        return { isValid, contractType: 'public' as const };
+        return { isValid, contractType: 'public' };
       } catch (publicError) {
         // Try next type
       }
@@ -100,15 +82,15 @@ export function useFileVerification(): FileVerificationReturn {
           fileHash,
           fileType
         );
-        return { isValid, contractType: 'private' as const };
+        return { isValid, contractType: 'private' };
       } catch (privateError) {
         // If we get here, none of the contract types worked
         throw new Error('Contract address is not a valid sub-contract');
       }
     } catch (err) {
       console.error('Error verifying file:', err);
-      setError(`Failed to verify file: ${(err as Error).message}`);
-      return { isValid: false, contractType: 'broadcast' as const };
+      setError(`Failed to verify file: ${err.message}`);
+      return { isValid: false, contractType: 'broadcast' };
     } finally {
       setIsLoading(false);
     }

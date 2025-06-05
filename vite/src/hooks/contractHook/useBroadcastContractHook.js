@@ -2,43 +2,11 @@ import { useState, useContext, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../../provider/dataProvider';
 import { createContractFactories, waitForTransaction, findEventInLogs, eventInterfaces } from './utils';
-import { BaseHookReturn, NewSubContractOwnedEvent, BroadcastSubContractParams } from './types';
 
-interface BroadcastContractReturn extends BaseHookReturn {
-  // Read operations
-  getContractDetails: (contractAddress: string) => Promise<{
-    owner: string;
-    title: string;
-    totalVerNo: number;
-    activeVer: number;
-  }>;
-  
-  getAllVersions: (contractAddress: string) => Promise<string[]>;
-  getVersionByIndex: (contractAddress: string, index: number) => Promise<string>;
-  getCurrentVersion: (contractAddress: string) => Promise<string>;
-  getVersionByNumber: (contractAddress: string, versionNumber: number) => Promise<string>;
-  
-  // Write operations
-  addNewBroadcastSubContract: (
-    contractAddress: string, 
-    params: BroadcastSubContractParams
-  ) => Promise<NewSubContractOwnedEvent>;
-  
-  // Events
-  getNewBroadcastSubContractEvents: (
-    contractAddress: string,
-    fromBlock?: number,
-    toBlock?: number
-  ) => Promise<NewSubContractOwnedEvent[]>;
-}
-
-/**
- * Hook for interacting with the BroadcastContract
- */
-export function useBroadcastContract(): BroadcastContractReturn {
+export function useBroadcastContract() {
   const { data } = useContext(DataContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
   const resetState = () => {
     setIsLoading(true);
@@ -48,7 +16,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
   /**
    * Get contract details
    */
-  const getContractDetails = useCallback(async (contractAddress: string) => {
+  const getContractDetails = useCallback(async (contractAddress) => {
     try {
       resetState();
       
@@ -74,7 +42,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
       };
     } catch (err) {
       console.error('Error getting contract details:', err);
-      setError(`Failed to get contract details: ${(err as Error).message}`);
+      setError(`Failed to get contract details: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -84,7 +52,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
   /**
    * Get all versions of this contract
    */
-  const getAllVersions = useCallback(async (contractAddress: string) => {
+  const getAllVersions = useCallback(async (contractAddress) => {
     try {
       resetState();
       
@@ -99,7 +67,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
       return subContracts;
     } catch (err) {
       console.error('Error getting all versions:', err);
-      setError(`Failed to get versions: ${(err as Error).message}`);
+      setError(`Failed to get versions: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -110,8 +78,8 @@ export function useBroadcastContract(): BroadcastContractReturn {
    * Get a specific version by index
    */
   const getVersionByIndex = useCallback(async (
-    contractAddress: string,
-    index: number
+    contractAddress,
+    index
   ) => {
     try {
       resetState();
@@ -127,7 +95,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
       return subContractAddress;
     } catch (err) {
       console.error('Error getting version by index:', err);
-      setError(`Failed to get version: ${(err as Error).message}`);
+      setError(`Failed to get version: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -137,7 +105,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
   /**
    * Get current active version
    */
-  const getCurrentVersion = useCallback(async (contractAddress: string) => {
+  const getCurrentVersion = useCallback(async (contractAddress) => {
     try {
       resetState();
       
@@ -152,7 +120,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
       return currentVersionAddress;
     } catch (err) {
       console.error('Error getting current version:', err);
-      setError(`Failed to get current version: ${(err as Error).message}`);
+      setError(`Failed to get current version: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -163,8 +131,8 @@ export function useBroadcastContract(): BroadcastContractReturn {
    * Get version by version number
    */
   const getVersionByNumber = useCallback(async (
-    contractAddress: string,
-    versionNumber: number
+    contractAddress,
+    versionNumber
   ) => {
     try {
       resetState();
@@ -180,7 +148,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
       return subContractAddress;
     } catch (err) {
       console.error('Error getting version by number:', err);
-      setError(`Failed to get version: ${(err as Error).message}`);
+      setError(`Failed to get version: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -191,8 +159,8 @@ export function useBroadcastContract(): BroadcastContractReturn {
    * Add a new sub-contract version
    */
   const addNewBroadcastSubContract = useCallback(async (
-    contractAddress: string,
-    params: BroadcastSubContractParams
+    contractAddress,
+    params
   ) => {
     try {
       resetState();
@@ -215,7 +183,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
       
       const receipt = await waitForTransaction(tx);
       
-      const event = findEventInLogs<NewSubContractOwnedEvent>(
+      const event = findEventInLogs(
         receipt,
         'NewBroadcastSubContractOwned',
         eventInterfaces.broadcastContract,
@@ -238,7 +206,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
       return event;
     } catch (err) {
       console.error('Error adding new broadcast sub-contract:', err);
-      setError(`Failed to add sub-contract: ${(err as Error).message}`);
+      setError(`Failed to add sub-contract: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -249,9 +217,9 @@ export function useBroadcastContract(): BroadcastContractReturn {
    * Get NewBroadcastSubContractOwned events from blockchain
    */
   const getNewBroadcastSubContractEvents = useCallback(async (
-    contractAddress: string,
-    fromBlock?: number,
-    toBlock?: number
+    contractAddress,
+    fromBlock,
+    toBlock
   ) => {
     try {
       resetState();
@@ -270,7 +238,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
         toBlock || 'latest'
       );
       
-      const results: NewSubContractOwnedEvent[] = [];
+      const results = [];
       
       for (const event of events) {
         if (event.args) {
@@ -290,7 +258,7 @@ export function useBroadcastContract(): BroadcastContractReturn {
       return results;
     } catch (err) {
       console.error('Error getting NewBroadcastSubContractOwned events:', err);
-      setError(`Failed to get events: ${(err as Error).message}`);
+      setError(`Failed to get events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);

@@ -1,20 +1,6 @@
 import { useState, useContext, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../../provider/dataProvider';
-import { ContractStatus } from './types';
-
-interface SubContractDetails {
-  publicContractAddr: string;
-  owner: string;
-  status: ContractStatus;
-  version: number;
-  jsonHash: string;
-  softCopyHash: string;
-  storageLink: string;
-  startDate: number;
-  endDate: number;
-  deployTime: number;
-}
 
 const PublicSubContractABI = [
   "function getDetail() view returns (address publicContractAddr, address owner, uint8 status, uint256 version, string jsonHash, string softCopyHash, string storageLink, uint256 startDate, uint256 endDate, uint256 deployTime)",
@@ -34,9 +20,9 @@ const PublicSubContractABI = [
 export function usePublicSubContract() {
   const { data } = useContext(DataContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
-  const getSubContractDetails = useCallback(async (contractAddress: string): Promise<SubContractDetails> => {
+  const getSubContractDetails = useCallback(async (contractAddress) => {
     if (!data.ethProvider) {
       throw new Error('Provider not available');
     }
@@ -110,7 +96,7 @@ export function usePublicSubContract() {
       }
     } catch (err) {
       console.error('Error getting sub-contract details:', err);
-      setError(`Failed to get contract details: ${(err as Error).message}`);
+      setError(`Failed to get contract details: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);

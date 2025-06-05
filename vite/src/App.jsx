@@ -1,8 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
-import Broadcast from './pages/Broadcast'
-import Public from './pages/Public'
-import Private from './pages/Private'
 import Verify from './pages/Verify'
 import Layout from './components/Layout'
 import PublicView from './pages/View'

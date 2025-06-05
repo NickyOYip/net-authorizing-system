@@ -2,56 +2,11 @@ import { useState, useContext, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../../provider/dataProvider';
 import { createContractFactories, waitForTransaction, findEventInLogs, eventInterfaces } from './utils';
-import { BaseHookReturn, NewVerContractPushedEvent, UsingVerEvent } from './types';
 
-interface MasterFactoryReturn extends BaseHookReturn {
-  // Read operations
-  getCurrentFactories: () => Promise<{
-    broadcastFactory: string;
-    publicFactory: string;
-    privateFactory: string;
-  }>;
-  
-  getAllFactoryVersions: () => Promise<{
-    broadcastFactories: string[];
-    publicFactories: string[];
-    privateFactories: string[];
-  }>;
-  
-  getCurrentVersionNumbers: () => Promise<{
-    broadcastVer: number;
-    publicVer: number;
-    privateVer: number;
-  }>;
-  
-  getFactoryByVersion: (
-    factoryType: 'broadcast' | 'public' | 'private', 
-    version: number
-  ) => Promise<string>;
-  
-  // Write operations (owner only)
-  addFactoryVersion: (
-    factoryType: 'broadcast' | 'public' | 'private',
-    newFactoryAddress: string
-  ) => Promise<NewVerContractPushedEvent>;
-  
-  updateFactoryVersion: (
-    factoryType: 'broadcast' | 'public' | 'private',
-    version: number
-  ) => Promise<UsingVerEvent>;
-  
-  // Events
-  getNewVerContractPushedEvents: (fromBlock?: number, toBlock?: number) => Promise<NewVerContractPushedEvent[]>;
-  getUsingVerEvents: (fromBlock?: number, toBlock?: number) => Promise<UsingVerEvent[]>;
-}
-
-/**
- * Hook for interacting with the MasterFactory contract
- */
-export function useMasterFactory(): MasterFactoryReturn {
+export function useMasterFactory() {
   const { data } = useContext(DataContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
   const resetState = () => {
     setIsLoading(true);
@@ -81,7 +36,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       };
     } catch (err) {
       console.error('Error getting current factories:', err);
-      setError(`Failed to get current factories: ${(err as Error).message}`);
+      setError(`Failed to get current factories: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -111,7 +66,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       };
     } catch (err) {
       console.error('Error getting all factory versions:', err);
-      setError(`Failed to get all factory versions: ${(err as Error).message}`);
+      setError(`Failed to get all factory versions: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -145,7 +100,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       };
     } catch (err) {
       console.error('Error getting current version numbers:', err);
-      setError(`Failed to get current version numbers: ${(err as Error).message}`);
+      setError(`Failed to get current version numbers: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -156,8 +111,8 @@ export function useMasterFactory(): MasterFactoryReturn {
    * Get a factory address by its type and version
    */
   const getFactoryByVersion = useCallback(async (
-    factoryType: 'broadcast' | 'public' | 'private',
-    version: number
+    factoryType,
+    version
   ) => {
     try {
       resetState();
@@ -169,7 +124,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       const { getMasterFactoryContract } = createContractFactories(data.ethProvider);
       const masterFactory = getMasterFactoryContract(data.factoryAddress);
       
-      let factoryAddress: string;
+      let factoryAddress;
       
       switch (factoryType) {
         case 'broadcast':
@@ -188,7 +143,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       return factoryAddress;
     } catch (err) {
       console.error('Error getting factory by version:', err);
-      setError(`Failed to get factory by version: ${(err as Error).message}`);
+      setError(`Failed to get factory by version: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -199,8 +154,8 @@ export function useMasterFactory(): MasterFactoryReturn {
    * Add a new factory version (owner only)
    */
   const addFactoryVersion = useCallback(async (
-    factoryType: 'broadcast' | 'public' | 'private',
-    newFactoryAddress: string
+    factoryType,
+    newFactoryAddress
   ) => {
     try {
       resetState();
@@ -217,7 +172,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       const masterFactory = getMasterFactoryContract(data.factoryAddress);
       const signer = await data.ethProvider.getSigner();
       
-      let tx: ethers.ContractTransactionResponse;
+      let tx;
       
       switch (factoryType) {
         case 'broadcast':
@@ -235,7 +190,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       
       const receipt = await waitForTransaction(tx);
       
-      const event = findEventInLogs<NewVerContractPushedEvent>(
+      const event = findEventInLogs(
         receipt,
         'NewVerContractPushed',
         eventInterfaces.masterFactory,
@@ -257,7 +212,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       return event;
     } catch (err) {
       console.error('Error adding factory version:', err);
-      setError(`Failed to add factory version: ${(err as Error).message}`);
+      setError(`Failed to add factory version: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -268,8 +223,8 @@ export function useMasterFactory(): MasterFactoryReturn {
    * Update the active factory version (owner only)
    */
   const updateFactoryVersion = useCallback(async (
-    factoryType: 'broadcast' | 'public' | 'private',
-    version: number
+    factoryType,
+    version
   ) => {
     try {
       resetState();
@@ -282,7 +237,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       const masterFactory = getMasterFactoryContract(data.factoryAddress);
       const signer = await data.ethProvider.getSigner();
       
-      let tx: ethers.ContractTransactionResponse;
+      let tx;
       
       switch (factoryType) {
         case 'broadcast':
@@ -300,7 +255,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       
       const receipt = await waitForTransaction(tx);
       
-      const event = findEventInLogs<UsingVerEvent>(
+      const event = findEventInLogs(
         receipt,
         'UsingVer',
         eventInterfaces.masterFactory,
@@ -322,7 +277,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       return event;
     } catch (err) {
       console.error('Error updating factory version:', err);
-      setError(`Failed to update factory version: ${(err as Error).message}`);
+      setError(`Failed to update factory version: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -333,8 +288,8 @@ export function useMasterFactory(): MasterFactoryReturn {
    * Get NewVerContractPushed events from blockchain
    */
   const getNewVerContractPushedEvents = useCallback(async (
-    fromBlock?: number,
-    toBlock?: number
+    fromBlock,
+    toBlock
   ) => {
     try {
       resetState();
@@ -353,7 +308,7 @@ export function useMasterFactory(): MasterFactoryReturn {
         toBlock || 'latest'
       );
       
-      const results: NewVerContractPushedEvent[] = [];
+      const results = [];
       
       for (const event of events) {
         if (event.args) {
@@ -372,7 +327,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       return results;
     } catch (err) {
       console.error('Error getting NewVerContractPushed events:', err);
-      setError(`Failed to get events: ${(err as Error).message}`);
+      setError(`Failed to get events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);
@@ -383,8 +338,8 @@ export function useMasterFactory(): MasterFactoryReturn {
    * Get UsingVer events from blockchain
    */
   const getUsingVerEvents = useCallback(async (
-    fromBlock?: number,
-    toBlock?: number
+    fromBlock,
+    toBlock
   ) => {
     try {
       resetState();
@@ -403,7 +358,7 @@ export function useMasterFactory(): MasterFactoryReturn {
         toBlock || 'latest'
       );
       
-      const results: UsingVerEvent[] = [];
+      const results = [];
       
       for (const event of events) {
         if (event.args) {
@@ -422,7 +377,7 @@ export function useMasterFactory(): MasterFactoryReturn {
       return results;
     } catch (err) {
       console.error('Error getting UsingVer events:', err);
-      setError(`Failed to get events: ${(err as Error).message}`);
+      setError(`Failed to get events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);

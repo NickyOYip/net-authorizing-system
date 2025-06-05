@@ -2,14 +2,9 @@ import { ContractType } from '../types';
 import { ethers } from 'ethers';
 
 export async function detectContractType(
-  id: string,
-  contracts: {
-    broadcast: { getContractDetails: (id: string) => Promise<any> },
-    public: { getContractDetails: (id: string) => Promise<any> },
-    private: { getContractDetails: (id: string) => Promise<any> },
-    provider: ethers.Provider
-  }
-): Promise<ContractType> {
+  id,
+  contracts
+) {
   if (!id) throw new Error('No contract ID provided');
 
   // First verify contract exists

@@ -15,7 +15,7 @@ import {
 /**
  * Creates a contract instance with appropriate ABI
  */
-export function getContract(address: string, abi: any[], provider: ethers.BrowserProvider): ethers.Contract {
+export function getContract(address, abi, provider) {
   if (!address || !ethers.isAddress(address)) {
     throw new Error(`Invalid contract address: ${address}`);
   }
@@ -26,9 +26,9 @@ export function getContract(address: string, abi: any[], provider: ethers.Browse
  * Gets a contract with a signer for write operations
  */
 export async function getSignerContract(
-  contract: ethers.Contract, 
-  provider: ethers.BrowserProvider
-): Promise<ethers.Contract> {
+  contract, 
+  provider
+) {
   const signer = await provider.getSigner();
   return contract.connect(signer);
 }
@@ -37,9 +37,9 @@ export async function getSignerContract(
  * Get timestamp from block number
  */
 export async function getTimestampFromBlockNumber(
-  blockNumber: number,
-  provider: ethers.BrowserProvider
-): Promise<number> {
+  blockNumber,
+  provider
+) {
   const block = await provider.getBlock(blockNumber);
   return block ? Number(block.timestamp) : 0;
 }
@@ -48,8 +48,8 @@ export async function getTimestampFromBlockNumber(
  * Wait for transaction to be mined and return receipt
  */
 export async function waitForTransaction(
-  tx: ethers.ContractTransactionResponse
-): Promise<ethers.ContractTransactionReceipt> {
+  tx
+) {
   const receipt = await tx.wait();
   if (!receipt) {
     throw new Error('Transaction failed');
@@ -60,18 +60,18 @@ export async function waitForTransaction(
 /**
  * Find an event in transaction logs
  */
-export function findEventInLogs<T>(
-  receipt: ethers.ContractTransactionReceipt,
-  eventName: string,
-  iface: ethers.Interface,
-  mapper: (args: any) => T
-): T | null {
+export function findEventInLogs(
+  receipt,
+  eventName,
+  iface,
+  mapper
+) {
   if (!receipt.logs) return null;
   
   for (const log of receipt.logs) {
     try {
       const parsed = iface.parseLog({
-        topics: log.topics as string[],
+        topics: log.topics,
         data: log.data
       });
       
@@ -90,36 +90,36 @@ export function findEventInLogs<T>(
 /**
  * Creates contract instances based on type
  */
-export function createContractFactories(provider: ethers.BrowserProvider) {
+export function createContractFactories(provider) {
   return {
-    getMasterFactoryContract: (address: string) => 
+    getMasterFactoryContract: (address) => 
       getContract(address, MasterFactoryABI, provider),
       
-    getBroadcastFactoryContract: (address: string) => 
+    getBroadcastFactoryContract: (address) => 
       getContract(address, BroadcastFactoryABI, provider),
       
-    getPublicFactoryContract: (address: string) => 
+    getPublicFactoryContract: (address) => 
       getContract(address, PublicFactoryABI, provider),
       
-    getPrivateFactoryContract: (address: string) => 
+    getPrivateFactoryContract: (address) => 
       getContract(address, PrivateFactoryABI, provider),
       
-    getBroadcastContract: (address: string) => 
+    getBroadcastContract: (address) => 
       getContract(address, BroadcastContractABI, provider),
       
-    getPublicContract: (address: string) => 
+    getPublicContract: (address) => 
       getContract(address, PublicContractABI, provider),
       
-    getPrivateContract: (address: string) => 
+    getPrivateContract: (address) => 
       getContract(address, PrivateContractABI, provider),
       
-    getBroadcastSubContract: (address: string) => 
+    getBroadcastSubContract: (address) => 
       getContract(address, BroadcastSubContractABI, provider),
       
-    getPublicSubContract: (address: string) => 
+    getPublicSubContract: (address) => 
       getContract(address, PublicSubContractABI, provider),
       
-    getPrivateSubContract: (address: string) => 
+    getPrivateSubContract: (address) => 
       getContract(address, PrivateSubContractABI, provider),
   };
 }

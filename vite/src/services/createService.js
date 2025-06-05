@@ -1,44 +1,10 @@
 import { ethers } from 'ethers';
 import * as irysAction from '../hooks/irysHook/irysAction';
-import { WebUploader } from '@irys/sdk';
 import { NETWORKS, switchNetwork } from '../utils/networkUtils';
 
-// Progress state type
-export interface CreateProgressState {
-  estimating: boolean | null;
-  uploading: boolean | null;
-  creating: boolean | null;
-  success: boolean | null;
-}
-
-// Contract creation result type
-export interface ContractCreationResult {
-  success: boolean;
-  contractAddress?: string;
-  subContractAddress?: string;
-  errorMessage?: string;
-  transactionHash?: string;
-}
-
-// Common parameters for all contract types
-interface CommonContractParams {
-  title: string;
-  documentFile: File;
-  jsonFile: File;
-  factoryAddress: string;
-  progressCallback: (state: CreateProgressState) => void;
-  provider?: any; // Ethereum provider
-  contractHelpers?: any; // Contract helpers
-  irysUploader?: any; // Irys instance from context
-}
-
-// Parameters specific to public and private contracts
-interface ActivatableContractParams extends CommonContractParams {
-  activationCode: string;
-}
 
 // Helper function to generate file hash (moved from useFileVerification hook)
-const generateFileHash = async (file: File): Promise<string> => {
+const generateFileHash = async (file) => {
   const arrayBuffer = await file.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -57,7 +23,7 @@ const prepareIrysNetwork = async () => {
   }
 };
 
-const performIrysOperation = async <T>(operation: () => Promise<T>): Promise<T> => {
+const performIrysOperation = async (operation) => {
   try {
     const networkReady = await prepareIrysNetwork();
     if (!networkReady) {
@@ -83,7 +49,7 @@ export const createService = {
   /**
    * Create a broadcast contract
    */
-  createBroadcastContract: async (params: CommonContractParams): Promise<ContractCreationResult> => {
+  createBroadcastContract: async (params) => {
     const provider = window.ethereum;
     if (!provider) {
       throw new Error('No Ethereum provider available');
@@ -129,7 +95,7 @@ export const createService = {
         });
       } catch (err) {
         console.error("File upload failed:", err);
-        throw new Error(`File upload failed: ${(err as Error).message}`);
+        throw new Error(`File upload failed: ${(err).message}`);
       }
 
       params.progressCallback({
@@ -201,7 +167,7 @@ export const createService = {
       
       return {
         success: false,
-        errorMessage: (error as Error).message || 'Unknown error occurred'
+        errorMessage: (error).message || 'Unknown error occurred'
       };
     }
   },
@@ -209,7 +175,7 @@ export const createService = {
   /**
    * Create a public contract
    */
-  createPublicContract: async (params: ActivatableContractParams): Promise<ContractCreationResult> => {
+  createPublicContract: async (params) => {
     const provider = window.ethereum;
     if (!provider) {
       throw new Error('No Ethereum provider available');
@@ -255,7 +221,7 @@ export const createService = {
         });
       } catch (err) {
         console.error("File upload failed:", err);
-        throw new Error(`File upload failed: ${(err as Error).message}`);
+        throw new Error(`File upload failed: ${(err ).message}`);
       }
 
       params.progressCallback({
@@ -328,7 +294,7 @@ export const createService = {
       
       return {
         success: false,
-        errorMessage: (error as Error).message || 'Unknown error occurred'
+        errorMessage: (error).message || 'Unknown error occurred'
       };
     }
   },
@@ -336,7 +302,7 @@ export const createService = {
   /**
    * Create a private contract
    */
-  createPrivateContract: async (params: ActivatableContractParams): Promise<ContractCreationResult> => {
+  createPrivateContract: async (params) => {
     try {
       // Update progress - Estimating
       params.progressCallback({
@@ -420,7 +386,7 @@ export const createService = {
       
       return {
         success: false,
-        errorMessage: (error as Error).message || 'Unknown error occurred'
+        errorMessage: (error).message || 'Unknown error occurred'
       };
     }
   }

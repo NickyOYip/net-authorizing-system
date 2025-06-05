@@ -1,45 +1,13 @@
 import { usePublicContract, usePublicSubContract, usePrivateContract, usePrivateSubContract } from '../hooks/contractHook';
 import { DataContext } from '../provider/dataProvider';
 import { useContext, useState } from 'react';
-import { getCachedContractType, ContractType } from '../utils/contractUtils';
+import { getCachedContractType } from '../utils/contractUtils';
 import * as irysAction from '../hooks/irysHook/irysAction';
 import { NETWORKS, switchNetwork } from '../utils/networkUtils';
 import { encryptFile } from '../utils/encryptionUtils';
-import { WebUploader } from '@irys/sdk';
-import { ethers } from 'ethers';
+
 
 // Progress state type
-export interface ActivationProgressState {
-  verifying: boolean | null;
-  activating: boolean | null;
-  uploading: boolean | null;
-  encrypting: boolean | null; // New state for encryption progress
-  success: boolean | null;
-}
-
-// Activation parameters
-export interface ActivationParams {
-  contractAddress: string;
-  activationCode: string;
-  documentFile?: File;
-  jsonFile?: File;
-  documentHash?: string;
-  jsonHash?: string;
-  progressCallback: (state: ActivationProgressState) => void;
-}
-
-// Activation result
-export interface ActivationResult {
-  success: boolean;
-  errorMessage?: string;
-  txHash?: string;
-  contractAddress?: string;
-  contractType?: ContractType;
-  txIds?: {
-    document?: string;
-    json?: string;
-  };
-}
 
 export function useActivateService() {
   const publicContract = usePublicContract();
@@ -49,7 +17,7 @@ export function useActivateService() {
   const { data } = useContext(DataContext);
 
   // Detect contract type based on address
-  const detectContractType = async (contractAddress: string): Promise<ContractType> => {
+  const detectContractType = async (contractAddress) => {
     if (!contractAddress) throw new Error('Contract address is required');
     
     try {
@@ -79,7 +47,7 @@ export function useActivateService() {
   };
 
   // Helper method to perform Irys operations with network switching
-  const performIrysOperation = async <T>(operation: () => Promise<T>): Promise<T> => {
+  const performIrysOperation = async (operation) => {
     try {
       const networkReady = await prepareIrysNetwork();
       if (!networkReady) {
@@ -99,7 +67,7 @@ export function useActivateService() {
   };
 
   // Upload files to Irys
-  const uploadFilesToIrys = async (documentFile: File, jsonFile: File): Promise<{documentTxId: string, jsonTxId: string}> => {
+  const uploadFilesToIrys = async (documentFile, jsonFile) => {
     try {
       let irys = data.irysUploader;
       if (!irys) {
@@ -135,12 +103,12 @@ export function useActivateService() {
       return { documentTxId, jsonTxId };
     } catch (error) {
       console.error('[activateService] ❌ Error uploading encrypted files:', error);
-      throw new Error(`Encrypted file upload failed: ${(error as Error).message}`);
+      throw new Error(`Encrypted file upload failed: ${(error ).message}`);
     }
   };
 
   // Unified activation method for all contract types
-  const activateContract = async (params: ActivationParams): Promise<ActivationResult> => {
+  const activateContract = async (params) => {
     const { 
       contractAddress, 
       activationCode, 
@@ -241,7 +209,7 @@ export function useActivateService() {
             return {
               success: false,
               contractType,
-              errorMessage: `Activation failed: ${(error as Error).message}`
+              errorMessage: `Activation failed: ${(error ).message}`
             };
           }
 
@@ -374,7 +342,7 @@ export function useActivateService() {
             return {
               success: false,
               contractType,
-              errorMessage: `Activation failed: ${(error as Error).message}`
+              errorMessage: `Activation failed: ${(error ).message}`
             };
           }
 
@@ -408,7 +376,7 @@ export function useActivateService() {
       
       return {
         success: false,
-        errorMessage: `Activation process failed: ${(error as Error).message}`
+        errorMessage: `Activation process failed: ${(error ).message}`
       };
     }
   };

@@ -2,54 +2,11 @@ import { useState, useContext, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../../provider/dataProvider';
 import { createContractFactories, waitForTransaction, findEventInLogs, eventInterfaces } from './utils';
-import { BaseHookReturn, NewSubContractOwnedEvent, PrivateSubContractParams, ContractActivatedEvent } from './types';
 
-interface PrivateContractReturn extends BaseHookReturn {
-  // Read operations
-  getContractDetails: (contractAddress: string) => Promise<{
-    owner: string;
-    user: string;
-    title: string;
-    totalVerNo: number;
-    activeVer: number;
-  }>;
-  
-  getAllVersions: (contractAddress: string) => Promise<string[]>;
-  getVersionByIndex: (contractAddress: string, index: number) => Promise<string>;
-  getCurrentVersion: (contractAddress: string) => Promise<string>;
-  
-  // Write operations
-  addNewPrivateSubContract: (
-    contractAddress: string, 
-    params: PrivateSubContractParams
-  ) => Promise<NewSubContractOwnedEvent>;
-  
-  activate: (
-    contractAddress: string, 
-    activationCode: string
-  ) => Promise<ContractActivatedEvent>;
-  
-  // Events
-  getNewPrivateSubContractEvents: (
-    contractAddress: string,
-    fromBlock?: number,
-    toBlock?: number
-  ) => Promise<NewSubContractOwnedEvent[]>;
-  
-  getPrivateContractActivatedEvents: (
-    contractAddress: string,
-    fromBlock?: number,
-    toBlock?: number
-  ) => Promise<ContractActivatedEvent[]>;
-}
-
-/**
- * Hook for interacting with the PrivateContract
- */
-export function usePrivateContract(): PrivateContractReturn {
+export function usePrivateContract() {
   const { data } = useContext(DataContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
   const resetState = () => {
     setIsLoading(true);
@@ -59,7 +16,7 @@ export function usePrivateContract(): PrivateContractReturn {
   /**
    * Get contract details
    */
-  const getContractDetails = useCallback(async (contractAddress: string) => {
+  const getContractDetails = useCallback(async (contractAddress) => {
     try {
       resetState();
       
@@ -87,7 +44,7 @@ export function usePrivateContract(): PrivateContractReturn {
       };
     } catch (err) {
       console.error('Error getting contract details:', err);
-      setError(`Failed to get contract details: ${(err as Error).message}`);
+      setError(`Failed to get contract details: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -97,7 +54,7 @@ export function usePrivateContract(): PrivateContractReturn {
   /**
    * Get all versions of this contract
    */
-  const getAllVersions = useCallback(async (contractAddress: string) => {
+  const getAllVersions = useCallback(async (contractAddress) => {
     try {
       resetState();
       
@@ -112,7 +69,7 @@ export function usePrivateContract(): PrivateContractReturn {
       return subContracts;
     } catch (err) {
       console.error('Error getting all versions:', err);
-      setError(`Failed to get versions: ${(err as Error).message}`);
+      setError(`Failed to get versions: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -123,8 +80,8 @@ export function usePrivateContract(): PrivateContractReturn {
    * Get a specific version by index
    */
   const getVersionByIndex = useCallback(async (
-    contractAddress: string,
-    index: number
+    contractAddress,
+    index
   ) => {
     try {
       resetState();
@@ -140,7 +97,7 @@ export function usePrivateContract(): PrivateContractReturn {
       return subContractAddress;
     } catch (err) {
       console.error('Error getting version by index:', err);
-      setError(`Failed to get version: ${(err as Error).message}`);
+      setError(`Failed to get version: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -150,7 +107,7 @@ export function usePrivateContract(): PrivateContractReturn {
   /**
    * Get current active version
    */
-  const getCurrentVersion = useCallback(async (contractAddress: string) => {
+  const getCurrentVersion = useCallback(async (contractAddress) => {
     try {
       resetState();
       
@@ -165,7 +122,7 @@ export function usePrivateContract(): PrivateContractReturn {
       return currentVersionAddress;
     } catch (err) {
       console.error('Error getting current version:', err);
-      setError(`Failed to get current version: ${(err as Error).message}`);
+      setError(`Failed to get current version: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -176,8 +133,8 @@ export function usePrivateContract(): PrivateContractReturn {
    * Add a new sub-contract version
    */
   const addNewPrivateSubContract = useCallback(async (
-    contractAddress: string,
-    params: PrivateSubContractParams
+    contractAddress,
+    params
   ) => {
     try {
       resetState();
@@ -199,7 +156,7 @@ export function usePrivateContract(): PrivateContractReturn {
       
       const receipt = await waitForTransaction(tx);
       
-      const event = findEventInLogs<NewSubContractOwnedEvent>(
+      const event = findEventInLogs(
         receipt,
         'NewPrivateSubContractOwned',
         eventInterfaces.privateContract,
@@ -222,7 +179,7 @@ export function usePrivateContract(): PrivateContractReturn {
       return event;
     } catch (err) {
       console.error('Error adding new private sub-contract:', err);
-      setError(`Failed to add sub-contract: ${(err as Error).message}`);
+      setError(`Failed to add sub-contract: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -233,8 +190,8 @@ export function usePrivateContract(): PrivateContractReturn {
    * Activate contract with activation code
    */
   const activate = useCallback(async (
-    contractAddress: string,
-    activationCode: string
+    contractAddress,
+    activationCode
   ) => {
     try {
       resetState();
@@ -250,7 +207,7 @@ export function usePrivateContract(): PrivateContractReturn {
       const tx = await contract.connect(signer).activate(activationCode);
       const receipt = await waitForTransaction(tx);
       
-      const event = findEventInLogs<ContractActivatedEvent>(
+      const event = findEventInLogs(
         receipt,
         'PrivateContractActivated',
         eventInterfaces.privateContract,
@@ -272,7 +229,7 @@ export function usePrivateContract(): PrivateContractReturn {
       return event;
     } catch (err) {
       console.error('Error activating private contract:', err);
-      setError(`Failed to activate contract: ${(err as Error).message}`);
+      setError(`Failed to activate contract: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -283,9 +240,9 @@ export function usePrivateContract(): PrivateContractReturn {
    * Get NewPrivateSubContractOwned events from blockchain
    */
   const getNewPrivateSubContractEvents = useCallback(async (
-    contractAddress: string,
-    fromBlock?: number,
-    toBlock?: number
+    contractAddress,
+    fromBlock,
+    toBlock
   ) => {
     try {
       resetState();
@@ -304,7 +261,7 @@ export function usePrivateContract(): PrivateContractReturn {
         toBlock || 'latest'
       );
       
-      const results: NewSubContractOwnedEvent[] = [];
+      const results = [];
       
       for (const event of events) {
         if (event.args) {
@@ -324,7 +281,7 @@ export function usePrivateContract(): PrivateContractReturn {
       return results;
     } catch (err) {
       console.error('Error getting NewPrivateSubContractOwned events:', err);
-      setError(`Failed to get events: ${(err as Error).message}`);
+      setError(`Failed to get events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);
@@ -335,9 +292,9 @@ export function usePrivateContract(): PrivateContractReturn {
    * Get PrivateContractActivated events from blockchain
    */
   const getPrivateContractActivatedEvents = useCallback(async (
-    contractAddress: string,
-    fromBlock?: number,
-    toBlock?: number
+    contractAddress,
+    fromBlock,
+    toBlock
   ) => {
     try {
       resetState();
@@ -356,7 +313,7 @@ export function usePrivateContract(): PrivateContractReturn {
         toBlock || 'latest'
       );
       
-      const results: ContractActivatedEvent[] = [];
+      const results = [];
       
       for (const event of events) {
         if (event.args) {
@@ -375,7 +332,7 @@ export function usePrivateContract(): PrivateContractReturn {
       return results;
     } catch (err) {
       console.error('Error getting PrivateContractActivated events:', err);
-      setError(`Failed to get events: ${(err as Error).message}`);
+      setError(`Failed to get events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);

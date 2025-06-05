@@ -2,34 +2,14 @@ import { useState, useContext, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../../provider/dataProvider';
 import { createContractFactories, waitForTransaction, findEventInLogs, eventInterfaces } from './utils';
-import { BaseHookReturn, NewContractOwnedEvent, CreateBroadcastParams } from './types';
-
-interface BroadcastFactoryReturn extends BaseHookReturn {
-  // Read operations
-  getAllBroadcastContracts: (factoryAddress: string) => Promise<string[]>;
-  getBroadcastContractByIndex: (factoryAddress: string, index: number) => Promise<string>;
-  
-  // Write operations
-  createBroadcastContract: (
-    factoryAddress: string, 
-    params: CreateBroadcastParams
-  ) => Promise<NewContractOwnedEvent>;
-  
-  // Events
-  getNewBroadcastContractEvents: (
-    factoryAddress: string,
-    fromBlock?: number,
-    toBlock?: number
-  ) => Promise<NewContractOwnedEvent[]>;
-}
 
 /**
  * Hook for interacting with the BroadcastFactory contract
  */
-export function useBroadcastFactory(): BroadcastFactoryReturn {
+export function useBroadcastFactory() {
   const { data } = useContext(DataContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
   const resetState = () => {
     setIsLoading(true);
@@ -39,7 +19,7 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
   /**
    * Get all broadcast contracts created by this factory
    */
-  const getAllBroadcastContracts = useCallback(async (factoryAddress: string) => {
+  const getAllBroadcastContracts = useCallback(async (factoryAddress) => {
     try {
       resetState();
       
@@ -54,7 +34,7 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
       return contracts;
     } catch (err) {
       console.error('Error getting all broadcast contracts:', err);
-      setError(`Failed to get contracts: ${(err as Error).message}`);
+      setError(`Failed to get contracts: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -65,8 +45,8 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
    * Get a broadcast contract by its index
    */
   const getBroadcastContractByIndex = useCallback(async (
-    factoryAddress: string,
-    index: number
+    factoryAddress,
+    index
   ) => {
     try {
       resetState();
@@ -82,7 +62,7 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
       return contractAddress;
     } catch (err) {
       console.error('Error getting broadcast contract by index:', err);
-      setError(`Failed to get contract: ${(err as Error).message}`);
+      setError(`Failed to get contract: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -93,8 +73,8 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
    * Create a new broadcast contract
    */
   const createBroadcastContract = useCallback(async (
-    factoryAddress: string,
-    params: CreateBroadcastParams
+    factoryAddress,
+    params
   ) => {
     try {
       resetState();
@@ -110,7 +90,7 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
       const tx = await factory.connect(signer).createBroadcastContract(params.title);
       const receipt = await waitForTransaction(tx);
       
-      const event = findEventInLogs<NewContractOwnedEvent>(
+      const event = findEventInLogs(
         receipt,
         'NewBroadcastContractOwned',
         eventInterfaces.broadcastFactory,
@@ -132,7 +112,7 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
       return event;
     } catch (err) {
       console.error('Error creating broadcast contract:', err);
-      setError(`Failed to create contract: ${(err as Error).message}`);
+      setError(`Failed to create contract: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -143,9 +123,9 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
    * Get NewBroadcastContractOwned events from blockchain
    */
   const getNewBroadcastContractEvents = useCallback(async (
-    factoryAddress: string,
-    fromBlock?: number,
-    toBlock?: number
+    factoryAddress,
+    fromBlock,
+    toBlock
   ) => {
     try {
       resetState();
@@ -164,7 +144,7 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
         toBlock || 'latest'
       );
       
-      const results: NewContractOwnedEvent[] = [];
+      const results = [];
       
       for (const event of events) {
         if (event.args) {
@@ -183,7 +163,7 @@ export function useBroadcastFactory(): BroadcastFactoryReturn {
       return results;
     } catch (err) {
       console.error('Error getting NewBroadcastContractOwned events:', err);
-      setError(`Failed to get events: ${(err as Error).message}`);
+      setError(`Failed to get events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);

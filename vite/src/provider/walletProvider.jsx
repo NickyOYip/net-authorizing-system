@@ -9,10 +9,10 @@ import { checkBalance, fundAccount, withdrawAccount } from '../hooks/irysHook/ir
 
 // Debug logging function
 const debug = {
-  log: (...args: any[]) => console.log('[Wallet]', ...args),
-  error: (...args: any[]) => console.error('[Wallet Error]', ...args),
-  warn: (...args: any[]) => console.warn('[Wallet Warning]', ...args),
-  info: (...args: any[]) => console.info('[Wallet Info]', ...args),
+  log: (...args) => console.log('[Wallet]', ...args),
+  error: (...args) => console.error('[Wallet Error]', ...args),
+  warn: (...args) => console.warn('[Wallet Warning]', ...args),
+  info: (...args) => console.info('[Wallet Info]', ...args),
 };
 
 const DEFAULT_WALLET_INFO = {

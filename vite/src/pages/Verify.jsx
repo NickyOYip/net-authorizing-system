@@ -27,7 +27,7 @@ export default function VerifyDocument() {
   const [activeStep, setActiveStep] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedJson, setSelectedJson] = useState(null);
-  const [contractType, setContractType] = useState<ContractType | null>(null);
+  const [contractType, setContractType] = useState(null);
   const [contractAddress, setContractAddress] = useState('');
   const [fileHash, setFileHash] = useState('');
   const [jsonHash, setJsonHash] = useState('');

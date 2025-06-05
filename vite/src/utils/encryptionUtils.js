@@ -1,11 +1,10 @@
 import { encrypt, decrypt } from '@metamask/eth-sig-util';
-import { ethers } from 'ethers';
 import { Buffer } from 'buffer';
 
 /**
  * Get encryption public key from MetaMask
  */
-export async function getEncryptionPublicKey(address: string): Promise<string> {
+export async function getEncryptionPublicKey(address) {
   try {
     console.log('[encryptionUtils] 🔑 Requesting encryption public key from MetaMask...');
     
@@ -21,7 +20,7 @@ export async function getEncryptionPublicKey(address: string): Promise<string> {
     
     console.log('[encryptionUtils] ✅ Public key obtained:', publicKey);
     return publicKey;
-  } catch (error: any) {
+  } catch (error) {
     console.error('[encryptionUtils] ❌ Failed to get encryption public key:', error);
     
     if (error.code === 4001) {
@@ -35,7 +34,7 @@ export async function getEncryptionPublicKey(address: string): Promise<string> {
 /**
  * Encrypt data using eth-sig-util library
  */
-export async function encryptWithMetaMask(data: string, address: string) {
+export async function encryptWithMetaMask(data, address) {
   try {
     console.log('[encryptionUtils] 🔐 Requesting public key from MetaMask...');
     const publicKey = await window.ethereum.request({
@@ -62,7 +61,7 @@ export async function encryptWithMetaMask(data: string, address: string) {
 /**
  * Encrypt a file
  */
-export async function encryptFile(file: File, address: string): Promise<File> {
+export async function encryptFile(file, address) {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const data = Buffer.from(arrayBuffer).toString('base64');
@@ -95,7 +94,7 @@ export async function encryptFile(file: File, address: string): Promise<File> {
 /**
  * Decrypt data using private key
  */
-export async function decryptWithPrivateKey(encryptedData: string, privateKey: string): Promise<string> {
+export async function decryptWithPrivateKey(encryptedData, privateKey) {
   try {
     console.log('[encryptionUtils] 🔑 Attempting decryption with private key');
     
@@ -136,7 +135,7 @@ export async function decryptWithPrivateKey(encryptedData: string, privateKey: s
 /**
  * Decrypt a file using private key
  */
-export async function decryptFileWithPrivateKey(encryptedData: string, privateKey: string): Promise<File> {
+export async function decryptFileWithPrivateKey(encryptedData, privateKey) {
   try {
     const decryptedData = await decryptWithPrivateKey(encryptedData, privateKey);
     const buffer = Buffer.from(decryptedData, 'base64');
@@ -152,11 +151,11 @@ export async function decryptFileWithPrivateKey(encryptedData: string, privateKe
  * Download and decrypt a file from Irys
  */
 export async function downloadAndDecryptFile(
-  fileId: string,
-  userAddress: string,
-  fileName: string = 'document',
-  privateKey?: string
-): Promise<void> {
+  fileId,
+  userAddress,
+  fileName = 'document',
+  privateKey
+) {
   try {
     console.log('[encryptionUtils] 🔍 Downloading encrypted file from Irys:', fileId);
     
@@ -216,7 +215,7 @@ export async function downloadAndDecryptFile(
 /**
  * Handle decrypted data and determine how to process it
  */
-async function handleDecryptedData(decryptedData: string, fileName: string): Promise<void> {
+async function handleDecryptedData(decryptedData, fileName) {
   console.log('[encryptionUtils] 🔍 Analyzing decrypted data structure');
   
   // First try to parse as JSON with metadata
@@ -250,9 +249,9 @@ async function handleDecryptedData(decryptedData: string, fileName: string): Pro
  * Handle decrypted JSON data with file metadata
  */
 async function handleJsonWithFileMetadata(
-  fileData: any, 
-  defaultFileName: string
-): Promise<void> {
+  fileData, 
+  defaultFileName
+) {
   console.log('[encryptionUtils] ✅ File metadata found in decrypted data');
   
   // Extract file content and metadata
@@ -285,7 +284,7 @@ async function handleJsonWithFileMetadata(
 /**
  * Handle decrypted data that isn't JSON
  */
-async function handleNonJsonData(data: string, fileName: string): Promise<void> {
+async function handleNonJsonData(data, fileName) {
   // Check if it's base64 encoded
   if (isBase64(data)) {
     try {
@@ -313,7 +312,7 @@ async function handleNonJsonData(data: string, fileName: string): Promise<void> 
 /**
  * Check if a string is likely base64 encoded
  */
-function isBase64(str: string): boolean {
+function isBase64(str) {
   // Base64 pattern check (not perfect but good enough for most cases)
   if (str.length % 4 !== 0) {
     return false;
@@ -337,7 +336,7 @@ function isBase64(str: string): boolean {
 /**
  * Try to detect file type from binary data
  */
-function detectBinaryFileType(data: Buffer | Uint8Array): string | null {
+function detectBinaryFileType(data) {
   // Simple file type detection based on magic numbers
   const bytes = new Uint8Array(data instanceof Buffer ? data.buffer : data);
   
@@ -362,7 +361,7 @@ function detectBinaryFileType(data: Buffer | Uint8Array): string | null {
 }
 
 // Helper function to download data as a file
-function downloadAsFile(data: string | ArrayBuffer | Uint8Array, fileName: string, mimeType: string): void {
+function downloadAsFile(data, fileName, mimeType){
   const blob = new Blob([data], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -381,10 +380,10 @@ function downloadAsFile(data: string | ArrayBuffer | Uint8Array, fileName: strin
 }
 
 // Helper function to determine MIME type from filename
-function getMimeTypeFromFileName(fileName: string): string {
+function getMimeTypeFromFileName(fileName) {
   const extension = fileName.split('.').pop()?.toLowerCase() || '';
   
-  const mimeTypes: Record<string, string> = {
+  const mimeTypes = {
     'pdf': 'application/pdf',
     'doc': 'application/msword',
     'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

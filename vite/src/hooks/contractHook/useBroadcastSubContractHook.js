@@ -2,48 +2,11 @@ import { useState, useContext, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../../provider/dataProvider';
 import { createContractFactories, waitForTransaction, findEventInLogs, eventInterfaces } from './utils';
-import { BaseHookReturn, StatusUpdatedEvent, ContractStatus } from './types';
 
-interface BroadcastSubContractDetail {
-  broadcastContractAddr: string;
-  owner: string;
-  status: ContractStatus;
-  version: number;
-  jsonHash: string;
-  softCopyHash: string;
-  storageLink: string;
-  startDate: number;
-  endDate: number;
-  deployTime: number;
-}
-
-interface BroadcastSubContractReturn extends BaseHookReturn {
-  // Read operations
-  getSubContractDetails: (subContractAddress: string) => Promise<BroadcastSubContractDetail>;
-  verifyFileHash: (subContractAddress: string, fileHash: string, fileType: 'json' | 'softCopy') => Promise<boolean>;
-  getContractVariables: (subContractAddress: string) => Promise<BroadcastSubContractDetail>;
-  
-  // Write operations (owner or parent only)
-  updateStatus: (
-    subContractAddress: string, 
-    status: ContractStatus
-  ) => Promise<StatusUpdatedEvent>;
-  
-  // Events
-  getStatusUpdatedEvents: (
-    subContractAddress: string,
-    fromBlock?: number,
-    toBlock?: number
-  ) => Promise<StatusUpdatedEvent[]>;
-}
-
-/**
- * Hook for interacting with the BroadcastSubContract
- */
-export function useBroadcastSubContract(): BroadcastSubContractReturn {
+export function useBroadcastSubContract() {
   const { data } = useContext(DataContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
   const resetState = () => {
     setIsLoading(true);
@@ -53,7 +16,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
   /**
    * Get all contract details
    */
-  const getSubContractDetails = useCallback(async (subContractAddress: string) => {
+  const getSubContractDetails = useCallback(async (subContractAddress) => {
     try {
       resetState();
       
@@ -80,7 +43,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
       };
     } catch (err) {
       console.error('Error getting sub-contract details:', err);
-      setError(`Failed to get sub-contract details: ${(err as Error).message}`);
+      setError(`Failed to get sub-contract details: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -91,9 +54,9 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
    * Verify a file against the stored hash
    */
   const verifyFileHash = useCallback(async (
-    subContractAddress: string,
-    fileHash: string,
-    fileType: 'json' | 'softCopy'
+    subContractAddress,
+    fileHash,
+    fileType
   ) => {
     try {
       resetState();
@@ -105,7 +68,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
       const { getBroadcastSubContract } = createContractFactories(data.ethProvider);
       const subContract = getBroadcastSubContract(subContractAddress);
       
-      let storedHash: string;
+      let storedHash;
       if (fileType === 'json') {
         storedHash = await subContract.jsonHash();
       } else {
@@ -115,7 +78,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
       return fileHash === storedHash;
     } catch (err) {
       console.error('Error verifying file hash:', err);
-      setError(`Failed to verify file: ${(err as Error).message}`);
+      setError(`Failed to verify file: ${err.message}`);
       return false;
     } finally {
       setIsLoading(false);
@@ -126,8 +89,8 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
    * Update the contract status (active/disabled)
    */
   const updateStatus = useCallback(async (
-    subContractAddress: string,
-    status: ContractStatus
+    subContractAddress,
+    status
   ) => {
     try {
       resetState();
@@ -143,7 +106,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
       const tx = await subContract.connect(signer).updateStatus(status);
       const receipt = await waitForTransaction(tx);
       
-      const event = findEventInLogs<StatusUpdatedEvent>(
+      const event = findEventInLogs(
         receipt,
         'StatusUpdated',
         eventInterfaces.broadcastSubContract,
@@ -162,7 +125,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
       return event;
     } catch (err) {
       console.error('Error updating contract status:', err);
-      setError(`Failed to update status: ${(err as Error).message}`);
+      setError(`Failed to update status: ${err.message}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -173,9 +136,9 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
    * Get StatusUpdated events from blockchain
    */
   const getStatusUpdatedEvents = useCallback(async (
-    subContractAddress: string,
-    fromBlock?: number,
-    toBlock?: number
+    subContractAddress,
+    fromBlock,
+    toBlock
   ) => {
     try {
       resetState();
@@ -194,7 +157,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
         toBlock || 'latest'
       );
       
-      const results: StatusUpdatedEvent[] = [];
+      const results = [];
       
       for (const event of events) {
         if (event.args) {
@@ -210,7 +173,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
       return results;
     } catch (err) {
       console.error('Error getting StatusUpdated events:', err);
-      setError(`Failed to get events: ${(err as Error).message}`);
+      setError(`Failed to get events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);
@@ -220,7 +183,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
   /**
    * Get individual state variables
    */
-  const getContractVariables = useCallback(async (subContractAddress: string) => {
+  const getContractVariables = useCallback(async (subContractAddress) => {
     try {
       if (!data.ethProvider) {
         throw new Error('Provider not available');
@@ -266,7 +229,7 @@ export function useBroadcastSubContract(): BroadcastSubContractReturn {
         deployTime: Number(deployTime)
       };
     } catch (err) {
-      setError(`Failed to get contract variables: ${(err as Error).message}`);
+      setError(`Failed to get contract variables: ${err.message}`);
       throw err;
     }
   }, [data.ethProvider]);

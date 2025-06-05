@@ -1,57 +1,17 @@
 import { useState, useCallback, useContext } from 'react';
 import { ethers } from 'ethers';
 import { DataContext } from '../../../provider/dataProvider';
-import { ContractEvent } from '../types';
 
-interface EventHistoryOptions {
-  fromBlock?: number;
-  toBlock?: number;
-  fromDate?: Date;
-  toDate?: Date;
-  limit?: number;
-  indexedFilters?: {
-    [key: string]: string;  // key is the indexed parameter name, value is the address/value to filter
-  };
-}
-
-interface EventHistoryReturn {
-  isLoading: boolean;
-  error: string | null;
-  getEventsByRange: <T extends ContractEvent>(
-    contract: ethers.Contract,
-    eventName: string,
-    options?: EventHistoryOptions
-  ) => Promise<T[]>;
-  getEventsByTimeRange: <T extends ContractEvent>(
-    contract: ethers.Contract,
-    eventName: string,
-    fromDate: Date,
-    toDate: Date
-  ) => Promise<T[]>;
-  getEventsByOwner: <T extends ContractEvent>(
-    contract: ethers.Contract,
-    eventName: string,
-    ownerAddress: string,
-    options?: Omit<EventHistoryOptions, 'indexedFilters'>
-  ) => Promise<T[]>;
-  getEventsByContract: <T extends ContractEvent>(
-    contract: ethers.Contract,
-    eventName: string,
-    contractAddress: string,
-    options?: Omit<EventHistoryOptions, 'indexedFilters'>
-  ) => Promise<T[]>;
-}
-
-export function useEventHistory(): EventHistoryReturn {
+export function useEventHistory() {
   const { data } = useContext(DataContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   const getBlockNumberByTimestamp = useCallback(async (
-    timestamp: number,
-    searchStart: number,
-    searchEnd: number
-  ): Promise<number> => {
+    timestamp,
+    searchStart,
+    searchEnd
+  ) => {
     if (!data.ethProvider) throw new Error('Provider not available');
 
     let left = searchStart;
@@ -73,11 +33,11 @@ export function useEventHistory(): EventHistoryReturn {
     return left; // Return closest block
   }, [data.ethProvider]);
 
-  const getEventsByRange = useCallback(async <T extends ContractEvent>(
-    contract: ethers.Contract,
-    eventName: string,
-    options: EventHistoryOptions = {}
-  ): Promise<T[]> => {
+  const getEventsByRange = useCallback(async (
+    contract,
+    eventName,
+    options = {}
+  ) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -96,7 +56,7 @@ export function useEventHistory(): EventHistoryReturn {
         : contract.filters[eventName]();
 
       const events = await contract.queryFilter(filter, fromBlock, toBlock);
-      const results: T[] = [];
+      const results = [];
       
       for (const event of events) {
         if (!event.args) continue;
@@ -109,7 +69,7 @@ export function useEventHistory(): EventHistoryReturn {
           transactionHash: event.transactionHash,
           blockNumber: event.blockNumber,
           timestamp
-        } as T;
+        };
 
         results.push(eventData);
       }
@@ -121,19 +81,19 @@ export function useEventHistory(): EventHistoryReturn {
       return results;
     } catch (err) {
       console.error(`Error fetching ${eventName} events:`, err);
-      setError(`Failed to fetch events: ${(err as Error).message}`);
+      setError(`Failed to fetch events: ${err.message}`);
       return [];
     } finally {
       setIsLoading(false);
     }
   }, [data.ethProvider]);
 
-  const getEventsByTimeRange = useCallback(async <T extends ContractEvent>(
-    contract: ethers.Contract,
-    eventName: string,
-    fromDate: Date,
-    toDate: Date
-  ): Promise<T[]> => {
+  const getEventsByTimeRange = useCallback(async (
+    contract,
+    eventName,
+    fromDate,
+    toDate
+  ) => {
     try {
       if (!data.ethProvider) {
         throw new Error('Provider not available');
@@ -147,33 +107,33 @@ export function useEventHistory(): EventHistoryReturn {
       const fromBlock = await getBlockNumberByTimestamp(fromTimestamp, 0, latestBlock);
       const toBlock = await getBlockNumberByTimestamp(toTimestamp, fromBlock, latestBlock);
 
-      return getEventsByRange<T>(contract, eventName, { fromBlock, toBlock });
+      return getEventsByRange(contract, eventName, { fromBlock, toBlock });
     } catch (err) {
       console.error(`Error fetching ${eventName} events by time range:`, err);
-      setError(`Failed to fetch events: ${(err as Error).message}`);
+      setError(`Failed to fetch events: ${err.message}`);
       return [];
     }
   }, [data.ethProvider, getBlockNumberByTimestamp, getEventsByRange]);
 
-  const getEventsByOwner = useCallback(async <T extends ContractEvent>(
-    contract: ethers.Contract,
-    eventName: string,
-    ownerAddress: string,
-    options: Omit<EventHistoryOptions, 'indexedFilters'> = {}
-  ): Promise<T[]> => {
-    return getEventsByRange<T>(contract, eventName, {
+  const getEventsByOwner = useCallback(async (
+    contract,
+    eventName,
+    ownerAddress,
+    options = {}
+  ) => {
+    return getEventsByRange(contract, eventName, {
       ...options,
       indexedFilters: { ownerAddr: ownerAddress }
     });
   }, [getEventsByRange]);
 
-  const getEventsByContract = useCallback(async <T extends ContractEvent>(
-    contract: ethers.Contract,
-    eventName: string,
-    contractAddress: string,
-    options: Omit<EventHistoryOptions, 'indexedFilters'> = {}
-  ): Promise<T[]> => {
-    return getEventsByRange<T>(contract, eventName, {
+  const getEventsByContract = useCallback(async (
+    contract,
+    eventName,
+    contractAddress,
+    options = {}
+  ) => {
+    return getEventsByRange(contract, eventName, {
       ...options,
       indexedFilters: { contractAddr: contractAddress }
     });

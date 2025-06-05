@@ -7,7 +7,7 @@ import { BroadcastFactoryABI } from '../hooks/contractHook/abis/broadcastFactory
 import { PublicFactoryABI }    from '../hooks/contractHook/abis/publicFactory';
 import { PrivateFactoryABI }   from '../hooks/contractHook/abis/privateFactory';
 import { DataContext } from '../provider/dataProvider';
-import { getContractType, getCachedContractType, ContractType } from '../utils/contractUtils';
+import { getCachedContractType} from '../utils/contractUtils';
 
 // Debug: RPC provider to fetch events directly
 const debugProvider = new ethers.JsonRpcProvider('https://ethereum-hoodi-rpc.publicnode.com');
@@ -16,7 +16,7 @@ const debugProvider = new ethers.JsonRpcProvider('https://ethereum-hoodi-rpc.pub
  * ownerAddr: user address 
  * factoryAddrs: [broadcastFactoryAddr, publicFactoryAddr, privateFactoryAddr] 
  */
-async function fetchUserEvents(ownerAddr: string, factoryAddrs: (string|null)[]) {
+async function fetchUserEvents(ownerAddr, factoryAddrs) {
   console.log('[homeService][debug] fetchUserEvents()', { ownerAddr, factoryAddrs });
   const eventSignature = 'NewBroadcastContractOwned(address,address,address,string)';
   const topic0 = ethers.id(eventSignature);
@@ -27,7 +27,7 @@ async function fetchUserEvents(ownerAddr: string, factoryAddrs: (string|null)[])
     const latest = await debugProvider.getBlockNumber();
     const fromBlock = 25000;
     const toBlock = Math.min(latest, 50000);
-    let allLogs: ethers.providers.Log[] = [];
+    let allLogs = [];
 
     for (const factoryAddr of factoryAddrs) {
       if (!factoryAddr) continue;
@@ -50,14 +50,14 @@ async function fetchUserEvents(ownerAddr: string, factoryAddrs: (string|null)[])
 // Batch contract.queryFilter in ≤40 k‐block chunks,
 // using debugProvider if contract.provider is missing
 async function batchQueryFilter(
-  contract: ethers.Contract,
-  eventFilter: ethers.EventFilter,
+  contract,
+  eventFilter,
   step = 40000,
   startBlock = 0
 ) {
   const provider = contract.provider || debugProvider;
   const latest = await provider.getBlockNumber();
-  let allEvents: ethers.Event[] = [];
+  let allEvents = [];
   // ensure a read‐only contract backed by the provider
   const reader = contract.connect(provider);
   
@@ -300,7 +300,7 @@ export function useHomeService() {
   };
   
   // Determine contract type from address (new method)
-  const getContractTypeFromAddress = async (address: string): Promise<ContractType> => {
+  const getContractTypeFromAddress = async (address) => {
     const factories = await getCurrentFactories();
     return getCachedContractType(address, factories, data.ethProvider);
   };

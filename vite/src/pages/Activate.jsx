@@ -21,6 +21,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { DataContext } from '../provider/dataProvider';
+import { useActivateService } from '../services/activateService';
 
 export default function Activate() {
   // Get contract ID from URL params

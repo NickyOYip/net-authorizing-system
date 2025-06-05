@@ -1,9 +1,9 @@
 // Debug logging function
 const debug = {
-  log: (...args: any[]) => console.log('[Network]', ...args),
-  error: (...args: any[]) => console.error('[Network Error]', ...args),
-  warn: (...args: any[]) => console.warn('[Network Warning]', ...args),
-  info: (...args: any[]) => console.info('[Network Info]', ...args),
+  log: (...args) => console.log('[Network]', ...args),
+  error: (...args) => console.error('[Network Error]', ...args),
+  warn: (...args) => console.warn('[Network Warning]', ...args),
+  info: (...args) => console.info('[Network Info]', ...args),
 };
 
 export const NETWORKS = {
@@ -21,7 +21,7 @@ export const NETWORKS = {
   }
 };
 
-export const switchNetwork = async (networkConfig: typeof NETWORKS.HOODI) => {
+export const switchNetwork = async (networkConfig) => {
   if (!window.ethereum) {
     debug.warn('No ethereum provider found');
     return false;

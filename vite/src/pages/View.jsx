@@ -5,10 +5,6 @@ import {
   Button, 
   Paper, 
   Alert,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
   Table,
   TableBody,
   TableCell,
@@ -41,7 +37,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import KeyIcon from '@mui/icons-material/Key';
 
-import { usePublicContract } from '../hooks/contractHook/usePublicContractHook';
+import { usePublicContract } from '../hooks/contractHook/usePublicContractHook.js';
 import { usePrivateContract } from '../hooks/contractHook/usePrivateContractHook';
 import { useBroadcastContract } from '../hooks/contractHook/useBroadcastContractHook';
 import { usePublicSubContract } from '../hooks/contractHook/usePublicSubContractHook';
@@ -72,7 +68,7 @@ export default function ContractViewPage() {
   const eventHistory = useEventHistory();
 
   // Contract state
-  const [contractDetails, setContractDetails] = useState<any>(null);
+  const [contractDetails, setContractDetails] = useState(null);
   const [versions, setVersions] = useState([]);
 
   const handleCopy = (text) => {
@@ -85,9 +81,9 @@ export default function ContractViewPage() {
 
   // Add new state variables for decryption
   const [isDecrypting, setIsDecrypting] = useState(false);
-  const [decryptionError, setDecryptionError] = useState<string | null>(null);
+  const [decryptionError, setDecryptionError] = useState(null);
   const [isDecryptionDialogOpen, setIsDecryptionDialogOpen] = useState(false);
-  const [fileToDecrypt, setFileToDecrypt] = useState<{ id: string, type: 'json' | 'document', name: string } | null>(null);
+  const [fileToDecrypt, setFileToDecrypt] = useState(null);
   
   // Add a check for whether the current wallet is the contract user
   const [isUser, setIsUser] = useState(false);
@@ -97,10 +93,10 @@ export default function ContractViewPage() {
 
   // Add state for storage link loading/validation
   const [storageLinksValid, setStorageLinksValid] = useState(true);
-  const [storageLinksError, setStorageLinksError] = useState<string | null>(null);
+  const [storageLinksError, setStorageLinksError] = useState(null);
 
   // Add state for private key input
-  const [privateKey, setPrivateKey] = useState<string>('');
+  const [privateKey, setPrivateKey] = useState('');
   const [showPrivateKey, setShowPrivateKey] = useState(false);
 
   // Detect contract type - modified to prevent looping

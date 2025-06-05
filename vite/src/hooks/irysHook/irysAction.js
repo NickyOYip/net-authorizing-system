@@ -4,7 +4,7 @@
  * @param irysUploader - The WebUploader instance
  * @returns The current balance
  */
-export const checkBalance = async (irysUploader: WebUploader) => {
+export const checkBalance = async (irysUploader) => {
   try {
     const balance = await irysUploader.getBalance();
     console.log("Current balance:", balance);
@@ -22,7 +22,7 @@ export const checkBalance = async (irysUploader: WebUploader) => {
  * @param amount - Amount to fund (in atomic units)
  * @returns The funding transaction details
  */
-export const fundAccount = async (irysUploader: WebUploader, amount: string) => {
+export const fundAccount = async (irysUploader, amount) => {
   try {
     console.log("Attempting to fund with testnet configuration...");
     
@@ -37,7 +37,7 @@ export const fundAccount = async (irysUploader: WebUploader, amount: string) => 
   }
 };
 
-export const withdrawAccount = async (irysUploader: WebUploader) => {
+export const withdrawAccount = async (irysUploader) => {
   try {
     const tx = await irysUploader.withdrawAll();
     return tx;
@@ -79,8 +79,8 @@ export const withdrawAccount = async (irysUploader: WebUploader) => {
  * @returns The upload receipt containing the transaction ID
  */
 export const uploadData = async (
-  irysUploader: WebUploader,
-  data: File | Buffer | string,
+  irysUploader,
+  data,
 ) => {
   try {
     // Check balance before upload
@@ -126,7 +126,7 @@ export const uploadData = async (
  * @param bytes - Size of data in bytes
  * @returns The estimated price
  */
-export const getPrice = async (irysUploader: WebUploader, bytes: number) => {
+export const getPrice = async (irysUploader, bytes) => {
   try {
     const price = await irysUploader.getPrice(bytes);
     console.log(`Cost to upload ${bytes} bytes:`, price);
@@ -142,6 +142,6 @@ export const getPrice = async (irysUploader: WebUploader, bytes: number) => {
  * @param irysUploader - The WebUploader instance
  * @returns The wallet address
  */
-export const getAddress = (irysUploader: WebUploader) => {
+export const getAddress = (irysUploader) => {
   return irysUploader.address;
 };
