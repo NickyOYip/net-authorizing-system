@@ -91,7 +91,7 @@ async function isContractFromFactory(
 async function batchQueryFilter(
   contract,
   eventFilter,
-  step = 40000,
+  step = 50000,
   startBlock = 0
 ) {
   const provider = contract.provider || debugProvider;

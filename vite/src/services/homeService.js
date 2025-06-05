@@ -52,7 +52,7 @@ async function fetchUserEvents(ownerAddr, factoryAddrs) {
 async function batchQueryFilter(
   contract,
   eventFilter,
-  step = 40000,
+  step = 50000,
   startBlock = 0
 ) {
   const provider = contract.provider || debugProvider;
@@ -61,7 +61,7 @@ async function batchQueryFilter(
   // ensure a read‐only contract backed by the provider
   const reader = contract.connect(provider);
   
-  // Debug the contract address - added for debugging
+  // Debug the contract address - added for debuggings
   console.log(`[homeService][debug] Using contract:`, {
     address: contract.address,
     hasProvider: !!contract.provider
