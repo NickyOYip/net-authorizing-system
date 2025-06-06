@@ -1,9 +1,0 @@
-{
-  "masterFactory": "0xEe92E27D2F67c74d8D593cBD81a9d63Ff779E933",
-  "broadcastFactory": "0xD67f3c606B64353FB351d3397501bC555AF51B28",
-  "publicFactory": "0xca5dd78de84B69306ED7ef4BF548f163F9A790e3",
-  "privateFactory": "0xC4075813f5a4A1EDbe3f9BAc7a45B5265eb25386",
-  "deployedBy": "0x591D38E6eAA91C336589A9E1F2197AF364Ce3f36",
-  "deployedAt": "2025-05-02T11:04:08.185Z",
-  "subContracts": []
-}

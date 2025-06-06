@@ -1,102 +1,58 @@
-# Net Authorizing System
+# Net Authorizing System - Frontend
 
-A blockchain-based document verification and authorization system that provides three levels of document verification:
+This is the frontend application for the Net Authorizing System, a blockchain-based document verification platform that offers three levels of document security:
 
-- **📡 Broadcast Contracts**: Open and accessible to anyone
-- **🌐 Public Contracts**: Targeted to specific users with activation codes
-- **🔒 Private Contracts**: Secure document sharing with encrypted storage
+- **📡 Broadcast**: Open and accessible documents visible to all
+- **🌐 Public**: Targeted documents requiring activation codes
+- **🔒 Private**: Confidential documents with encryption
 
-## Project Overview
+## Features
 
-The Net Authorizing System (NAT) is a decentralized application (DApp) designed to address e-document forgery and inefficient verification processes. Built on Ethereum blockchain with Arweave for decentralized storage, NAT enables secure creation, management, and verification of documents through smart contracts.
-
-This system integrates MetaMask for self-sovereign identity, ensuring secure and transparent user interactions without relying on centralized servers. It was developed as a Final Year Project to demonstrate how blockchain technology can enhance document trustworthiness.
-
-## Dual-Chain Architecture
-
-This is a fully decentralized application running on two Ethereum testnets:
-- **Hoodi**: Primary network for Ethereum contract deployments
-- **Sepolia**: Secondary network for Irys/Arweave storage operations
-
-To use this application, you'll need test ETH on both networks. You can obtain test ETH from the following faucets:
-
-- Sepolia Faucet: [https://sepolia-faucet.pk910.de/](https://sepolia-faucet.pk910.de/)
-- Hoodi Faucet: [https://hoodi-faucet.pk910.de/](https://hoodi-faucet.pk910.de/)
-
-Please request test ETH from these faucets before attempting to create or interact with contracts.
-
-### Why Two Networks?
-
-The dual-chain approach addresses specific technical challenges:
-
-1. **Gas Cost Management**: Hoodi network offers more stable and lower gas fees for smart contract deployments and interactions.
-
-2. **Storage Operations**: Sepolia is used for Irys operations to store documents on Arweave, leveraging its compatibility with decentralized storage solutions.
-
-3. **Event Querying Limitations**: The Graph (event query service) is not currently supported on the Hoodi network. As a result:
-   - The dashboard may not show all activated contracts that exist on the Hoodi network
-   - Users can still access these contracts by using the search function
-
-This hybrid approach allows for cost-effective operations while maintaining essential functionality across both networks.
-
-## Important Notes on Data Storage
-
-**⚠️ Development Environment Limitations:**
-
-This project currently uses Irys devnet for storing data on Arweave. Please be aware that:
-
-- All data stored on Irys devnet will be **deleted after 60 days**
-- For permanent storage, the application must be configured to use Irys mainnet
-- Transition to production would require funding an Irys account with AR tokens
-
-During development and testing, please keep local backups of any important documents uploaded to the system, as they will not be permanently stored on the devnet.
-
-## Key Features
-
-- **Modular Smart Contracts**: Split Contracts architecture with three contract types:
-  - Broadcast (publicly accessible)
-  - Public (entity-issued with activation codes)
-  - Private (sensitive data with encryption)
-
-- **Decentralized Storage**: Arweave integration via Irys reduces storage costs from $1088/MB (Ethereum) to $0.02/MB
-
-- **Event-Based Data Access**: Optimized UI rendering through Ethereum events, reducing costs by 96%
-
-- **Security**: Blockchain immutability and MetaMask authentication prevent forgery and unauthorized access
-
-- **Version Control**: Document versioning with full history tracking
-
-- **Role-Based Access**: Different interfaces for document issuers, recipients, and verifiers
-
-## Technical Achievements
-
-- 97% transaction success rate across testing scenarios
-- 80% reduction in verification time compared to traditional systems
-- ~$63 HKD per contract deployment cost (estimated for Ethereum mainnet)
-- Elimination of single points of failure in document management
+- Connect wallet with Web3 integration
+- Create and manage verification contracts
+- Upload documents to decentralized storage via Irys (Arweave)
+- Activate contracts with activation codes
+- Verify document authenticity against blockchain records
+- View document history and versions
+- Dashboard for managing all your contracts
 
 ## Project Structure
 
 ```
-net-authorizing-system/
-├── docs/               # Project documentation
-│   ├── ContractDesign.md     # Smart contract architecture
-│   └── UserFlow.md           # User interaction flows
-├── web3/               # Smart contract code and deployment
-│   ├── contracts/      # Solidity smart contracts
-│   ├── scripts/        # Deployment & testing scripts
-│   ├── deployments/    # Deployment records
-│   └── test/           # Contract test files
-├── vite/               # Frontend application
-│   ├── public/         # Static assets
-│   └── src/            # Frontend source code
-│       ├── components/ # UI components
-│       ├── hooks/      # Custom React hooks
-│       │   ├── contractHook/  # Contract integration
-│       │   └── irysHook/      # Arweave/Irys integration
-│       ├── pages/      # Application pages
-│       └── services/   # External services
-└── testData/          # Data for testing
+vite/
+├── public/             # Static assets
+└── src/
+    ├── components/     # Reusable UI components
+    │   ├── ConnectionPopup.jsx  # Wallet connection interface
+    │   ├── Layout.tsx          # Page layout wrapper
+    │   ├── Navbar.jsx          # Navigation bar
+    │   ├── Sidebar.jsx         # Sidebar navigation
+    │   └── ...
+    ├── hooks/
+    │   ├── contractHook/       # Smart contract integration hooks
+    │   │   ├── abis/           # Contract ABIs
+    │   │   ├── helpers/        # Helper functions for contracts
+    │   │   └── utils/          # Contract utility functions
+    │   └── irysHook/           # Arweave/Irys integration
+    ├── pages/                  # Main application pages
+    │   ├── Activate.tsx        # Contract activation page
+    │   ├── Create.jsx          # Create new contracts
+    │   ├── Home.tsx            # Dashboard/home page
+    │   ├── Verify.tsx          # Document verification
+    │   └── View.tsx            # Contract and document viewing
+    ├── provider/               # React context providers
+    │   ├── dataProvider.tsx    # App data provider
+    │   └── walletProvider.tsx  # Wallet connection provider
+    ├── services/               # Business logic services
+    │   ├── activateService.ts  # Contract activation
+    │   ├── createService.ts    # Contract creation
+    │   ├── verifyService.ts    # Document verification
+    │   └── ...
+    ├── styles/                 # CSS styles
+    └── utils/                  # Utility functions
+        ├── contractUtils.ts    # Contract utilities
+        ├── encryptionUtils.ts  # Encryption/decryption utils
+        └── networkUtils.ts     # Network-related utilities
 ```
 
 ## Getting Started
@@ -105,139 +61,115 @@ net-authorizing-system/
 
 - Node.js (v14+)
 - npm or yarn
-- MetaMask or other web3 wallet
-- Test ETH on Sepolia and Hoodi networks
+- MetaMask or other Web3 wallet
 
-### Smart Contract Setup
+### Installation
 
-1. Navigate to the web3 directory:
-   ```bash
-   cd web3
-   ```
-
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    npm install
+   # or
+   yarn install
    ```
 
-3. Create a `.env` file with your credentials:
-   ```
-   PRIVATE_KEY=your_private_key_without_0x_prefix
-   SEPOLIA_RPC_URL=https://eth-sepolia.public.blastapi.io
-   HOODI_RPC_URL=https://rpc.testnet.hoodinetwork.com
-   ETHERSCAN_API_KEY=your_etherscan_api_key
-   REPORT_GAS=true
-   ```
-
-4. Deploy contracts:
-   ```bash
-   # For local testing
-   npx hardhat node
-   npx hardhat run scripts/deploy-all.js --network localhost
-   
-   # For Sepolia testnet
-   npx hardhat run scripts/deploy-all.js --network sepolia
-   
-   # For Hoodi testnet
-   npx hardhat run scripts/deploy-all.js --network hoodi
-   ```
-
-Refer to the [Web3 README](./web3/README.md) for more detailed information on smart contract deployment and testing.
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd vite
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create a `.env.local` file with network configuration:
+2. Create a `.env.local` file with required environment variables:
    ```
    VITE_IRYS_NODE=https://node2.irys.xyz
    VITE_DEFAULT_CHAIN_ID=11155111 # Sepolia testnet
-   VITE_HOODI_CHAIN_ID=80085 # Hoodi testnet
    VITE_CONTRACT_ADDRESSES_PATH=/deployments/latest.json
    ```
 
-4. Start the development server:
+3. Start the development server:
    ```bash
    npm run dev
+   # or
+   yarn dev
    ```
 
-5. Open [http://localhost:5173](http://localhost:5173) in your browser
-
-Refer to the [Vite README](./vite/README.md) for more detailed frontend information.
+4. Open [http://localhost:5173](http://localhost:5173) in your browser
 
 ## Network Configuration
 
-To use the application, you'll need to configure your MetaMask wallet with both networks:
+This application operates across two Ethereum testnets:
 
-### Sepolia Network
-- Network Name: Sepolia
-- RPC URL: https://eth-sepolia.public.blastapi.io
-- Chain ID: 11155111
-- Currency Symbol: ETH
-- Block Explorer: https://sepolia.etherscan.io/
+- **Hoodi**: Primary network for Ethereum contract deployments and interactions
+- **Sepolia**: Secondary network for Irys/Arweave storage operations
 
-### Hoodi Network
-- Network Name: Hoodi Testnet
-- RPC URL: https://rpc.testnet.hoodinetwork.com
-- Chain ID: 80085
-- Currency Symbol: HOO
-- Block Explorer: https://explorer.testnet.hoodinetwork.com/
+### Network Limitations
+
+**Important to know when using the application:**
+
+- The dashboard may not show all activated contracts from the Hoodi network
+- This is because The Graph (event indexing service) is not available on Hoodi
+- **Workaround**: Use the search functionality to find contracts deployed on Hoodi
+
+### Getting Test ETH
+
+Before using the application, obtain test ETH from:
+- Sepolia: [https://sepolia-faucet.pk910.de/](https://sepolia-faucet.pk910.de/) - Used for storage operations
+- Hoodi: [https://hoodi-faucet.pk910.de/](https://hoodi-faucet.pk910.de/) - Used for contract interactions
+
+### Important: Devnet Storage Limitations
+
+This application currently uses Irys devnet for storing data on Arweave. Be aware of these limitations:
+
+- **Data Retention**: Files stored on Irys devnet are automatically deleted after 60 days
+- **Testing Only**: The devnet is suitable for testing but not for production use
+- **Backups Required**: Always keep local backups of any documents you upload through this system
+
+To configure the application for permanent storage:
+1. Create an Irys account and fund it with AR tokens
+2. Update the environment variable to point to the mainnet node:
+   ```
+   VITE_IRYS_NODE=https://node1.irys.xyz
+   ```
+3. Adjust the frontend code to handle mainnet transaction fees
 
 ## Usage
 
-### Document Creation
+### Creating a Document Contract
 
-1. Connect your wallet to the application
-2. Select the appropriate contract type:
-   - Broadcast: For public documents visible to all
-   - Public: For documents with specific recipients
-   - Private: For confidential documents with encryption
-3. Upload your document and metadata
-4. Complete the transaction to store your document reference on-chain
+1. Connect your wallet
+2. Navigate to "Create" page
+3. Select contract type (Broadcast, Public, or Private)
+4. Fill out document details and upload files
+5. Submit the transaction
 
-### Document Verification
+### Activating a Contract
 
-1. Search for documents by contract address, owner address, or document ID
-2. View the document details and verification status
-3. Download and verify the document contents against on-chain hashes
+1. Navigate to "Activate" page
+2. Enter the contract address and activation code
+3. For Private contracts, upload encrypted document files
+4. Complete the activation
 
-### Demo Test Addresses
+### Verifying Documents
 
-You can use these test addresses to view sample contracts in the system:
+1. Navigate to "Verify" page
+2. Enter contract address or search for documents by owner
+3. View document details and verification status
+4. Compare document hash with on-chain record
 
-- `0x591D38E6eAA91C336589A9E1F2197AF364Ce3f36`
-- `0x84D80644Ff4bCCb6380DA194e3d413B4813C4AAB`
+### Test Addresses for Quick Demo
 
-Simply enter either address in the search field on the Verify page to view associated test contracts.
+To quickly test the system without creating your own contracts, you can search for these test addresses:
 
-## Documentation
+- Owner Address: `0x591D38E6eAA91C336589A9E1F2197AF364Ce3f36`
+- Owner Address: `0x84D80644Ff4bCCb6380DA194e3d413B4813C4AAB`
 
-- [Contract Design](./docs/ContractDesign.md) - Detailed smart contract architecture
-- [User Flow](./docs/UserFlow.md) - Step-by-step user interaction flows
+These addresses have associated test contracts that you can view and verify.
 
-## Team
+## Building for Production
 
-- IEONG Kai Yip (Alex)
-- WONG Ka Ho (Shison)
-- WONG Ki Tung (Nicky)
+```bash
+npm run build
+# or
+yarn build
+```
 
-## Advisors
+The built files will be in the `dist` directory.
 
-- Dr. AU YEUNG Siu Kei (Jeff)
-- Dr. TAO Bishenghui
+## Learn More
 
-## Acknowledgments
-
-We thank Kinetix Systems Limited for their business insights, Dr. Ma Xiaoxue for demo feedback, and the open-source communities behind Solidity, React, MetaMask, Hardhat, and Arweave.
-
-## License
-
-This project is licensed under the MIT License.
+- [Contract Design](../docs/ContractDesign.md) - Smart contract architecture overview
+- [User Flow](../docs/UserFlow.md) - Learn about document flows and verification processes
+- [Web3 Integration](../web3/README.md) - Smart contract deployment and interaction
