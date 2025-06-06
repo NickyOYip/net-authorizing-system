@@ -1,0 +1,28 @@
+{
+  "contract_metadata": {
+    "contract_type": "Sales Agreement",
+    "parties": {
+      "seller": "Green Farms Co.",
+      "buyer": "FreshMart Supermarkets"
+    },
+    "transaction": {
+      "product": "Organic Apples",
+      "quantity": "10,000 lbs/month",
+      "price_per_unit": "$1.20/lb",
+      "delivery_terms": "FOB Shipping Point"
+    },
+    "payment": {
+      "terms": "Net 30",
+      "late_fee": "1.5% per month"
+    },
+    "inspection": {
+      "acceptance_period": "48 hours post-delivery",
+      "rejection_conditions": ["Pest Damage", "Rotten >5%"]
+    },
+    "signatures": {
+      "seller_signed": true,
+      "buyer_signed": true,
+      "date": "2024-09-10"
+    }
+  }
+}

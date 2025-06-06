@@ -1,0 +1,22 @@
+{
+  "financial_report_metadata": {
+    "report_type": "HNWI Wealth Summary",
+    "client": {
+      "client_id": "HNWI-7890",
+      "risk_profile": "Aggressive Growth",
+      "advisor": "Morgan Stanley Private Wealth"
+    },
+    "holdings": {
+      "liquid_assets": ["Stocks: $12M", "Bonds: $3M", "Cash: $5M"],
+      "alternative_investments": ["VC Fund LP", "Art Collection"]
+    },
+    "projections": {
+      "next_12m_cashflow": "$2.4M",
+      "tax_liability_estimate": "$1.1M"
+    },
+    "security": {
+      "biometric_auth_required": true,
+      "data_masking": ["Client Name", "Exact Address"]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "report_metadata": {
+    "report_type": "Sustainability Report",
+    "company": {
+      "name": "Microsoft Corporation",
+      "ticker": "MSFT",
+      "exchange": "NASDAQ",
+      "reporting_year": "2022"
+    },
+    "standards": {
+      "GRI": "Core Option",
+      "SASB": "Software & IT Services",
+      "TCFD_aligned": true
+    },
+    "environmental": {
+      "carbon_footprint": "12.0M metric tons CO2e",
+      "renewable_energy_use": "60%",
+      "water_recycled": "8.7M cubic meters"
+    },
+    "governance": {
+      "board_diversity": "45% women/ethnic minorities",
+      "esg_oversight": "Sustainability Committee"
+    },
+    "verification": {
+      "third_party_assurance": "PwC Limited",
+      "assurance_scope": "GHG Emissions, Diversity Data"
+    }
+  }
+}

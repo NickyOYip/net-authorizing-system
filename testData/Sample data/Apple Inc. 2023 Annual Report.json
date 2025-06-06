@@ -1,0 +1,40 @@
+{
+  "report_metadata": {
+    "report_type": "Annual Report (10-K)",
+    "company": {
+      "name": "Apple Inc.",
+      "ticker": "AAPL",
+      "exchange": "NASDAQ",
+      "CIK": "0000320193",
+      "fiscal_year": "2023"
+    },
+    "filing": {
+      "filing_date": "2023-10-27",
+      "period_end": "2023-09-30",
+      "SEC_accession_number": "0000320193-23-000106",
+      "file_number": "001-36743"
+    },
+    "content": {
+      "sections": [
+        "Business Overview",
+        "Risk Factors",
+        "MD&A",
+        "Financial Statements",
+        "Exhibits"
+      ],
+      "page_count": 172,
+      "XBRL_embedded": true
+    },
+    "financial_highlights": {
+      "revenue": "$394.33B",
+      "net_income": "$99.80B",
+      "eps": "$6.16",
+      "assets": "$352.58B"
+    },
+    "compliance": {
+      "auditor": "Ernst & Young LLP",
+      "audit_opinion": "Unqualified",
+      "SOX_compliant": true
+    }
+  }
+}

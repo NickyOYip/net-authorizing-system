@@ -1,0 +1,30 @@
+{
+  "contract_metadata": {
+    "contract_type": "Service-Level Agreement",
+    "parties": {
+      "service_provider": "CloudHost Inc.",
+      "client": "DataFlow Corp."
+    },
+    "service_details": {
+      "service_description": "Cloud Storage & Data Backup",
+      "uptime_guarantee": "99.9%",
+      "response_time": "2 hours for critical issues"
+    },
+    "metrics": {
+      "penalties": {
+        "downtime_credit": "5% of monthly fee per 1% below SLA"
+      },
+      "reporting_frequency": "Monthly"
+    },
+    "term": {
+      "start_date": "2024-08-01",
+      "renewal_auto": true,
+      "termination_notice": "30 days"
+    },
+    "signatures": {
+      "provider_signed": true,
+      "client_signed": true,
+      "effective_date": "2024-07-20"
+    }
+  }
+}

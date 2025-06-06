@@ -1,0 +1,32 @@
+{
+  "contract_metadata": {
+    "contract_type": "Commercial Lease",
+    "parties": {
+      "landlord": "Prime Real Estate LLC",
+      "tenant": "Café Bistro Inc."
+    },
+    "property": {
+      "address": "123 Downtown Ave, Suite 200",
+      "square_feet": "2,500",
+      "zoning": "Commercial"
+    },
+    "terms": {
+      "monthly_rent": "$4,500",
+      "security_deposit": "$9,000",
+      "lease_duration": "3 years",
+      "maintenance_responsibility": "Tenant handles utilities"
+    },
+    "clauses": {
+      "subletting_allowed": false,
+      "early_termination_fee": "2 months’ rent"
+    },
+    "signatures": {
+      "landlord_signed": true,
+      "tenant_signed": true,
+      "witness": "Sarah Lee (Notary)"
+    },
+    "local_requirements": {
+      "compliance": "City Business License Required"
+    }
+  }
+}

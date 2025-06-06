@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "document": {
+      "title": "Financial Analysis for ABC Restaurant",
+      "type": "Business/Financial Report",
+      "industry": "Restaurant (Chain/Franchise)",
+      "focus_areas": [
+        "Revenue Streams",
+        "Cost Structure",
+        "Profitability Analysis",
+        "Cash Flow Management",
+        "Growth Strategies"
+      ],
+      "target_audience": [
+        "Restaurant Owners",
+        "Investors",
+        "Financial Analysts",
+        "Management Teams"
+      ]
+    },
+    "key_topics": {
+      "revenue_streams": {
+        "dine_in_sales": "Primary income source influenced by location, pricing, and menu.",
+        "takeout_delivery": "Growing channel due to technology and consumer trends.",
+        "catering_services": "Additional revenue from events/corporate functions.",
+        "merchandising": "Branded products or packaged foods for extra income.",
+        "revenue_range": "$10M–$50M annually (medium-sized chains)."
+      },
+      "cost_structure": {
+        "cogs": "25–35% of revenue (food/beverage costs).",
+        "labor_costs": "30–35% of revenue (wages, benefits, payroll taxes).",
+        "rent_utilities": "5–10% of revenue (varies by location).",
+        "marketing": "3–6% of revenue (brand awareness, promotions).",
+        "general_admin": "Overhead (management, IT, accounting).",
+        "depreciation": "Equipment/facility maintenance and depreciation."
+      },
+      "profitability": {
+        "gross_margin": "60–75% (Revenue - COGS / Revenue).",
+        "operating_margin": "10–15% (industry target).",
+        "net_margin": "5–10% (post-tax profit goal).",
+        "example_calculation": {
+          "revenue": "$20,000,000",
+          "cogs": "$6,000,000 (30%)",
+          "labor": "$6,400,000 (32%)",
+          "

@@ -1,0 +1,30 @@
+{
+  "report_metadata": {
+    "report_type": "Current Report (8-K)",
+    "company": {
+      "name": "Tesla Inc.",
+      "ticker": "TSLA",
+      "exchange": "NASDAQ",
+      "filing_date": "2023-07-19",
+      "event_date": "2023-07-18"
+    },
+    "event_type": "Item 8.01 - Other Events",
+    "event_details": {
+      "description": "Cybertruck production commencement announced",
+      "material_impact": true,
+      "attachments": ["press_release.pdf"]
+    },
+    "market_data": {
+      "pre_announcement_price": "$279.82",
+      "post_announcement_price": "$291.76 (+4.3%)",
+      "volume_spike": "2.5x average"
+    },
+    "related_filings": [
+      {
+        "type": "Form 4",
+        "description": "CEO stock purchase post-announcement",
+        "accession_number": "0001564590-23-028045"
+      }
+    ]
+  }
+}
