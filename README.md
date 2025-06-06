@@ -6,7 +6,13 @@ A blockchain-based document verification and authorization system that provides 
 - **🌐 Public Contracts**: Targeted to specific users with activation codes
 - **🔒 Private Contracts**: Secure document sharing with encrypted storage
 
-## Project Overview 
+## 🚀 Live Demo
+
+**[Try the Application](https://net-authorizing-system.vercel.app/)**
+
+Experience the Net Authorizing System in action! The demo is deployed on Vercel and connected to Ethereum testnets. Make sure to have test ETH on both Sepolia and Hoodi networks before trying the application.
+
+## Project Overview
 
 The Net Authorizing System (NAT) is a decentralized application (DApp) designed to address e-document forgery and inefficient verification processes. Built on Ethereum blockchain with Arweave for decentralized storage, NAT enables secure creation, management, and verification of documents through smart contracts.
 
